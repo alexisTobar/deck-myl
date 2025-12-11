@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --- FONDO ANIMADO --- */
+body {
+    background-color: #0f172a;
+    /* Slate 900 */
+    color: #f8fafc;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow-x: hidden;
+}
+
+/* Patrón de fondo sutil */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9)),
+        url('https://www.transparenttextures.com/patterns/cubes.png');
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* --- SCROLLBAR PERSONALIZADO (Estilo Gamer) --- */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1e293b;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ea580c;
+    /* Naranja Mitos */
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #f97316;
+}
+
+/* --- ANIMACIONES KEYFRAMES --- */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+@keyframes pulseGlow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 10px rgba(234, 88, 12, 0.2);
+    }
+
+    50% {
+        box-shadow: 0 0 20px rgba(234, 88, 12, 0.6);
+    }
+}
+
+/* --- CLASES DE UTILIDAD --- */
+.animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Para aplicar delay a elementos en lista */
+.stagger-1 {
+    animation-delay: 0.1s;
+}
+
+.stagger-2 {
+    animation-delay: 0.2s;
+}
+
+.stagger-3 {
+    animation-delay: 0.3s;
+}
+
+/* Efecto Holográfico en cartas */
+.card-hover-effect {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.card-hover-effect:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(234, 88, 12, 0.4);
+    z-index: 10;
+    border-color: #f97316;
+}
+
+/* Botones con gradiente animado */
+.btn-epic {
+    background-size: 200% auto;
+    transition: 0.5s;
+}
+
+.btn-epic:hover {
+    background-position: right center;
+}
