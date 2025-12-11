@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-// Usamos toPng para mejor calidad que Jpeg
 import { toPng } from 'html-to-image';
+// 1. IMPORTAR LA VARIABLE DE CONFIGURACIÓN
+import BACKEND_URL from "../config"; 
 
 // --- CONFIGURACIÓN ---
 const EDICIONES = {
@@ -29,23 +30,20 @@ const TIPOS_FILTRO = [
 ];
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 
-export default function Home() {
+export default function DeckBuilder() { // Renombrado a DeckBuilder para ser consistente
     const navigate = useNavigate();
     const location = useLocation();
-
-    // Referencias
+    
     const gridContainerRef = useRef(null);
-    const galleryRef = useRef(null); // Ref para el capturador
+    const galleryRef = useRef(null);
 
-    // Estados
     const [edicionSeleccionada, setEdicionSeleccionada] = useState("");
     const [tipoSeleccionado, setTipoSeleccionado] = useState("");
     const [busqueda, setBusqueda] = useState("");
     const [cartas, setCartas] = useState([]);
     const [loading, setLoading] = useState(false);
     const [mazo, setMazo] = useState([]);
-
-    // Visuales
+    
     const [showScrollTop, setShowScrollTop] = useState(false);
     const [modalMazoOpen, setModalMazoOpen] = useState(false);
     const [vistaPorTipo, setVistaPorTipo] = useState(true);
@@ -55,7 +53,7 @@ export default function Home() {
     const [editingDeckId, setEditingDeckId] = useState(null);
     const [cardToZoom, setCardToZoom] = useState(null);
 
-    // --- EFECTO: DETECTAR SCROLL ---
+    // --- EFECTOS ---
     useEffect(() => {
         const container = gridContainerRef.current;
         if (!container) return;
@@ -90,7 +88,10 @@ export default function Home() {
                 if (busqueda) params.append("q", busqueda);
                 if (edicionSeleccionada) params.append("edition", edicionSeleccionada);
                 if (tipoSeleccionado) params.append("type", tipoSeleccionado);
-                const res = await fetch(`http://localhost:4000/api/cards/search?${params.toString()}`);
+                
+                // 2. CORRECCIÓN VITAL: USAR BACKEND_URL AQUÍ
+                const res = await fetch(`${BACKEND_URL}/api/cards/search?${params.toString()}`);
+                
                 const data = await res.json();
                 setCartas(data);
             } catch (error) { console.error(error); } finally { setLoading(false); }
@@ -121,7 +122,8 @@ export default function Home() {
 
         setGuardando(true);
         try {
-            const url = editingDeckId ? `http://localhost:4000/api/decks/${editingDeckId}` : "http://localhost:4000/api/decks";
+            // 3. CORRECCIÓN VITAL: USAR BACKEND_URL AQUÍ TAMBIÉN
+            const url = editingDeckId ? `${BACKEND_URL}/api/decks/${editingDeckId}` : `${BACKEND_URL}/api/decks`;
             const method = editingDeckId ? "PUT" : "POST";
 
             const res = await fetch(url, {
@@ -139,28 +141,23 @@ export default function Home() {
         } catch (error) { console.error(error); alert("Error de conexión"); } finally { setGuardando(false); }
     };
 
-    // --- FUNCIÓN DE CAPTURA MEJORADA ---
+    // --- CAPTURA ---
     const handleTakeScreenshot = useCallback(async () => {
         if (!galleryRef.current) return;
         setGuardando(true);
-
-        // Pequeña espera para asegurar que todo el CSS esté aplicado
         await new Promise(r => setTimeout(r, 200));
 
         try {
             const node = galleryRef.current;
-
-            // Calculamos el tamaño REAL del contenido, incluyendo lo que no se ve
-            const width = node.scrollWidth + 40; // +40 para un poco de margen
-            const height = node.scrollHeight + 40;
+            const width = node.scrollWidth + 40; 
+            const height = node.scrollHeight + 100;
 
             const dataUrl = await toPng(node, {
                 quality: 1.0,
-                backgroundColor: '#0f172a', // Fondo azul oscuro sólido (Slate-900)
+                backgroundColor: '#0f172a',
                 width: width,
                 height: height,
                 style: {
-                    // Forzamos estilos al momento de la foto
                     transform: 'none',
                     overflow: 'visible',
                     maxHeight: 'none',
@@ -170,20 +167,13 @@ export default function Home() {
                     margin: '0',
                     padding: '20px'
                 },
-                // Filtramos los botones de control para que no salgan en la foto
-                filter: (child) => {
-                    if (child.classList && child.classList.contains('hide-on-capture')) {
-                        return false;
-                    }
-                    return true;
-                }
+                filter: (child) => !child.classList?.contains('hide-on-capture')
             });
 
             const link = document.createElement('a');
             link.download = `${nombreMazo ? nombreMazo.replace(/\s+/g, '-') : "MiMazo"}-DeckMyL.png`;
             link.href = dataUrl;
             link.click();
-
         } catch (err) {
             console.error('Error al capturar:', err);
             alert('Error al generar la imagen. Intenta de nuevo.');
@@ -205,10 +195,9 @@ export default function Home() {
 
     return (
         <div className="min-h-screen flex flex-col md:flex-row overflow-hidden font-sans bg-slate-900">
-            {/* IZQUIERDA */}
+            {/* IZQUIERDA: CONSTRUCTOR */}
             <div className="flex-1 flex flex-col h-screen relative z-10 overflow-hidden">
                 <div className="p-4 md:p-6 pb-0 z-20 bg-slate-900 shadow-md">
-                    {/* ... (Cabecera igual que antes) ... */}
                     <div className="animate-fade-in">
                         <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-600 mb-6 drop-shadow-md tracking-tight">
                             {editingDeckId ? "✏️ Editando Mazo" : "Constructor de Mazos"}
@@ -270,7 +259,6 @@ export default function Home() {
 
             {/* DERECHA: SIDEBAR */}
             <div className="w-full md:w-80 bg-slate-800 border-l border-slate-700 flex flex-col h-screen shadow-2xl z-20 relative">
-                {/* ... (Sidebar igual que antes) ... */}
                 <div className="absolute inset-0 bg-gradient-to-b from-slate-800 to-slate-900 pointer-events-none -z-10"></div>
                 <div className="p-4 border-b border-slate-700 bg-slate-800/95 backdrop-blur shadow-md z-10">
                     <div className="flex justify-between items-center mb-3">
@@ -349,16 +337,18 @@ export default function Home() {
                                 <button onClick={() => setVistaPorTipo(true)} className={`px-4 py-1.5 rounded-md text-xs font-bold transition ${vistaPorTipo ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>POR TIPO</button>
                                 <button onClick={() => setVistaPorTipo(false)} className={`px-4 py-1.5 rounded-md text-xs font-bold transition ${!vistaPorTipo ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>TODO</button>
                             </div>
-                            <button onClick={handleTakeScreenshot} disabled={guardando} className="bg-blue-600 hover:bg-blue-500 text-white p-2 rounded-full shadow-lg transition transform hover:scale-105 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed" title="Descargar imagen del mazo completo">
-                                {guardando ? <span className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span> : <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
-                            </button>
+                            
+                            {!vistaPorTipo && (
+                                <button onClick={handleTakeScreenshot} disabled={guardando} className="bg-blue-600 hover:bg-blue-500 text-white p-2 rounded-full shadow-lg transition transform hover:scale-105 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed" title="Descargar imagen del mazo completo">
+                                    {guardando ? <span className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span> : <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
+                                </button>
+                            )}
+
                             <button onClick={() => setModalMazoOpen(false)} className="text-slate-400 hover:text-white hover:bg-slate-800 rounded-full w-10 h-10 flex items-center justify-center transition text-xl font-bold">✕</button>
                         </div>
                     </div>
-
-                    {/* AREA SCROLLABLE - IMPORTANTE: LA REF VA DENTRO */}
+                    
                     <div className="flex-1 overflow-y-auto p-8 bg-slate-900/50">
-                        {/* ESTE ES EL DIV QUE SE CAPTURARÁ (galleryRef) */}
                         <div ref={galleryRef} className="galeria-content max-w-7xl mx-auto pb-20">
                             {vistaPorTipo ? (
                                 getSortedTypes().map(tipo => (
@@ -406,7 +396,7 @@ export default function Home() {
     );
 }
 
-// --- COMPONENTE MEJORADO: STACK VERTICAL SIN SOMBRAS NI BLUR ---
+// COMPONENTE VISUAL DE CARTAS APILADAS
 function CardItemRealStack({ carta, onAdd, onRemove }) {
     const copias = Array.from({ length: carta.cantidad });
     const verticalOffset = 30; // Distancia hacia abajo
@@ -418,29 +408,26 @@ function CardItemRealStack({ carta, onAdd, onRemove }) {
             {copias.map((_, index) => {
                 const isTopCard = index === copias.length - 1;
                 return (
-                    <div
-                        key={index}
-                        // Sin shadow-lg para eliminar las sombras oscuras
-                        className="absolute top-0 left-0 w-full rounded-lg border-2 border-slate-900 overflow-hidden bg-slate-800"
+                    <div 
+                        key={index} 
+                        className="absolute top-0 left-0 w-full rounded-lg border-2 border-slate-900 overflow-hidden bg-slate-800" 
                         style={{ transform: `translateY(${index * verticalOffset}px)`, zIndex: index, height: 'auto' }}
                     >
-                        <img
-                            src={carta.imgUrl}
-                            alt={carta.name}
-                            crossOrigin="anonymous"
-                            className="w-full h-auto object-cover block"
+                        <img 
+                            src={carta.imgUrl} 
+                            alt={carta.name} 
+                            crossOrigin="anonymous" 
+                            className="w-full h-auto object-cover block" 
                         />
-
+                        
                         {isTopCard && (
                             <>
-                                {/* INSIGNIA DE CANTIDAD */}
                                 <div className="absolute top-1 right-1 z-20 bg-black/90 text-orange-500 border border-orange-500/50 rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs shadow-md">
                                     {carta.cantidad}
                                 </div>
 
-                                {/* CONTROLES: CLASE 'hide-on-capture' */}
                                 <div className="hide-on-capture absolute inset-0 flex flex-col justify-center items-center gap-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/60">
-                                    <div className="flex gap-2">
+                                     <div className="flex gap-2">
                                         <button onClick={(e) => { e.stopPropagation(); onRemove(carta.slug); }} className="w-8 h-8 bg-red-600 hover:bg-red-500 text-white rounded-full font-bold flex items-center justify-center border-2 border-slate-800 transition">-</button>
                                         <button onClick={(e) => { e.stopPropagation(); onAdd(carta); }} disabled={carta.cantidad >= 3} className={`w-8 h-8 rounded-full font-bold flex items-center justify-center border-2 border-slate-800 transition ${carta.cantidad >= 3 ? 'bg-slate-600 text-slate-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-white'}`}>+</button>
                                     </div>
