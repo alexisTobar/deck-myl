@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+// 1. IMPORTAR LA VARIABLE DE CONFIGURACIÓN
+import BACKEND_URL from "../config"; 
 
 export default function Register() {
     const navigate = useNavigate();
@@ -11,7 +13,8 @@ export default function Register() {
         setError("");
 
         try {
-            const res = await fetch("http://localhost:4000/api/auth/register", {
+            // 2. USAR LA VARIABLE EN LUGAR DE LOCALHOST
+            const res = await fetch(`${BACKEND_URL}/api/auth/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData)
