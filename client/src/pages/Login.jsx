@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-// 1. IMPORTAR LA VARIABLE DE CONFIGURACIÓN
+// 1. IMPORTAMOS LA VARIABLE INTELIGENTE
 import BACKEND_URL from "../config"; 
 
 export default function Login() {
@@ -13,7 +13,7 @@ export default function Login() {
         setError("");
         setLoading(true);
         try {
-            // 2. USAR LA VARIABLE EN LUGAR DE LOCALHOST
+            // 2. USAMOS LA VARIABLE AQUÍ (SIN COMILLAS)
             const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
