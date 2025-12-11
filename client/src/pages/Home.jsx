@@ -44,21 +44,21 @@ export default function Home() {
                             <div className="text-5xl mb-4">⚖️</div>
                             <h3 className="text-xl font-bold mb-2">DAR Actualizado</h3>
                             <p className="text-slate-400 text-sm mb-6">Documento de Arbitraje y Reglas oficial para torneos.</p>
-                            <a href="#" className="text-orange-400 font-bold hover:underline">Descargar PDF →</a>
+                            <a href="https://drive.google.com/file/d/1T73XocxDyUqiVQ_LD4I7dlfdUE1Tg9W_/view" className="text-orange-400 font-bold hover:underline">Descargar PDF →</a>
                         </div>
 
                         <div className="bg-slate-900 p-8 rounded-2xl border border-slate-700 hover:border-orange-500 transition group text-center">
                             <div className="text-5xl mb-4">❓</div>
                             <h3 className="text-xl font-bold mb-2">Preguntas Frecuentes</h3>
                             <p className="text-slate-400 text-sm mb-6">Respuestas oficiales a las dudas más complejas del juego.</p>
-                            <a href="#" className="text-orange-400 font-bold hover:underline">Leer FAQ →</a>
+                            <a href="https://drive.google.com/drive/folders/1i1y725whp728kCk92_Y01_ngB1ZS4EYM?usp=drive_link" className="text-orange-400 font-bold hover:underline">Leer FAQ →</a>
                         </div>
 
                         <div className="bg-slate-900 p-8 rounded-2xl border border-slate-700 hover:border-orange-500 transition group text-center">
                             <div className="text-5xl mb-4">📖</div>
-                            <h3 className="text-xl font-bold mb-2">Manual Básico</h3>
+                            <h3 className="text-xl font-bold mb-2">Lista de Cartas Baneadad o Restringigas</h3>
                             <p className="text-slate-400 text-sm mb-6">Aprende a jugar desde cero. Ideal para nuevos gladiadores.</p>
-                            <a href="#" className="text-orange-400 font-bold hover:underline">Descargar Manual →</a>
+                            <a href="https://blog.myl.cl/banlists-actualizadas/" className="text-orange-400 font-bold hover:underline">Bantlist Imperio →</a>
                         </div>
 
                     </div>
