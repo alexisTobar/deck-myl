@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-// 1. IMPORTAR LA VARIABLE DE CONFIGURACIÓN
+// 1. IMPORTAMOS LA VARIABLE INTELIGENTE
 import BACKEND_URL from "../config"; 
 
 export default function Register() {
@@ -13,7 +13,7 @@ export default function Register() {
         setError("");
 
         try {
-            // 2. USAR LA VARIABLE EN LUGAR DE LOCALHOST
+            // 2. USAMOS LA VARIABLE AQUÍ
             const res = await fetch(`${BACKEND_URL}/api/auth/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
