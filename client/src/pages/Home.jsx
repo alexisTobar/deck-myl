@@ -78,7 +78,7 @@ export default function Home() {
                         <CreatorCard
                             name="Sombra y Oscuridad"
                             platform="YouTube"
-                            image="https://placehold.co/150"
+                            image="https://yt3.googleusercontent.com/Ju206vax7ca6jntDBJC1Ve4E5QmmWjWmLETU1d_i5VClS7K0GYPWSrnpEb3zzp28CfFrxk6DHA=s120-c-k-c0x00ffffff-no-rj"
                             link="https://www.youtube.com/@Sombras_y_Oscuridad"
                         />
                         <CreatorCard
