@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+// 1. IMPORTAR LA VARIABLE DE CONFIGURACIÓN
+import BACKEND_URL from "../config"; 
 
 export default function Login() {
     const [formData, setFormData] = useState({ email: "", password: "" });
@@ -11,7 +13,8 @@ export default function Login() {
         setError("");
         setLoading(true);
         try {
-            const res = await fetch("http://localhost:4000/api/auth/login", {
+            // 2. USAR LA VARIABLE EN LUGAR DE LOCALHOST
+            const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData)
@@ -27,7 +30,6 @@ export default function Login() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-900 relative overflow-hidden font-sans">
-            {/* Decoración de Fondo */}
             <div className="absolute w-[500px] h-[500px] bg-orange-600/20 rounded-full blur-3xl -top-20 -left-20 animate-pulse"></div>
             <div className="absolute w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-3xl -bottom-20 -right-20"></div>
 
