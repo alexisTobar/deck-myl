@@ -1,19 +1,88 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-// 1. IMPORTAMOS LA VARIABLE INTELIGENTE
+import { Link, useNavigate } from "react-router-dom";
+import { GoogleLogin } from '@react-oauth/google'; // IMPORTAMOS GOOGLE
 import BACKEND_URL from "../config"; 
 
 export default function Login() {
+    const navigate = useNavigate();
+
+    // --- ESTADOS LOGIN NORMAL ---
     const [formData, setFormData] = useState({ email: "", password: "" });
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
+    // --- ESTADOS GOOGLE (NUEVOS) ---
+    const [showCompleteProfile, setShowCompleteProfile] = useState(false);
+    const [googleData, setGoogleData] = useState(null); 
+    const [profileData, setProfileData] = useState({ username: '', age: '' });
+
+    // 1. MANEJAR RESPUESTA DE GOOGLE
+    const handleGoogleSuccess = async (credentialResponse) => {
+        setLoading(true);
+        setError("");
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/auth/google`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: credentialResponse.credential })
+            });
+            const data = await res.json();
+
+            if (data.isNew) {
+                // Si es nuevo, guardamos email y mostramos formulario extra
+                setGoogleData({ email: data.email, googleId: data.googleId });
+                setShowCompleteProfile(true);
+                setLoading(false);
+            } else {
+                // Si ya existe, login directo
+                localStorage.setItem('token', data.token);
+                if(data.user) localStorage.setItem('user', JSON.stringify(data.user));
+                navigate("/"); // Usamos navigate en lugar de window.location para SPA
+            }
+        } catch (error) {
+            console.error("Error Google Login", error);
+            setError("Error al conectar con Google");
+            setLoading(false);
+        }
+    };
+
+    // 2. COMPLETAR PERFIL (Paso 2 de Google)
+    const handleCompleteProfile = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/auth/google-register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    email: googleData.email, 
+                    googleId: googleData.googleId,
+                    username: profileData.username,
+                    age: profileData.age
+                })
+            });
+            const data = await res.json();
+            
+            if (res.ok) {
+                localStorage.setItem('token', data.token);
+                // Opcional: Fetch user data here if needed
+                navigate("/");
+            } else {
+                setError(data.msg || "Error al registrar. Intenta otro nombre de usuario.");
+            }
+        } catch (error) { 
+            setError("Error de conexión");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 3. LOGIN MANUAL (Tu código original)
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
         setLoading(true);
         try {
-            // 2. USAMOS LA VARIABLE AQUÍ (SIN COMILLAS)
             const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -23,20 +92,25 @@ export default function Login() {
             if (res.ok) {
                 localStorage.setItem("token", data.token);
                 localStorage.setItem("user", JSON.stringify(data.user));
-                window.location.href = "/";
+                navigate("/");
             } else { setError(data.error || "Credenciales incorrectas"); }
         } catch (err) { setError("Error de conexión"); } finally { setLoading(false); }
     };
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-900 relative overflow-hidden font-sans">
+            {/* Efectos de fondo */}
             <div className="absolute w-[500px] h-[500px] bg-orange-600/20 rounded-full blur-3xl -top-20 -left-20 animate-pulse"></div>
             <div className="absolute w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-3xl -bottom-20 -right-20"></div>
 
             <div className="bg-slate-800/80 p-8 rounded-3xl shadow-2xl w-full max-w-md border border-slate-700 backdrop-blur-xl relative z-10 animate-fade-in">
+                
+                {/* --- HEADER --- */}
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-600 mb-2">Deck-MyL</h1>
-                    <p className="text-slate-400 text-sm">Ingresa a tu cuenta de Gladiador</p>
+                    <p className="text-slate-400 text-sm">
+                        {showCompleteProfile ? "¡Casi listo, Gladiador!" : "Ingresa a tu cuenta"}
+                    </p>
                 </div>
 
                 {error && (
@@ -45,25 +119,87 @@ export default function Login() {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div>
-                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Correo Electrónico</label>
-                        <input type="email" required placeholder="tu@correo.com" className="w-full p-4 rounded-xl bg-slate-900/50 border border-slate-600 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none transition text-white placeholder-slate-600" onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Contraseña</label>
-                        <input type="password" required placeholder="••••••••" className="w-full p-4 rounded-xl bg-slate-900/50 border border-slate-600 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none transition text-white placeholder-slate-600" onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
-                    </div>
+                {/* --- VISTA 1: LOGIN NORMAL + GOOGLE --- */}
+                {!showCompleteProfile ? (
+                    <>
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Correo Electrónico</label>
+                                <input type="email" required placeholder="tu@correo.com" className="w-full p-4 rounded-xl bg-slate-900/50 border border-slate-600 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none transition text-white placeholder-slate-600" onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Contraseña</label>
+                                <input type="password" required placeholder="••••••••" className="w-full p-4 rounded-xl bg-slate-900/50 border border-slate-600 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none transition text-white placeholder-slate-600" onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+                            </div>
 
-                    <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-orange-900/20 transition transform hover:-translate-y-1 flex justify-center items-center">
-                        {loading ? <span className="animate-spin">⏳</span> : "Iniciar Sesión"}
-                    </button>
-                </form>
+                            <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-orange-900/20 transition transform hover:-translate-y-1 flex justify-center items-center">
+                                {loading ? <span className="animate-spin">⏳</span> : "Iniciar Sesión"}
+                            </button>
+                        </form>
 
-                <div className="mt-8 text-center pt-6 border-t border-slate-700/50">
-                    <p className="text-slate-400 text-sm mb-2">¿Nuevo en el reino?</p>
-                    <Link to="/register" className="text-orange-400 hover:text-orange-300 font-bold hover:underline transition">Crear cuenta gratis</Link>
-                </div>
+                        {/* SEPARADOR */}
+                        <div className="flex items-center gap-4 my-6">
+                            <div className="h-px bg-slate-700 flex-1"></div>
+                            <span className="text-slate-500 text-xs uppercase tracking-widest">O continúa con</span>
+                            <div className="h-px bg-slate-700 flex-1"></div>
+                        </div>
+
+                        {/* BOTÓN GOOGLE */}
+                        <div className="flex justify-center">
+                            <GoogleLogin
+                                onSuccess={handleGoogleSuccess}
+                                onError={() => console.log('Login Failed')}
+                                theme="filled_black"
+                                shape="pill"
+                                text="continue_with"
+                                width="300"
+                            />
+                        </div>
+
+                        <div className="mt-8 text-center pt-6 border-t border-slate-700/50">
+                            <p className="text-slate-400 text-sm mb-2">¿Nuevo en el reino?</p>
+                            <Link to="/register" className="text-orange-400 hover:text-orange-300 font-bold hover:underline transition">Crear cuenta gratis</Link>
+                        </div>
+                    </>
+                ) : (
+                    /* --- VISTA 2: COMPLETAR PERFIL (Solo nuevos Google) --- */
+                    <form onSubmit={handleCompleteProfile} className="space-y-6 animate-fade-in">
+                        <p className="text-slate-400 text-center text-sm mb-4">Elige tu nombre de batalla y edad.</p>
+                        
+                        <div>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Usuario (Nick)</label>
+                            <input 
+                                type="text" 
+                                required 
+                                placeholder="Ej: MagoOscuro99" 
+                                className="w-full p-4 rounded-xl bg-slate-900/50 border border-slate-600 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none transition text-white placeholder-slate-600" 
+                                value={profileData.username}
+                                onChange={(e) => setProfileData({ ...profileData, username: e.target.value })} 
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Edad</label>
+                            <input 
+                                type="number" 
+                                required 
+                                placeholder="Ej: 24" 
+                                min="10"
+                                max="99"
+                                className="w-full p-4 rounded-xl bg-slate-900/50 border border-slate-600 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none transition text-white placeholder-slate-600" 
+                                value={profileData.age}
+                                onChange={(e) => setProfileData({ ...profileData, age: e.target.value })} 
+                            />
+                        </div>
+
+                        <button type="submit" disabled={loading} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg transition transform hover:-translate-y-1">
+                            {loading ? "Registrando..." : "Completar Registro 🚀"}
+                        </button>
+                        
+                        <button type="button" onClick={() => setShowCompleteProfile(false)} className="w-full text-slate-400 hover:text-white text-sm mt-2">
+                            Cancelar
+                        </button>
+                    </form>
+                )}
             </div>
         </div>
     );
