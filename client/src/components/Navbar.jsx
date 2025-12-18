@@ -22,7 +22,7 @@ export default function Navbar() {
                    md:h-16 (64px) para PC
                    w-auto mantiene la proporción
                 */}
-                <Logo className="h-14 md:h-16 w-auto drop-shadow-lg" showText={false} />
+                <Logo className="h-16 md:h-18 w-auto drop-shadow-lg" showText={false} />
             </Link>
 
             <div className="flex items-center gap-6">
