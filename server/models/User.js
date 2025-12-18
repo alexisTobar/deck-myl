@@ -14,13 +14,21 @@ const UserSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
+        // IMPORTANTE: Quitamos 'required: true' para permitir usuarios de Google
         minlength: 6
+    },
+    googleId: {
+        type: String // Para identificar usuarios que vienen de Google
+    },
+    age: {
+        type: Number // Para el dato extra que pediremos
     },
     createdAt: {
         type: Date,
         default: Date.now
     }
 });
+
+module.exports = mongoose.model('User', UserSchema);
 
 module.exports = mongoose.model('User', UserSchema);
