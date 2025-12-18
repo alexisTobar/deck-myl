@@ -16,9 +16,13 @@ export default function Navbar() {
         <nav className="bg-slate-900 border-b border-slate-700 px-6 py-4 flex justify-between items-center sticky top-0 z-50 shadow-md">
             {/* LOGO QUE LLEVA AL INICIO */}
             {/* LOGO PRINCIPAL */}
-            <Link to="/" className="hover:scale-105 transition-transform duration-200">
-                {/* Llamamos al componente Logo. Puedes ajustar el tamaño con h-10 o h-12 */}
-                <Logo className="h-10 w-auto text-2xl md:text-3xl" showText={true} />
+            {/* LOGO PRINCIPAL (Ahora más grande) */}
+            <Link to="/" className="hover:scale-105 transition-transform duration-200 flex items-center">
+                {/* h-14 (56px) para móvil 
+                   md:h-16 (64px) para PC
+                   w-auto mantiene la proporción
+                */}
+                <Logo className="h-14 md:h-16 w-auto drop-shadow-lg" showText={false} />
             </Link>
 
             <div className="flex items-center gap-6">
