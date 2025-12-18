@@ -179,9 +179,9 @@ export default function Login() {
                                 />
                             </div>
                             <div className="w-2/3">
-                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">CL / Ciudad</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">CL</label>
                                 <input 
-                                    type="text" required placeholder="Ej: Santiago" 
+                                    type="text" required placeholder="Ej: CL006" 
                                     className="w-full p-4 rounded-xl bg-slate-900/50 border border-slate-600 focus:border-orange-500 text-white" 
                                     value={profileData.cl}
                                     onChange={(e) => setProfileData({ ...profileData, cl: e.target.value })} 
