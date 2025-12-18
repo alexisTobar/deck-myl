@@ -16,14 +16,16 @@ const PORT = process.env.PORT || 4000;
 // --- MIDDLEWARES (Aquí está el cambio clave) ---
 // Configuración explícita para evitar errores de Google/Vercel
 // --- MIDDLEWARES ---
+// server/index.js
+
 app.use(cors({
     origin: [
-        "http://localhost:5173",             
-        "https://deck-myl.vercel.app"        // Tu URL de Vercel
+        "http://localhost:5173",
+        "https://deck-myl.vercel.app" // TU FRONTEND
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    // 👇 AQUÍ ESTÁ LA MAGIA: Agregamos 'auth-token' a la lista permitida
+    // 👇 ESTA LÍNEA ES LA CLAVE QUE TE FALTA 👇
     allowedHeaders: ['Content-Type', 'Authorization', 'auth-token'] 
 }));
 
