@@ -13,7 +13,7 @@ export default function Logo({ className = "w-8 h-8", showText = true }) {
             {/* Texto Opcional (si quieres que diga Deck-MyL al lado) */}
             {showText && (
                 <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500 tracking-tight whitespace-nowrap">
-                    
+                    Deck-MyL
                 </span>
             )}
         </div>
