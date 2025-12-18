@@ -1,146 +1,168 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import BACKEND_URL from "../config"; // <--- IMPORTACIÓN NUEVA
+import { Link, useNavigate } from "react-router-dom";
+import BACKEND_URL from "../config";
 
 export default function MyDecks() {
-    const navigate = useNavigate();
     const [decks, setDecks] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const navigate = useNavigate();
 
-    // Estado para el Modal de "Ver Cartas"
-    const [selectedDeck, setSelectedDeck] = useState(null);
-
-    // 1. CARGAR MAZOS
     useEffect(() => {
-        const fetchDecks = async () => {
-            const token = localStorage.getItem("token");
-            if (!token) return navigate("/login");
-
-            try {
-                // USAMOS URL DINÁMICA
-                const res = await fetch(`${BACKEND_URL}/api/decks/my-decks`, {
-                    headers: { "auth-token": token }
-                });
-                const data = await res.json();
-                if (res.ok) setDecks(data);
-            } catch (error) {
-                console.error("Error de conexión");
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchDecks();
-    }, [navigate]);
+    }, []);
 
-    // 2. BORRAR MAZO
-    const handleDelete = async (id, e) => {
-        e.stopPropagation();
-        if (!window.confirm("¿Seguro que quieres eliminar este mazo?")) return;
+    const fetchDecks = async () => {
+        const token = localStorage.getItem("token");
+        if (!token) return navigate("/login");
 
         try {
-            const token = localStorage.getItem("token");
-            // USAMOS URL DINÁMICA
+            const res = await fetch(`${BACKEND_URL}/api/decks/my-decks`, {
+                headers: { "auth-token": token }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setDecks(data);
+            } else {
+                setError("Error al cargar mazos");
+            }
+        } catch (err) {
+            setError("Error de conexión");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm("¿Seguro que quieres eliminar este mazo?")) return;
+        const token = localStorage.getItem("token");
+        try {
             const res = await fetch(`${BACKEND_URL}/api/decks/${id}`, {
                 method: "DELETE",
                 headers: { "auth-token": token }
             });
-            if (res.ok) setDecks(decks.filter(d => d._id !== id));
-        } catch (error) {
-            alert("Error de conexión");
+            if (res.ok) {
+                setDecks(decks.filter(deck => deck._id !== id));
+            }
+        } catch (err) {
+            alert("No se pudo eliminar");
         }
     };
 
-    // 3. EDITAR MAZO
-    const handleEdit = (deck, e) => {
-        e.stopPropagation();
-        // Redirige al builder (recuerda que renombraste Home.jsx a DeckBuilder.jsx y ajustaste las rutas en App.jsx)
-        navigate("/builder", { state: { deckToEdit: deck } });
+    // --- NUEVA FUNCIÓN: EXPORTAR MAZO A TXT ---
+    const handleExport = (deck) => {
+        // 1. Crear el contenido del texto
+        let content = `MAZO: ${deck.name}\n`;
+        content += `Formato: Mitos y Leyendas\n`;
+        content += `Total Cartas: ${deck.cards.length}\n`;
+        content += `----------------------------\n`;
+
+        // Agrupamos las cartas para que se vea bonito (ej: 3 x Dragón)
+        const cardCounts = {};
+        deck.cards.forEach(card => {
+            cardCounts[card.name] = (cardCounts[card.name] || 0) + 1;
+        });
+
+        for (const [name, count] of Object.entries(cardCounts)) {
+            content += `${count} x ${name}\n`;
+        }
+
+        // 2. Crear un "Blob" (archivo virtual)
+        const element = document.createElement("a");
+        const file = new Blob([content], { type: 'text/plain' });
+        element.href = URL.createObjectURL(file);
+        element.download = `${deck.name.replace(/ /g, "_")}.txt`;
+        document.body.appendChild(element); // Requerido para Firefox
+        element.click();
+        document.body.removeChild(element);
     };
 
+    if (loading) return <div className="text-center text-white mt-20 text-xl animate-pulse">Cargando la armería... ⚔️</div>;
+
     return (
-        <div className="min-h-screen bg-slate-900 text-white p-6 font-sans">
+        <div className="min-h-screen bg-slate-900 p-6 font-sans">
             <div className="max-w-6xl mx-auto">
-                <h1 className="text-3xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">
-                    📂 Mis Mazos Guardados
-                </h1>
+                
+                {/* ENCABEZADO */}
+                <div className="flex justify-between items-center mb-10">
+                    <div>
+                        <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-600">
+                            Mis Mazos
+                        </h1>
+                        <p className="text-slate-400 mt-1">Tu colección de estrategias</p>
+                    </div>
+                    <Link to="/builder" className="bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-orange-900/40 transition transform hover:-translate-y-1 flex items-center gap-2">
+                        <span>🔨</span> Nuevo Mazo
+                    </Link>
+                </div>
 
-                {loading ? <div className="text-center mt-20">Cargando...</div> :
-                    decks.length === 0 ? (
-                        <div className="text-center bg-slate-800 p-10 rounded-xl border border-slate-700">
-                            <p className="text-xl text-slate-400 mb-4">No tienes mazos aún.</p>
-                            <button onClick={() => navigate("/builder")} className="bg-green-600 px-6 py-2 rounded font-bold hover:bg-green-500 transition">Crear uno</button>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {decks.map((deck) => (
-                                <div
-                                    key={deck._id}
-                                    onClick={() => setSelectedDeck(deck)}
-                                    className="bg-slate-800 rounded-xl overflow-hidden shadow-lg border border-slate-700 hover:border-orange-500 transition cursor-pointer group"
-                                >
-                                    <div className="p-5">
-                                        <h3 className="text-xl font-bold text-white mb-1 truncate">{deck.name}</h3>
-                                        <p className="text-xs text-slate-400">Clic para ver detalles</p>
-                                        <div className="mt-4"><span className="bg-slate-700 text-xs px-2 py-1 rounded text-slate-300">{deck.cards.reduce((acc, c) => acc + c.quantity, 0)} Cartas</span></div>
-                                    </div>
+                {error && <div className="bg-red-500/20 text-red-200 p-4 rounded-xl mb-6 text-center border border-red-500/50">{error}</div>}
 
-                                    <div className="px-5 pb-4 space-y-1">
-                                        {deck.cards.slice(0, 3).map((c, i) => (
-                                            <div key={i} className="text-xs text-slate-400 flex justify-between">
-                                                <span className="truncate w-32">{c.name}</span>
-                                                <span className="text-orange-500 font-bold">x{c.quantity}</span>
-                                            </div>
-                                        ))}
-                                        {deck.cards.length > 3 && <p className="text-xs text-slate-600">...y más</p>}
-                                    </div>
+                {decks.length === 0 && !error ? (
+                    <div className="text-center py-20 bg-slate-800/50 rounded-3xl border border-slate-700 border-dashed">
+                        <p className="text-slate-400 text-xl mb-4">Aún no has forjado ningún mazo.</p>
+                        <Link to="/builder" className="text-orange-400 hover:underline text-lg">¡Empieza aquí!</Link>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {decks.map((deck) => {
+                            // --- LÓGICA DE FONDO: Primera carta o gradiente por defecto ---
+                            const bgImage = deck.cards.length > 0 ? deck.cards[0].imageUrl : null;
 
-                                    <div className="bg-slate-900/50 p-3 flex justify-between items-center border-t border-slate-700">
-                                        <button
-                                            onClick={(e) => handleEdit(deck, e)}
-                                            className="text-blue-400 hover:text-white text-sm font-bold bg-blue-900/20 px-3 py-1 rounded hover:bg-blue-600 transition"
-                                        >
-                                            ✏️ Editar
-                                        </button>
-                                        <button
-                                            onClick={(e) => handleDelete(deck._id, e)}
-                                            className="text-red-400 hover:text-white text-sm font-bold bg-red-900/20 px-3 py-1 rounded hover:bg-red-600 transition"
-                                        >
-                                            🗑️ Eliminar
-                                        </button>
+                            return (
+                                <div key={deck._id} className="group relative bg-slate-800 rounded-2xl shadow-xl overflow-hidden border border-slate-700 hover:border-orange-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-orange-900/20 h-64 flex flex-col justify-end">
+                                    
+                                    {/* --- 1. IMAGEN DE FONDO --- */}
+                                    {bgImage ? (
+                                        <>
+                                            <div 
+                                                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+                                                style={{ backgroundImage: `url(${bgImage})` }}
+                                            ></div>
+                                            {/* Overlay oscuro para que se lea el texto */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent"></div>
+                                        </>
+                                    ) : (
+                                        <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-700"></div>
+                                    )}
+
+                                    {/* --- CONTENIDO --- */}
+                                    <div className="relative z-10 p-6">
+                                        <h2 className="text-2xl font-bold text-white mb-1 drop-shadow-md truncate">{deck.name}</h2>
+                                        <p className="text-orange-300 text-sm font-medium mb-4 flex items-center gap-2">
+                                            🃏 {deck.cards.length} Cartas
+                                        </p>
+
+                                        {/* --- BOTONES DE ACCIÓN --- */}
+                                        <div className="flex gap-2">
+                                            <Link 
+                                                to={`/builder/${deck._id}`} 
+                                                className="flex-1 bg-blue-600/90 hover:bg-blue-500 text-white py-2 rounded-lg font-bold text-center text-sm transition backdrop-blur-sm"
+                                            >
+                                                ✏️ Editar
+                                            </Link>
+                                            
+                                            {/* BOTÓN EXPORTAR */}
+                                            <button 
+                                                onClick={() => handleExport(deck)}
+                                                className="bg-green-600/90 hover:bg-green-500 text-white px-3 rounded-lg transition backdrop-blur-sm"
+                                                title="Descargar lista (.txt)"
+                                            >
+                                                📥
+                                            </button>
+
+                                            <button 
+                                                onClick={() => handleDelete(deck._id)} 
+                                                className="bg-red-600/90 hover:bg-red-500 text-white px-3 rounded-lg transition backdrop-blur-sm"
+                                                title="Eliminar"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    )}
-
-                {selectedDeck && (
-                    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setSelectedDeck(null)}>
-                        <div className="bg-slate-800 p-6 rounded-xl shadow-2xl w-full max-w-2xl border border-slate-600 max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
-                            <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
-                                <h2 className="text-2xl font-bold text-orange-400">{selectedDeck.name}</h2>
-                                <button onClick={() => setSelectedDeck(null)} className="text-slate-400 hover:text-white font-bold text-xl">✕</button>
-                            </div>
-
-                            <div className="overflow-y-auto custom-scrollbar flex-1 pr-2">
-                                {selectedDeck.cards.map((card, idx) => (
-                                    <div key={idx} className="flex items-center gap-3 mb-2 bg-slate-700/30 p-2 rounded hover:bg-slate-700 transition">
-                                        <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0">
-                                            <img src={card.imgUrl} alt={card.name} className="w-full h-full object-cover" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-bold text-sm text-slate-200">{card.name}</p>
-                                            <p className="text-xs text-orange-300">{card.type}</p>
-                                        </div>
-                                        <span className="font-bold text-lg text-white bg-slate-900 w-8 h-8 flex items-center justify-center rounded">x{card.quantity}</span>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="mt-4 pt-4 border-t border-slate-700 flex justify-end gap-3">
-                                <button onClick={() => setSelectedDeck(null)} className="text-slate-300 font-bold px-4 py-2 hover:text-white">Cerrar</button>
-                                <button onClick={(e) => { setSelectedDeck(null); handleEdit(selectedDeck, e); }} className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded shadow">Cargar en Editor</button>
-                            </div>
-                        </div>
+                            );
+                        })}
                     </div>
                 )}
             </div>
