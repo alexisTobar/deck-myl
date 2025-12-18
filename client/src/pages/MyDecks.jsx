@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // Quitamos Link, usamos useNavigate
+import { useNavigate } from "react-router-dom";
 import BACKEND_URL from "../config";
 
 export default function MyDecks() {
     const [decks, setDecks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const navigate = useNavigate(); // Hook para navegar enviando datos
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchDecks();
@@ -50,29 +50,29 @@ export default function MyDecks() {
         }
     };
 
-    // --- 1. RECUPERAMOS TU FUNCIÓN DE EDITAR QUE SÍ FUNCIONA ---
+    // --- FUNCIÓN EDITAR ---
     const handleEdit = (deck) => {
-        // Enviamos el objeto "deck" completo al constructor mediante "state"
         navigate("/builder", { state: { deckToEdit: deck } });
     };
 
-    // --- 2. FUNCIÓN EXPORTAR (Mantenemos la mejora) ---
+    // --- FUNCIÓN EXPORTAR (CORREGIDA: AHORA LEE LAS CANTIDADES) ---
     const handleExport = (deck) => {
+        // 1. Calcular el TOTAL REAL sumando las cantidades (quantity)
+        const totalCards = deck.cards.reduce((acc, card) => acc + (card.quantity || 1), 0);
+
         let content = `MAZO: ${deck.name}\n`;
         content += `Formato: Mitos y Leyendas\n`;
-        content += `Total Cartas: ${deck.cards.length}\n`;
+        content += `Total Cartas: ${totalCards}\n`; // Ahora mostrará 50 (o el número real)
         content += `----------------------------\n`;
 
-        const cardCounts = {};
+        // 2. Listar las cartas usando su cantidad real
         deck.cards.forEach(card => {
             const cleanName = card.name ? card.name.trim() : "Carta Desconocida";
-            cardCounts[cleanName] = (cardCounts[cleanName] || 0) + 1;
+            const qty = card.quantity || 1; // Aquí está la clave
+            content += `${qty} x ${cleanName}\n`;
         });
 
-        for (const [name, count] of Object.entries(cardCounts)) {
-            content += `${count} x ${name}\n`;
-        }
-
+        // 3. Crear y descargar archivo
         const element = document.createElement("a");
         const file = new Blob([content], { type: 'text/plain' });
         element.href = URL.createObjectURL(file);
@@ -82,12 +82,12 @@ export default function MyDecks() {
         document.body.removeChild(element);
     };
 
-    // --- 3. IMAGEN SEGURA (Agregamos 'imgUrl' que vi en tu código viejo) ---
+    // --- FUNCIÓN IMAGEN ---
     const getCardImage = (cards) => {
         if (!cards || cards.length === 0) return null;
         const firstCard = cards[0];
-        // Aquí agregué 'imgUrl' que es la que usabas antes
-        return firstCard.imageUrl || firstCard.imgUrl || firstCard.imagen || firstCard.img || null;
+        // Buscamos en todas las propiedades posibles para asegurar que salga la foto
+        return firstCard.imgUrl || firstCard.imageUrl || firstCard.imagen || firstCard.img || null;
     };
 
     if (loading) return <div className="text-center text-white mt-20 text-xl animate-pulse">Cargando la armería... ⚔️</div>;
@@ -103,7 +103,6 @@ export default function MyDecks() {
                         </h1>
                         <p className="text-slate-400 mt-1">Tu colección de estrategias</p>
                     </div>
-                    {/* Botón para crear nuevo (sin estado, va limpio) */}
                     <button 
                         onClick={() => navigate("/builder")} 
                         className="bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-orange-900/40 transition transform hover:-translate-y-1 flex items-center gap-2"
@@ -123,6 +122,8 @@ export default function MyDecks() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {decks.map((deck) => {
                             const bgImage = getCardImage(deck.cards);
+                            // Calculamos el total real para mostrarlo en la tarjeta también
+                            const realTotal = deck.cards.reduce((acc, c) => acc + (c.quantity || 1), 0);
 
                             return (
                                 <div key={deck._id} className="group relative bg-slate-800 rounded-2xl shadow-xl overflow-hidden border border-slate-700 hover:border-orange-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-orange-900/20 h-64 flex flex-col justify-end">
@@ -148,11 +149,10 @@ export default function MyDecks() {
                                             {deck.name}
                                         </h2>
                                         <p className="text-orange-300 text-sm font-medium mb-4 flex items-center gap-2">
-                                            🃏 {deck.cards.reduce((acc, c) => acc + (c.quantity || 1), 0)} Cartas
+                                            🃏 {realTotal} Cartas
                                         </p>
 
                                         <div className="flex gap-2">
-                                            {/* BOTÓN EDITAR ARREGLADO */}
                                             <button 
                                                 onClick={() => handleEdit(deck)} 
                                                 className="flex-1 bg-blue-600/90 hover:bg-blue-500 text-white py-2 rounded-lg font-bold text-center text-sm transition backdrop-blur-sm"
