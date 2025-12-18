@@ -63,7 +63,7 @@ router.post('/google', async (req, res) => {
         // Verificar token con Google
         const ticket = await client.verifyIdToken({
             idToken: token,
-            audience: "PEGA_AQUI_TU_CLIENT_ID_LARGO" // ⚠️ El mismo ID otra vez
+            audience: "570011480834-rs6o3vggmdovvouj8gi9gi4p0l2mnqdm.apps.googleusercontent.com" // ⚠️ El mismo ID otra vez
         });
         const { email, sub: googleId } = ticket.getPayload();
 

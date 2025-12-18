@@ -15,15 +15,16 @@ const PORT = process.env.PORT || 4000;
 
 // --- MIDDLEWARES (Aquí está el cambio clave) ---
 // Configuración explícita para evitar errores de Google/Vercel
+// --- MIDDLEWARES ---
 app.use(cors({
     origin: [
-        "http://localhost:5173",             // Tu PC (Desarrollo)
-        "https://deck-myl.vercel.app",       // ⚠️ REEMPLAZA ESTO con tu URL real de Vercel
-        // Si tienes otra URL en Vercel (como la de git-main), agrégala aquí también
+        "http://localhost:5173",             
+        "https://deck-myl.vercel.app"        // Tu URL de Vercel
     ],
-    credentials: true, // Permite envío de cookies/headers seguros
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    // 👇 AQUÍ ESTÁ LA MAGIA: Agregamos 'auth-token' a la lista permitida
+    allowedHeaders: ['Content-Type', 'Authorization', 'auth-token'] 
 }));
 
 app.use(express.json());
