@@ -18,30 +18,23 @@ const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 
 // --- ESTILOS DE ANIMACIÓN ---
 const animationStyles = `
-  @keyframes slideInRight {
-    from { opacity: 0; transform: translateX(20px); }
-    to { opacity: 1; transform: translateX(0); }
-  }
-  .animate-slide-in {
-    animation: slideInRight 0.3s ease-out forwards;
-  }
-  .card-transition {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
+  @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .animate-slide-in { animation: slideInRight 0.3s ease-out forwards; }
+  .animate-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .card-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 `;
 
 export default function DeckBuilder() {
     const navigate = useNavigate();
     const location = useLocation();
-    
     const gridContainerRef = useRef(null);
     const galleryRef = useRef(null);
 
-    // --- ESTADO DE COLUMNAS (GRID DINÁMICO) ---
-    // Detectamos si es móvil (pantalla < 768px) para empezar con 3, si es PC con 5.
+    // Grid Dinámico
     const [gridColumns, setGridColumns] = useState(window.innerWidth < 768 ? 3 : 5);
 
-    // Estados Generales
+    // Estados
     const [edicionSeleccionada, setEdicionSeleccionada] = useState("kvsm_titanes");
     const [tipoSeleccionado, setTipoSeleccionado] = useState("");
     const [busqueda, setBusqueda] = useState("");
@@ -51,7 +44,8 @@ export default function DeckBuilder() {
     
     // UI States
     const [showFilters, setShowFilters] = useState(false);
-    const [modalMazoOpen, setModalMazoOpen] = useState(false); 
+    const [showMobileList, setShowMobileList] = useState(false); // Panel de Lista Rápida
+    const [modalMazoOpen, setModalMazoOpen] = useState(false); // Galería Visual
     const [vistaPorTipo, setVistaPorTipo] = useState(true);
     const [modalGuardarOpen, setModalGuardarOpen] = useState(false);
     const [nombreMazo, setNombreMazo] = useState("");
@@ -70,7 +64,7 @@ export default function DeckBuilder() {
     }, []);
     const scrollToTop = () => gridContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // Cargar mazo a editar
+    // Cargar mazo
     useEffect(() => {
         if (location.state && location.state.deckToEdit) {
             const deck = location.state.deckToEdit;
@@ -82,11 +76,10 @@ export default function DeckBuilder() {
         }
     }, [location]);
 
-    // Buscador con CACHÉ
+    // Buscador
     useEffect(() => {
         const fetchCartas = async () => {
             if (!busqueda && !edicionSeleccionada && !tipoSeleccionado) { setCartas([]); return; }
-            
             const cacheKey = `search-${busqueda}-${edicionSeleccionada}-${tipoSeleccionado}`;
             const cachedData = localStorage.getItem(cacheKey);
             if (cachedData) { setCartas(JSON.parse(cachedData)); return; }
@@ -146,7 +139,6 @@ export default function DeckBuilder() {
         } catch (error) { console.error(error); alert("Error de conexión"); } finally { setGuardando(false); }
     };
 
-    // Captura
     const handleTakeScreenshot = useCallback(async () => {
         if (!galleryRef.current) return;
         setGuardando(true);
@@ -185,53 +177,33 @@ export default function DeckBuilder() {
 
             {/* ================= IZQUIERDA: GRID DE CARTAS ================= */}
             <div className="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
-                
-                {/* Header Compacto */}
                 <div className="bg-slate-900 border-b border-slate-800 p-2 z-30 flex items-center gap-2 shadow-md">
                     <button onClick={() => setShowFilters(!showFilters)} className={`p-2 rounded-lg border md:hidden ${showFilters ? 'bg-orange-600 border-orange-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
                     </button>
-                    
                     <div className="flex-1 relative">
                         <input type="text" placeholder="Buscar carta..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="w-full p-2.5 pl-9 rounded-lg bg-slate-800 border border-slate-700 text-sm focus:border-orange-500 focus:outline-none transition-all focus:bg-slate-700" />
                         <span className="absolute left-3 top-2.5 text-slate-500">🔍</span>
                     </div>
-
-                    {/* --- CONTROLES DE ZOOM (+ / -) --- */}
+                    {/* Zoom PC */}
                     <div className="flex items-center bg-slate-800 rounded-lg p-1 gap-1 border border-slate-700 shadow-sm ml-1">
-                        <button 
-                            onClick={() => setGridColumns(prev => Math.max(2, prev - 1))} 
-                            className="w-8 h-8 flex items-center justify-center text-slate-300 hover:bg-slate-700 hover:text-white rounded font-bold transition text-lg"
-                            title="Cartas más grandes"
-                        >
-                            -
-                        </button>
-                        <span className="text-xs font-bold text-slate-500 w-4 text-center select-none">
-                            {gridColumns}
-                        </span>
-                        <button 
-                            onClick={() => setGridColumns(prev => Math.min(8, prev + 1))} 
-                            className="w-8 h-8 flex items-center justify-center text-slate-300 hover:bg-slate-700 hover:text-white rounded font-bold transition text-lg"
-                            title="Cartas más pequeñas"
-                        >
-                            +
-                        </button>
+                        <button onClick={() => setGridColumns(prev => Math.max(2, prev - 1))} className="w-8 h-8 flex items-center justify-center text-slate-300 hover:bg-slate-700 hover:text-white rounded font-bold transition text-lg">-</button>
+                        <span className="text-xs font-bold text-slate-500 w-4 text-center select-none">{gridColumns}</span>
+                        <button onClick={() => setGridColumns(prev => Math.min(8, prev + 1))} className="w-8 h-8 flex items-center justify-center text-slate-300 hover:bg-slate-700 hover:text-white rounded font-bold transition text-lg">+</button>
                     </div>
-
                     {/* Filtros PC */}
                     <div className="hidden md:flex gap-2 ml-2">
-                        <select value={edicionSeleccionada} onChange={(e) => setEdicionSeleccionada(e.target.value)} className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-xs hover:border-orange-500 transition cursor-pointer">
+                        <select value={edicionSeleccionada} onChange={(e) => setEdicionSeleccionada(e.target.value)} className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-xs hover:border-orange-500 cursor-pointer">
                             <option value="">📚 Ediciones</option>
                             {Object.entries(EDICIONES).map(([slug, label]) => (<option key={slug} value={slug}>{label}</option>))}
                         </select>
-                        <select value={tipoSeleccionado} onChange={(e) => setTipoSeleccionado(e.target.value)} className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-xs hover:border-orange-500 transition cursor-pointer">
+                        <select value={tipoSeleccionado} onChange={(e) => setTipoSeleccionado(e.target.value)} className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-xs hover:border-orange-500 cursor-pointer">
                             <option value="">🃏 Tipos</option>
                             {TIPOS_FILTRO.map((t) => (<option key={t.id} value={t.value}>{t.label}</option>))}
                         </select>
                     </div>
                 </div>
 
-                {/* Filtros Móvil */}
                 <div className={`md:hidden overflow-hidden transition-all duration-300 bg-slate-800 border-b border-slate-700 ${showFilters ? 'max-h-40 p-2' : 'max-h-0'}`}>
                     <div className="flex gap-2">
                         <select value={edicionSeleccionada} onChange={(e) => setEdicionSeleccionada(e.target.value)} className="flex-1 p-2 rounded bg-slate-900 border border-slate-600 text-xs">
@@ -245,80 +217,115 @@ export default function DeckBuilder() {
                     </div>
                 </div>
 
-                {/* Area Cartas */}
                 <div className="flex-1 flex overflow-hidden relative">
                     <div ref={gridContainerRef} className="flex-1 overflow-y-auto p-2 pb-20 md:pb-2 custom-scrollbar relative">
                         {loading ? (
                             <div className="flex justify-center mt-20"><div className="animate-spin rounded-full h-10 w-10 border-4 border-orange-500 border-t-transparent"></div></div>
                         ) : (
-                            // GRID DINÁMICO: Usamos 'style' para el control preciso de columnas
-                            <div 
-                                className="grid gap-2 transition-all duration-300 ease-in-out"
-                                style={{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }}
-                            >
+                            <div className="grid gap-2 transition-all duration-300 ease-in-out" style={{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }}>
                                 {cartas.map((carta) => (
                                     <div key={carta._id} className="relative group cursor-pointer animate-fade-in card-transition transform hover:-translate-y-1 hover:z-10" onClick={() => handleAdd(carta)}>
-                                        
                                         <div className="rounded overflow-hidden border border-slate-800 relative bg-slate-800 shadow-sm group-hover:shadow-orange-500/30 group-hover:border-orange-500 transition-all">
                                             <img src={carta.imgUrl} alt={carta.name} className="w-full h-auto object-cover" loading="lazy" />
-                                            
-                                            {/* Contador */}
                                             {mazo.filter(c => c.slug === carta.slug).length > 0 && (
-                                                <div className="absolute top-0 left-0 bg-orange-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-br-lg shadow-md z-10 animate-bounce">
-                                                    {mazo.find(c => c.slug === carta.slug).cantidad}
-                                                </div>
+                                                <div className="absolute top-0 left-0 bg-orange-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-br-lg shadow-md z-10 animate-bounce">{mazo.find(c => c.slug === carta.slug).cantidad}</div>
                                             )}
-
-                                            {/* Overlay PC */}
                                             <div className="hidden md:flex absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 items-center justify-center transition-opacity z-10 pointer-events-none">
                                                 <span className="text-white font-bold text-3xl drop-shadow-md">+</span>
                                             </div>
                                         </div>
-
-                                        {/* BOTÓN DE ZOOM CON LUPA */}
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); setCardToZoom(carta); }}
-                                            className="absolute top-1 right-1 z-20 bg-blue-600/90 hover:bg-blue-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-lg md:opacity-0 md:group-hover:opacity-100 transition-opacity"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                            </svg>
+                                        <button onClick={(e) => { e.stopPropagation(); setCardToZoom(carta); }} className="absolute top-1 right-1 z-20 bg-blue-600/90 hover:bg-blue-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-lg md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                                         </button>
-
                                         <h3 className="text-[9px] sm:text-[10px] text-center text-slate-400 mt-1 truncate group-hover:text-orange-400 transition-colors">{carta.name}</h3>
                                     </div>
                                 ))}
                             </div>
                         )}
-                        
-                        {showScrollTop && (
-                            <button onClick={scrollToTop} className="fixed bottom-20 right-4 md:bottom-8 md:right-8 z-40 bg-slate-800/80 backdrop-blur border border-slate-600 p-2 rounded-full shadow-lg text-orange-500 hover:bg-slate-700 transition animate-bounce">
-                                ⬆
-                            </button>
-                        )}
+                        {showScrollTop && ( <button onClick={scrollToTop} className="fixed bottom-20 right-4 md:bottom-8 md:right-8 z-40 bg-slate-800/80 backdrop-blur border border-slate-600 p-2 rounded-full shadow-lg text-orange-500 hover:bg-slate-700 transition animate-bounce">⬆</button> )}
                     </div>
                 </div>
             </div>
 
-            {/* ================= SOLO MÓVIL: FOOTER PEGAJOSO ================= */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-3 pb-4 z-50 flex items-center justify-between shadow-[0_-5px_15px_rgba(0,0,0,0.5)]">
-                <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Cartas</span>
-                    <span className={`text-lg font-black ${totalCartas === 50 ? 'text-green-500' : 'text-white'}`}>
-                        {totalCartas}<span className="text-slate-600 text-sm">/50</span>
+            {/* ================= FOOTER MÓVIL (3 Botones Clave) ================= */}
+            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-2 pb-4 z-50 flex items-center justify-between shadow-[0_-5px_15px_rgba(0,0,0,0.5)]">
+                {/* Contador */}
+                <div className="flex flex-col px-2">
+                    <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Cartas</span>
+                    <span className={`text-lg font-black leading-none ${totalCartas === 50 ? 'text-green-500' : 'text-white'}`}>
+                        {totalCartas}<span className="text-slate-600 text-xs">/50</span>
                     </span>
                 </div>
-                <div className="flex gap-3">
-                    <button onClick={() => setModalMazoOpen(true)} disabled={mazo.length === 0} className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-wide transition shadow-lg disabled:opacity-50">
-                        Ver Mazo
+                
+                {/* Botonera Principal Móvil */}
+                <div className="flex gap-2">
+                    {/* Botón 1: LISTA RÁPIDA (Editar) */}
+                    <button 
+                        onClick={() => setShowMobileList(true)} 
+                        disabled={mazo.length === 0} 
+                        className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white px-3 py-2 rounded-lg font-bold text-xs uppercase tracking-wide shadow flex items-center gap-1 disabled:opacity-50"
+                    >
+                        📋 Lista
                     </button>
-                    <button onClick={() => setModalGuardarOpen(true)} disabled={mazo.length === 0} className={`px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-wide transition shadow-lg disabled:opacity-50 ${mazo.length === 0 ? 'bg-slate-800 text-slate-500' : 'bg-gradient-to-r from-orange-600 to-red-600 text-white'}`}>
-                        Guardar
+
+                    {/* Botón 2: VER MAZO COMPLETO (Galería) - Fuerza vista 'Todo' */}
+                    <button 
+                        onClick={() => { setModalMazoOpen(true); setVistaPorTipo(false); }} 
+                        disabled={mazo.length === 0} 
+                        className="bg-blue-600 hover:bg-blue-500 border border-blue-600 text-white px-3 py-2 rounded-lg font-bold text-xs uppercase tracking-wide shadow flex items-center gap-1 disabled:opacity-50"
+                    >
+                        👁️ Ver
+                    </button>
+
+                    {/* Botón 3: GUARDAR */}
+                    <button 
+                        onClick={() => setModalGuardarOpen(true)} 
+                        disabled={mazo.length === 0} 
+                        className={`px-3 py-2 rounded-lg font-bold text-xs uppercase tracking-wide shadow disabled:opacity-50 ${mazo.length === 0 ? 'bg-slate-800 text-slate-500' : 'bg-gradient-to-r from-orange-600 to-red-600 text-white'}`}
+                    >
+                        💾
                     </button>
                 </div>
             </div>
 
-             {/* ================= SOLO DESKTOP: SIDEBAR LATERAL ================= */}
+             {/* ================= PANEL DESLIZANTE MÓVIL (LISTA RÁPIDA + / -) ================= */}
+            {showMobileList && (
+                <div className="md:hidden fixed inset-0 z-[60]">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setShowMobileList(false)}></div>
+                    <div className="absolute bottom-0 left-0 right-0 bg-slate-900 rounded-t-2xl shadow-2xl h-[70vh] flex flex-col animate-slide-up border-t border-slate-700">
+                        <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900 rounded-t-2xl">
+                            <h2 className="text-lg font-bold text-white flex gap-2 items-center">📝 Editar Lista <span className="text-orange-500 text-sm">({totalCartas})</span></h2>
+                            <button onClick={() => setShowMobileList(false)} className="bg-slate-800 w-8 h-8 rounded-full text-slate-400 font-bold hover:bg-slate-700">✕</button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-2 space-y-3">
+                            {mazo.length === 0 ? ( <div className="text-center py-10 text-slate-500">Mazo vacío</div> ) : (
+                                getSortedTypes().map(tipo => (
+                                    <div key={tipo} className="bg-slate-800/30 rounded-lg p-2 border border-slate-800">
+                                        <h3 className="text-orange-400 text-[10px] font-bold uppercase mb-2 px-1">{tipo}</h3>
+                                        <div className="space-y-1">
+                                            {mazoAgrupado[tipo].map(c => (
+                                                <div key={c.slug} className="flex items-center justify-between bg-slate-900 p-2 rounded-lg border border-slate-800 shadow-sm">
+                                                    <div className="flex items-center gap-3 overflow-hidden flex-1">
+                                                        <img src={c.imgUrl} className="w-10 h-10 object-cover rounded border border-slate-700" alt="" />
+                                                        <span className="text-xs font-bold text-slate-200 truncate">{c.name}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 bg-slate-800 rounded-lg px-2 py-1 border border-slate-700">
+                                                        <button onClick={() => handleRemove(c.slug)} className="w-8 h-8 bg-red-600/20 text-red-500 rounded flex items-center justify-center font-bold text-lg active:scale-90 transition border border-red-500/20">-</button>
+                                                        <span className="font-bold text-white w-4 text-center">{c.cantidad}</span>
+                                                        <button onClick={() => handleAdd(c)} disabled={c.cantidad >= 3} className={`w-8 h-8 rounded flex items-center justify-center font-bold text-lg active:scale-90 transition border ${c.cantidad >= 3 ? 'bg-slate-700 text-slate-500 border-slate-600' : 'bg-green-600/20 text-green-500 border-green-500/20'}`}>+</button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ================= SIDEBAR PC ================= */}
             <div className="hidden md:flex w-80 bg-slate-800 border-l border-slate-700 flex-col h-screen shadow-2xl z-20 relative">
                 <div className="p-4 border-b border-slate-700 bg-slate-800/95 backdrop-blur shadow-md z-10 flex justify-between items-center">
                     <h2 className="text-lg font-bold text-white flex items-center gap-2"><span>🛡️ Mi Mazo</span></h2>
@@ -326,16 +333,11 @@ export default function DeckBuilder() {
                         {totalCartas} / 50
                     </span>
                 </div>
-
                 <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
-                    {mazo.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-60"><span className="text-4xl mb-2">🎴</span><p className="text-sm font-medium">Vacío</p></div>
-                    ) : (
+                    {mazo.length === 0 ? ( <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-60"><span className="text-4xl mb-2">🎴</span><p className="text-sm font-medium">Vacío</p></div> ) : (
                         getSortedTypes().map(tipo => (
                             <div key={tipo} className="animate-fade-in">
-                                <h3 className="text-orange-400 text-[10px] font-extrabold uppercase tracking-widest mb-1 border-b border-slate-700 pb-1 flex justify-between">
-                                    {tipo} <span>{mazoAgrupado[tipo].reduce((a, c) => a + c.cantidad, 0)}</span>
-                                </h3>
+                                <h3 className="text-orange-400 text-[10px] font-extrabold uppercase tracking-widest mb-1 border-b border-slate-700 pb-1 flex justify-between">{tipo} <span>{mazoAgrupado[tipo].reduce((a, c) => a + c.cantidad, 0)}</span></h3>
                                 <ul className="space-y-1">
                                     {mazoAgrupado[tipo].map(c => (
                                         <li key={c.slug} className="flex justify-between items-center bg-slate-700/40 p-1.5 rounded hover:bg-slate-700 transition-all group border border-transparent hover:border-slate-600 animate-slide-in">
@@ -354,23 +356,17 @@ export default function DeckBuilder() {
                         ))
                     )}
                 </div>
-
                 <div className="p-4 border-t border-slate-700 bg-slate-800 z-10 flex flex-col gap-2">
-                     <button onClick={() => setModalMazoOpen(true)} disabled={mazo.length === 0} className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 rounded-lg shadow transition flex justify-center items-center gap-2 disabled:opacity-50 hover:scale-[1.02]">
-                        👁️ Galería / Captura
-                    </button>
-                    <button onClick={() => setModalGuardarOpen(true)} disabled={mazo.length === 0} className={`w-full font-bold py-3 rounded-lg shadow-lg transition transform hover:-translate-y-0.5 flex justify-center items-center gap-2 text-sm disabled:opacity-50 disabled:transform-none ${mazo.length === 0 ? 'bg-slate-700 text-slate-500' : 'bg-gradient-to-r from-green-600 via-emerald-600 to-green-500 text-white'}`}>
-                        {editingDeckId ? "💾 Actualizar" : "💾 Guardar"}
-                    </button>
+                     <button onClick={() => setModalMazoOpen(true)} disabled={mazo.length === 0} className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 rounded-lg shadow transition flex justify-center items-center gap-2 disabled:opacity-50 hover:scale-[1.02]">👁️ Galería / Captura</button>
+                    <button onClick={() => setModalGuardarOpen(true)} disabled={mazo.length === 0} className={`w-full font-bold py-3 rounded-lg shadow-lg transition transform hover:-translate-y-0.5 flex justify-center items-center gap-2 text-sm disabled:opacity-50 disabled:transform-none ${mazo.length === 0 ? 'bg-slate-700 text-slate-500' : 'bg-gradient-to-r from-green-600 via-emerald-600 to-green-500 text-white'}`}>{editingDeckId ? "💾 Actualizar" : "💾 Guardar"}</button>
                 </div>
             </div>
 
             {/* ================= MODALES ================= */}
-            
             {modalMazoOpen && (
                 <div className="fixed inset-0 bg-slate-950 z-[100] flex flex-col animate-slide-up">
                     <div className="p-4 bg-slate-900 border-b border-slate-800 flex justify-between items-center shadow-lg">
-                        <h2 className="text-lg font-bold text-white flex gap-2 items-center"><span className="text-orange-500">❖</span> Lista de Mazo</h2>
+                        <h2 className="text-lg font-bold text-white flex gap-2 items-center"><span className="text-orange-500">❖</span> Galería Visual</h2>
                         <button onClick={() => setModalMazoOpen(false)} className="bg-slate-800 p-2 rounded-full text-slate-400 hover:text-white transition">✕</button>
                     </div>
                     <div className="hidden md:flex p-2 bg-slate-900/50 justify-center gap-2 border-b border-slate-800">
@@ -420,16 +416,11 @@ export default function DeckBuilder() {
                 <div className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4 animate-fade-in" onClick={() => setCardToZoom(null)}>
                     <div className="relative max-w-lg w-full flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
                         <img src={cardToZoom.imgUrl} alt={cardToZoom.name} className="w-full max-h-[70vh] object-contain rounded-lg shadow-[0_0_50px_rgba(255,100,0,0.3)]" />
-                        
                         <div className="mt-6 flex items-center gap-6">
                              <button onClick={() => { handleRemove(cardToZoom.slug); setCardToZoom(null); }} className="w-12 h-12 rounded-full bg-slate-800 border border-slate-600 text-red-500 text-2xl font-bold flex items-center justify-center hover:bg-red-900/50 transition">-</button>
-                             <div className="text-white font-bold flex flex-col items-center">
-                                 <span className="text-orange-500 text-sm tracking-widest uppercase">CANTIDAD</span>
-                                 <span className="text-3xl">{mazo.find(c => c.slug === cardToZoom.slug)?.cantidad || 0}</span>
-                             </div>
+                             <div className="text-white font-bold flex flex-col items-center"><span className="text-orange-500 text-sm tracking-widest uppercase">CANTIDAD</span><span className="text-3xl">{mazo.find(c => c.slug === cardToZoom.slug)?.cantidad || 0}</span></div>
                              <button onClick={() => { handleAdd(cardToZoom); }} disabled={(mazo.find(c => c.slug === cardToZoom.slug)?.cantidad || 0) >= 3} className="w-12 h-12 rounded-full bg-slate-800 border border-slate-600 text-green-500 text-2xl font-bold flex items-center justify-center hover:bg-green-900/50 transition disabled:opacity-30 disabled:cursor-not-allowed">+</button>
                         </div>
-                        
                         <button onClick={() => setCardToZoom(null)} className="absolute -top-12 right-0 md:-right-12 text-white text-3xl opacity-70 hover:opacity-100 transition">✕</button>
                     </div>
                 </div>
@@ -440,8 +431,7 @@ export default function DeckBuilder() {
 
 function CardItem({ carta, onAdd, onRemove, onZoom }) {
     const copias = Array.from({ length: carta.cantidad });
-    const offset = 20; 
-    const totalHeight = 150 + ((carta.cantidad - 1) * offset);
+    const offset = 20; const totalHeight = 150 + ((carta.cantidad - 1) * offset);
     return (
         <div className="relative w-full select-none animate-fade-in" style={{ height: `${totalHeight}px` }} onClick={() => onZoom(carta)}>
              {copias.map((_, index) => {
