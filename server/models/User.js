@@ -14,11 +14,12 @@ const UserSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        minlength: 6
+        // ⚠️ ELIMINAMOS 'minlength: 6' AQUÍ
+        // Esto permite que la contraseña sea vacía "" para usuarios de Google
     },
     googleId: { type: String },
     age: { type: Number },
-    cl: { type: String }, // <--- NUEVO CAMPO AGREGADO
+    cl: { type: String },
     createdAt: {
         type: Date,
         default: Date.now
