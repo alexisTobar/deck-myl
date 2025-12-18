@@ -1,20 +1,19 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toPng } from 'html-to-image';
-import BACKEND_URL from "../config";
-import Logo from "../components/Logo";
+import BACKEND_URL from "../config"; 
 
 // --- CONFIGURACIÓN ---
 const EDICIONES = {
-    "kvsm_titanes": "KVSM Titanes", "libertadores": "Libertadores", "onyria": "Onyria",
-    "toolkit_cenizas_de_fuego": "Toolkit Cenizas", "toolkit_hielo_inmortal": "Toolkit Hielo",
-    "lootbox_2024": "Lootbox 2024", "secretos_arcanos": "Secretos Arcanos", "bestiarium": "Bestiarium",
-    "escuadronmecha": "Escuadrón Mecha", "amenazakaiju": "Amenaza Kaiju", "zodiaco": "Zodiaco",
+    "kvsm_titanes": "KVSM Titanes", "libertadores": "Libertadores", "onyria": "Onyria", 
+    "toolkit_cenizas_de_fuego": "Toolkit Cenizas", "toolkit_hielo_inmortal": "Toolkit Hielo", 
+    "lootbox_2024": "Lootbox 2024", "secretos_arcanos": "Secretos Arcanos", "bestiarium": "Bestiarium", 
+    "escuadronmecha": "Escuadrón Mecha", "amenazakaiju": "Amenaza Kaiju", "zodiaco": "Zodiaco", 
     "espiritu_samurai": "Espíritu Samurai"
 };
 
 const TIPOS_ID_TO_NAME = { 1: "Aliado", 2: "Talismán", 3: "Arma", 4: "Tótem", 5: "Oro" };
-const TIPOS_FILTRO = [{ id: 1, label: "Aliado", value: 1 }, { id: 2, label: "Talismán", value: 2 }, { id: 3, label: "Arma", value: 3 }, { id: 4, label: "Tótem", value: 4 }, { id: 5, label: "Oro", value: 5 }];
+const TIPOS_FILTRO = [ { id: 1, label: "Aliado", value: 1 }, { id: 2, label: "Talismán", value: 2 }, { id: 3, label: "Arma", value: 3 }, { id: 4, label: "Tótem", value: 4 }, { id: 5, label: "Oro", value: 5 } ];
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 
 // --- ESTILOS DE ANIMACIÓN ---
@@ -29,7 +28,7 @@ const animationStyles = `
 export default function DeckBuilder() {
     const navigate = useNavigate();
     const location = useLocation();
-
+    
     const gridContainerRef = useRef(null);
     const galleryRef = useRef(null);
 
@@ -43,7 +42,7 @@ export default function DeckBuilder() {
     const [cartas, setCartas] = useState([]);
     const [loading, setLoading] = useState(false);
     const [mazo, setMazo] = useState([]);
-
+    
     // UI States
     const [showFilters, setShowFilters] = useState(false);
     const [showMobileList, setShowMobileList] = useState(false); // Panel lista rápida
@@ -82,7 +81,7 @@ export default function DeckBuilder() {
     useEffect(() => {
         const fetchCartas = async () => {
             if (!busqueda && !edicionSeleccionada && !tipoSeleccionado) { setCartas([]); return; }
-
+            
             const cacheKey = `search-${busqueda}-${edicionSeleccionada}-${tipoSeleccionado}`;
             const cachedData = localStorage.getItem(cacheKey);
             if (cachedData) { setCartas(JSON.parse(cachedData)); return; }
@@ -184,7 +183,7 @@ export default function DeckBuilder() {
                     <button onClick={() => setShowFilters(!showFilters)} className={`p-2 rounded-lg border md:hidden ${showFilters ? 'bg-orange-600 border-orange-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
                     </button>
-
+                    
                     <div className="flex-1 relative">
                         <input type="text" placeholder="Buscar carta..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="w-full p-2.5 pl-9 rounded-lg bg-slate-800 border border-slate-700 text-sm focus:border-orange-500 focus:outline-none transition-all focus:bg-slate-700" />
                         <span className="absolute left-3 top-2.5 text-slate-500">🔍</span>
@@ -248,7 +247,7 @@ export default function DeckBuilder() {
                                 ))}
                             </div>
                         )}
-                        {showScrollTop && (<button onClick={scrollToTop} className="fixed bottom-20 right-4 md:bottom-8 md:right-8 z-40 bg-slate-800/80 backdrop-blur border border-slate-600 p-2 rounded-full shadow-lg text-orange-500 hover:bg-slate-700 transition animate-bounce">⬆</button>)}
+                        {showScrollTop && ( <button onClick={scrollToTop} className="fixed bottom-20 right-4 md:bottom-8 md:right-8 z-40 bg-slate-800/80 backdrop-blur border border-slate-600 p-2 rounded-full shadow-lg text-orange-500 hover:bg-slate-700 transition animate-bounce">⬆</button> )}
                     </div>
                 </div>
             </div>
@@ -261,30 +260,30 @@ export default function DeckBuilder() {
                         {totalCartas}<span className="text-slate-600 text-xs">/50</span>
                     </span>
                 </div>
-
+                
                 <div className="flex gap-2">
                     {/* Botón 1: LISTA RÁPIDA (Panel deslizante) */}
-                    <button
-                        onClick={() => setShowMobileList(true)}
-                        disabled={mazo.length === 0}
+                    <button 
+                        onClick={() => setShowMobileList(true)} 
+                        disabled={mazo.length === 0} 
                         className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white px-3 py-2 rounded-lg font-bold text-xs uppercase tracking-wide shadow flex items-center gap-1 disabled:opacity-50"
                     >
                         📋 Lista
                     </button>
 
                     {/* Botón 2: VER MAZO COMPLETO (Galería Visual) */}
-                    <button
-                        onClick={() => { setModalMazoOpen(true); setVistaPorTipo(false); }}
-                        disabled={mazo.length === 0}
+                    <button 
+                        onClick={() => { setModalMazoOpen(true); setVistaPorTipo(false); }} 
+                        disabled={mazo.length === 0} 
                         className="bg-blue-600 hover:bg-blue-500 border border-blue-600 text-white px-3 py-2 rounded-lg font-bold text-xs uppercase tracking-wide shadow flex items-center gap-1 disabled:opacity-50"
                     >
                         👁️ Ver
                     </button>
 
                     {/* Botón 3: GUARDAR */}
-                    <button
-                        onClick={() => setModalGuardarOpen(true)}
-                        disabled={mazo.length === 0}
+                    <button 
+                        onClick={() => setModalGuardarOpen(true)} 
+                        disabled={mazo.length === 0} 
                         className={`px-3 py-2 rounded-lg font-bold text-xs uppercase tracking-wide shadow disabled:opacity-50 ${mazo.length === 0 ? 'bg-slate-800 text-slate-500' : 'bg-gradient-to-r from-orange-600 to-red-600 text-white'}`}
                     >
                         💾
@@ -292,7 +291,7 @@ export default function DeckBuilder() {
                 </div>
             </div>
 
-            {/* ================= PANEL LISTA RÁPIDA (DRAWER + / -) ================= */}
+             {/* ================= PANEL LISTA RÁPIDA (DRAWER + / -) ================= */}
             {showMobileList && (
                 <div className="md:hidden fixed inset-0 z-[60]">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setShowMobileList(false)}></div>
@@ -302,7 +301,7 @@ export default function DeckBuilder() {
                             <button onClick={() => setShowMobileList(false)} className="bg-slate-800 w-8 h-8 rounded-full text-slate-400 font-bold hover:bg-slate-700">✕</button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-2 space-y-3">
-                            {mazo.length === 0 ? (<div className="text-center py-10 text-slate-500">Mazo vacío</div>) : (
+                            {mazo.length === 0 ? ( <div className="text-center py-10 text-slate-500">Mazo vacío</div> ) : (
                                 getSortedTypes().map(tipo => (
                                     <div key={tipo} className="bg-slate-800/30 rounded-lg p-2 border border-slate-800">
                                         <h3 className="text-orange-400 text-[10px] font-bold uppercase mb-2 px-1">{tipo}</h3>
@@ -332,15 +331,13 @@ export default function DeckBuilder() {
             {/* ================= SIDEBAR PC ================= */}
             <div className="hidden md:flex w-80 bg-slate-800 border-l border-slate-700 flex-col h-screen shadow-2xl z-20 relative">
                 <div className="p-4 border-b border-slate-700 bg-slate-800/95 backdrop-blur shadow-md z-10 flex justify-between items-center">
-                    <h2 className="text-lg font-bold text-white flex items-center">
-                        <Logo className="w-8 h-8 md:w-10 md:h-10 text-xl md:text-2xl" />
-                    </h2>
+                    <h2 className="text-lg font-bold text-white flex items-center gap-2"><span>🛡️ Mi Mazo</span></h2>
                     <span className={`text-xs font-bold px-3 py-1 rounded-full border ${totalCartas === 50 ? 'bg-green-600 border-green-400 text-white' : 'bg-slate-700 border-slate-600 text-orange-400'}`}>
                         {totalCartas} / 50
                     </span>
                 </div>
                 <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
-                    {mazo.length === 0 ? (<div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-60"><span className="text-4xl mb-2">🎴</span><p className="text-sm font-medium">Vacío</p></div>) : (
+                    {mazo.length === 0 ? ( <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-60"><span className="text-4xl mb-2">🎴</span><p className="text-sm font-medium">Vacío</p></div> ) : (
                         getSortedTypes().map(tipo => (
                             <div key={tipo} className="animate-fade-in">
                                 <h3 className="text-orange-400 text-[10px] font-extrabold uppercase tracking-widest mb-1 border-b border-slate-700 pb-1 flex justify-between">{tipo} <span>{mazoAgrupado[tipo].reduce((a, c) => a + c.cantidad, 0)}</span></h3>
@@ -363,7 +360,7 @@ export default function DeckBuilder() {
                     )}
                 </div>
                 <div className="p-4 border-t border-slate-700 bg-slate-800 z-10 flex flex-col gap-2">
-                    <button onClick={() => setModalMazoOpen(true)} disabled={mazo.length === 0} className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 rounded-lg shadow transition flex justify-center items-center gap-2 disabled:opacity-50 hover:scale-[1.02]">👁️ Galería / Captura</button>
+                     <button onClick={() => setModalMazoOpen(true)} disabled={mazo.length === 0} className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 rounded-lg shadow transition flex justify-center items-center gap-2 disabled:opacity-50 hover:scale-[1.02]">👁️ Galería / Captura</button>
                     <button onClick={() => setModalGuardarOpen(true)} disabled={mazo.length === 0} className={`w-full font-bold py-3 rounded-lg shadow-lg transition transform hover:-translate-y-0.5 flex justify-center items-center gap-2 text-sm disabled:opacity-50 disabled:transform-none ${mazo.length === 0 ? 'bg-slate-700 text-slate-500' : 'bg-gradient-to-r from-green-600 via-emerald-600 to-green-500 text-white'}`}>{editingDeckId ? "💾 Actualizar" : "💾 Guardar"}</button>
                 </div>
             </div>
@@ -377,17 +374,17 @@ export default function DeckBuilder() {
                     </div>
                     {/* Controles Modal */}
                     <div className="hidden md:flex p-2 bg-slate-900/50 justify-center gap-2 border-b border-slate-800">
-                        <div className="flex bg-slate-800 p-1 rounded-lg">
+                         <div className="flex bg-slate-800 p-1 rounded-lg">
                             <button onClick={() => setVistaPorTipo(true)} className={`px-4 py-1.5 rounded-md text-xs font-bold transition ${vistaPorTipo ? 'bg-orange-600 text-white' : 'text-slate-400'}`}>POR TIPO</button>
                             <button onClick={() => setVistaPorTipo(false)} className={`px-4 py-1.5 rounded-md text-xs font-bold transition ${!vistaPorTipo ? 'bg-orange-600 text-white' : 'text-slate-400'}`}>TODO</button>
                         </div>
-                        {!vistaPorTipo && (<button onClick={handleTakeScreenshot} disabled={guardando} className="bg-blue-600 text-white px-3 rounded-lg font-bold text-xs flex items-center gap-1 hover:bg-blue-500 transition">{guardando ? '⏳' : '📸 FOTO'}</button>)}
+                         {!vistaPorTipo && ( <button onClick={handleTakeScreenshot} disabled={guardando} className="bg-blue-600 text-white px-3 rounded-lg font-bold text-xs flex items-center gap-1 hover:bg-blue-500 transition">{guardando ? '⏳' : '📸 FOTO'}</button> )}
                     </div>
-
+                    
                     {/* CUERPO DEL MODAL (Aquí está el arreglo de espacios) */}
                     <div className="flex-1 overflow-y-auto p-4 bg-slate-900/80">
                         <div ref={galleryRef} className="galeria-content max-w-3xl mx-auto pb-20">
-                            {mazo.length === 0 ? (<div className="text-center py-20 text-slate-500">Tu mazo está vacío</div>) : (
+                            {mazo.length === 0 ? ( <div className="text-center py-20 text-slate-500">Tu mazo está vacío</div> ) : (
                                 vistaPorTipo ? (
                                     getSortedTypes().map(tipo => (
                                         <div key={tipo} className="mb-12 animate-fade-in">
@@ -428,9 +425,9 @@ export default function DeckBuilder() {
                     <div className="relative max-w-lg w-full flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
                         <img src={cardToZoom.imgUrl} alt={cardToZoom.name} className="w-full max-h-[70vh] object-contain rounded-lg shadow-[0_0_50px_rgba(255,100,0,0.3)]" />
                         <div className="mt-6 flex items-center gap-6">
-                            <button onClick={() => { handleRemove(cardToZoom.slug); setCardToZoom(null); }} className="w-12 h-12 rounded-full bg-slate-800 border border-slate-600 text-red-500 text-2xl font-bold flex items-center justify-center hover:bg-red-900/50 transition">-</button>
-                            <div className="text-white font-bold flex flex-col items-center"><span className="text-orange-500 text-sm tracking-widest uppercase">CANTIDAD</span><span className="text-3xl">{mazo.find(c => c.slug === cardToZoom.slug)?.cantidad || 0}</span></div>
-                            <button onClick={() => { handleAdd(cardToZoom); }} disabled={(mazo.find(c => c.slug === cardToZoom.slug)?.cantidad || 0) >= 3} className="w-12 h-12 rounded-full bg-slate-800 border border-slate-600 text-green-500 text-2xl font-bold flex items-center justify-center hover:bg-green-900/50 transition disabled:opacity-30 disabled:cursor-not-allowed">+</button>
+                             <button onClick={() => { handleRemove(cardToZoom.slug); setCardToZoom(null); }} className="w-12 h-12 rounded-full bg-slate-800 border border-slate-600 text-red-500 text-2xl font-bold flex items-center justify-center hover:bg-red-900/50 transition">-</button>
+                             <div className="text-white font-bold flex flex-col items-center"><span className="text-orange-500 text-sm tracking-widest uppercase">CANTIDAD</span><span className="text-3xl">{mazo.find(c => c.slug === cardToZoom.slug)?.cantidad || 0}</span></div>
+                             <button onClick={() => { handleAdd(cardToZoom); }} disabled={(mazo.find(c => c.slug === cardToZoom.slug)?.cantidad || 0) >= 3} className="w-12 h-12 rounded-full bg-slate-800 border border-slate-600 text-green-500 text-2xl font-bold flex items-center justify-center hover:bg-green-900/50 transition disabled:opacity-30 disabled:cursor-not-allowed">+</button>
                         </div>
                         <button onClick={() => setCardToZoom(null)} className="absolute -top-12 right-0 md:-right-12 text-white text-3xl opacity-70 hover:opacity-100 transition">✕</button>
                     </div>
@@ -442,11 +439,11 @@ export default function DeckBuilder() {
 
 function CardItem({ carta, onAdd, onRemove, onZoom }) {
     const copias = Array.from({ length: carta.cantidad });
-    const offset = 20;
+    const offset = 20; 
     const totalHeight = 150 + ((carta.cantidad - 1) * offset);
     return (
         <div className="relative w-full select-none animate-fade-in" style={{ height: `${totalHeight}px` }} onClick={() => onZoom(carta)}>
-            {copias.map((_, index) => {
+             {copias.map((_, index) => {
                 const isTop = index === copias.length - 1;
                 return (
                     <div key={index} className="absolute top-0 left-0 w-full rounded border border-slate-800 overflow-hidden bg-slate-800 shadow-sm" style={{ transform: `translateY(${index * offset}px)`, zIndex: index }}>
@@ -460,7 +457,7 @@ function CardItem({ carta, onAdd, onRemove, onZoom }) {
                         )}
                     </div>
                 )
-            })}
+             })}
         </div>
     );
 }

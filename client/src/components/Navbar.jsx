@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
+import Logo from "./Logo";
 
 export default function Navbar() {
     const navigate = useNavigate();
@@ -14,8 +15,10 @@ export default function Navbar() {
     return (
         <nav className="bg-slate-900 border-b border-slate-700 px-6 py-4 flex justify-between items-center sticky top-0 z-50 shadow-md">
             {/* LOGO QUE LLEVA AL INICIO */}
-            <Link to="/" className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500 hover:opacity-80 transition">
-                Deck-MyL 🛡️
+            {/* LOGO PRINCIPAL */}
+            <Link to="/" className="hover:scale-105 transition-transform duration-200">
+                {/* Llamamos al componente Logo. Puedes ajustar el tamaño con h-10 o h-12 */}
+                <Logo className="h-10 w-auto text-2xl md:text-3xl" showText={true} />
             </Link>
 
             <div className="flex items-center gap-6">
