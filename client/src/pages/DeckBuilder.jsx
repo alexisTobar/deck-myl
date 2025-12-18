@@ -33,7 +33,7 @@ export default function DeckBuilder() {
     
     // UI States
     const [showFilters, setShowFilters] = useState(false);
-    const [modalMazoOpen, setModalMazoOpen] = useState(false); // Para el modal en móvil
+    const [modalMazoOpen, setModalMazoOpen] = useState(false); 
     const [vistaPorTipo, setVistaPorTipo] = useState(true);
     const [modalGuardarOpen, setModalGuardarOpen] = useState(false);
     const [nombreMazo, setNombreMazo] = useState("");
@@ -161,7 +161,6 @@ export default function DeckBuilder() {
     const totalCartas = mazo.reduce((acc, c) => acc + c.cantidad, 0);
 
     return (
-        // ESTRUCTURA PRINCIPAL: Columna en móvil, Fila en Desktop (md:flex-row)
         <div className="h-screen flex flex-col md:flex-row font-sans bg-slate-900 text-white overflow-hidden">
             
             {/* ================= IZQUIERDA: GRID DE CARTAS (Flexible) ================= */}
@@ -204,35 +203,48 @@ export default function DeckBuilder() {
 
                 {/* Area Principal Scrollable */}
                 <div className="flex-1 flex overflow-hidden relative">
-                    {/* IMPORTANTE: pb-20 en móvil para que el footer no tape las últimas cartas */}
                     <div ref={gridContainerRef} className="flex-1 overflow-y-auto p-2 pb-20 md:pb-2 custom-scrollbar relative">
                         {loading ? (
                             <div className="flex justify-center mt-20"><div className="animate-spin rounded-full h-10 w-10 border-4 border-orange-500 border-t-transparent"></div></div>
                         ) : (
-                            // Grid adaptable: 3 columnas en móvil, más en desktop
+                            // Grid adaptable
                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2">
                                 {cartas.map((carta) => (
-                                    <div key={carta._id} className="relative group cursor-pointer animate-fade-in transition-transform active:scale-95" onClick={() => handleAdd(carta)}>
-                                        <div className="rounded overflow-hidden border border-slate-800 relative bg-slate-800 shadow-sm hover:shadow-orange-500/20 hover:border-orange-500 transition-all">
+                                    <div key={carta._id} className="relative group cursor-pointer animate-fade-in transition-transform active:scale-95">
+                                        
+                                        {/* IMAGEN DE LA CARTA (Al tocar se Agrega) */}
+                                        <div className="rounded overflow-hidden border border-slate-800 relative bg-slate-800 shadow-sm hover:shadow-orange-500/20 hover:border-orange-500 transition-all" onClick={() => handleAdd(carta)}>
                                             <img src={carta.imgUrl} alt={carta.name} className="w-full h-auto object-cover" loading="lazy" />
+                                            
                                             {/* Contador si ya está en el mazo */}
                                             {mazo.filter(c => c.slug === carta.slug).length > 0 && (
-                                                <div className="absolute top-0 right-0 bg-orange-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-bl-lg shadow-md z-10">
+                                                <div className="absolute top-0 left-0 bg-orange-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-br-lg shadow-md z-10">
                                                     {mazo.find(c => c.slug === carta.slug).cantidad}
                                                 </div>
                                             )}
-                                             {/* Efecto Hover Desktop */}
-                                            <div className="hidden md:block absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all z-0 pointer-events-none"></div>
+
+                                            {/* EFECTO HOVER EN PC (Capa oscura + Icono Suma) */}
+                                            <div className="hidden md:flex absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 items-center justify-center transition-opacity z-10 pointer-events-none">
+                                                <span className="text-white font-bold text-3xl drop-shadow-md">+</span>
+                                            </div>
                                         </div>
+
+                                        {/* BOTÓN DE ZOOM / OJO */}
+                                        {/* En Móvil: Siempre visible en la esquina. En PC: Aparece con hover */}
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); setCardToZoom(carta); }}
+                                            className="absolute top-1 right-1 z-20 bg-blue-600/90 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-lg md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                                        >
+                                            👁️
+                                        </button>
+
                                         <h3 className="text-[9px] sm:text-[10px] text-center text-slate-400 mt-1 truncate">{carta.name}</h3>
                                     </div>
                                 ))}
                             </div>
                         )}
                         
-                        {/* Botón Scroll Top */}
                         {showScrollTop && (
-                            // Posición ajustada para móvil (bottom-20) y desktop (bottom-8)
                             <button onClick={scrollToTop} className="fixed bottom-20 right-4 md:bottom-8 md:right-8 z-40 bg-slate-800/80 backdrop-blur border border-slate-600 p-2 rounded-full shadow-lg text-orange-500 hover:bg-slate-700 transition">
                                 ⬆
                             </button>
@@ -241,7 +253,7 @@ export default function DeckBuilder() {
                 </div>
             </div>
 
-            {/* ================= SOLO MÓVIL: FOOTER PEGAJOSO (Fixed Bottom) ================= */}
+            {/* ================= SOLO MÓVIL: FOOTER PEGAJOSO ================= */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-3 pb-4 z-50 flex items-center justify-between shadow-[0_-5px_15px_rgba(0,0,0,0.5)]">
                 <div className="flex flex-col">
                     <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Cartas</span>
@@ -259,7 +271,7 @@ export default function DeckBuilder() {
                 </div>
             </div>
 
-             {/* ================= SOLO DESKTOP: SIDEBAR LATERAL (hidden md:flex) ================= */}
+             {/* ================= SOLO DESKTOP: SIDEBAR LATERAL ================= */}
             <div className="hidden md:flex w-80 bg-slate-800 border-l border-slate-700 flex-col h-screen shadow-2xl z-20 relative">
                 {/* Header Sidebar */}
                 <div className="p-4 border-b border-slate-700 bg-slate-800/95 backdrop-blur shadow-md z-10 flex justify-between items-center">
@@ -281,11 +293,10 @@ export default function DeckBuilder() {
                                 </h3>
                                 <ul className="space-y-1.5">
                                     {mazoAgrupado[tipo].map(c => (
-                                        // Item de lista con animación simple al entrar y hover
                                         <li key={c.slug} className="flex justify-between items-center bg-slate-700/40 p-1.5 rounded hover:bg-slate-700 transition-all group border border-transparent hover:border-slate-600 animate-fade-in">
-                                            <div className="flex items-center gap-2 overflow-hidden">
+                                            <div className="flex items-center gap-2 overflow-hidden cursor-pointer" onClick={() => setCardToZoom(c)}>
                                                 <div className="bg-slate-900 text-orange-500 font-bold w-5 h-5 flex items-center justify-center rounded text-[10px] border border-slate-600 shadow-inner">{c.cantidad}</div>
-                                                <span className="text-xs text-slate-200 truncate font-medium">{c.name}</span>
+                                                <span className="text-xs text-slate-200 truncate font-medium hover:text-orange-400 transition">{c.name}</span>
                                             </div>
                                             <div className="flex opacity-0 group-hover:opacity-100 transition gap-1">
                                                 <button onClick={() => handleAdd(c)} disabled={c.cantidad >= 3} className="bg-green-600/20 text-green-400 hover:bg-green-600 hover:text-white w-5 h-5 rounded flex items-center justify-center transition font-bold text-xs disabled:opacity-30">+</button>
@@ -312,14 +323,14 @@ export default function DeckBuilder() {
 
             {/* ================= MODALES (Comunes para ambos) ================= */}
             
-            {/* MODAL VER MAZO (Lista completa estilo Grimorio) */}
+            {/* MODAL VER MAZO (Lista completa) */}
             {modalMazoOpen && (
                 <div className="fixed inset-0 bg-slate-950 z-[100] flex flex-col animate-slide-up">
                     <div className="p-4 bg-slate-900 border-b border-slate-800 flex justify-between items-center shadow-lg">
                         <h2 className="text-lg font-bold text-white flex gap-2 items-center"><span className="text-orange-500">❖</span> Lista de Mazo</h2>
                         <button onClick={() => setModalMazoOpen(false)} className="bg-slate-800 p-2 rounded-full text-slate-400 hover:text-white">✕</button>
                     </div>
-                    {/* Controles Modal (Solo visibles en Desktop dentro del modal) */}
+                    {/* Controles Modal (PC) */}
                     <div className="hidden md:flex p-2 bg-slate-900/50 justify-center gap-2 border-b border-slate-800">
                          <div className="flex bg-slate-800 p-1 rounded-lg">
                             <button onClick={() => setVistaPorTipo(true)} className={`px-4 py-1.5 rounded-md text-xs font-bold ${vistaPorTipo ? 'bg-orange-600 text-white' : 'text-slate-400'}`}>POR TIPO</button>
@@ -335,7 +346,6 @@ export default function DeckBuilder() {
                                     getSortedTypes().map(tipo => (
                                         <div key={tipo} className="mb-8">
                                             <h3 className="text-orange-400 font-bold border-b border-slate-700 mb-4 pb-1 flex justify-between text-sm uppercase tracking-wider">{tipo} <span>{mazoAgrupado[tipo].reduce((a, c) => a + c.cantidad, 0)}</span></h3>
-                                            {/* Grid adaptable para el modal */}
                                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
                                                 {mazoAgrupado[tipo].map(carta => <CardItem key={carta.slug} carta={carta} onAdd={handleAdd} onRemove={handleRemove} onZoom={setCardToZoom} />)}
                                             </div>
@@ -366,18 +376,31 @@ export default function DeckBuilder() {
                 </div>
             )}
 
-            {/* MODAL ZOOM */}
+            {/* MODAL ZOOM GRANDE (Funciona igual en PC y Móvil) */}
             {cardToZoom && (
                 <div className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4 animate-fade-in" onClick={() => setCardToZoom(null)}>
-                    <img src={cardToZoom.imgUrl} alt={cardToZoom.name} className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-[0_0_30px_rgba(255,100,0,0.3)]" />
-                    <button className="absolute top-4 right-4 text-white text-3xl opacity-70 hover:opacity-100">✕</button>
+                    <div className="relative max-w-lg w-full flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+                        <img src={cardToZoom.imgUrl} alt={cardToZoom.name} className="w-full max-h-[70vh] object-contain rounded-lg shadow-[0_0_50px_rgba(255,100,0,0.3)]" />
+                        
+                        {/* Controles dentro del Zoom */}
+                        <div className="mt-6 flex items-center gap-6">
+                             <button onClick={() => { handleRemove(cardToZoom.slug); setCardToZoom(null); }} className="w-12 h-12 rounded-full bg-slate-800 border border-slate-600 text-red-500 text-2xl font-bold flex items-center justify-center hover:bg-red-900/50 transition">-</button>
+                             <div className="text-white font-bold flex flex-col items-center">
+                                 <span className="text-orange-500 text-sm tracking-widest uppercase">CANTIDAD</span>
+                                 <span className="text-3xl">{mazo.find(c => c.slug === cardToZoom.slug)?.cantidad || 0}</span>
+                             </div>
+                             <button onClick={() => { handleAdd(cardToZoom); }} disabled={(mazo.find(c => c.slug === cardToZoom.slug)?.cantidad || 0) >= 3} className="w-12 h-12 rounded-full bg-slate-800 border border-slate-600 text-green-500 text-2xl font-bold flex items-center justify-center hover:bg-green-900/50 transition disabled:opacity-30 disabled:cursor-not-allowed">+</button>
+                        </div>
+                        
+                        <button onClick={() => setCardToZoom(null)} className="absolute -top-12 right-0 md:-right-12 text-white text-3xl opacity-70 hover:opacity-100">✕</button>
+                    </div>
                 </div>
             )}
         </div>
     );
 }
 
-// Subcomponente de Carta para el Modal de Mazo (Pila visual)
+// Item del Modal de Galería
 function CardItem({ carta, onAdd, onRemove, onZoom }) {
     const copias = Array.from({ length: carta.cantidad });
     const offset = 20; 
