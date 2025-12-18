@@ -16,7 +16,7 @@ const TIPOS_ID_TO_NAME = { 1: "Aliado", 2: "Talismán", 3: "Arma", 4: "Tótem", 
 const TIPOS_FILTRO = [ { id: 1, label: "Aliado", value: 1 }, { id: 2, label: "Talismán", value: 2 }, { id: 3, label: "Arma", value: 3 }, { id: 4, label: "Tótem", value: 4 }, { id: 5, label: "Oro", value: 5 } ];
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 
-// --- ESTILOS DE ANIMACIÓN INYECTADOS ---
+// --- ESTILOS DE ANIMACIÓN ---
 const animationStyles = `
   @keyframes slideInRight {
     from { opacity: 0; transform: translateX(20px); }
@@ -37,8 +37,11 @@ export default function DeckBuilder() {
     const gridContainerRef = useRef(null);
     const galleryRef = useRef(null);
 
-    // Estados
-    // CAMBIO 1: Iniciamos con KVSM Titanes por defecto
+    // --- ESTADO DE COLUMNAS (GRID DINÁMICO) ---
+    // Detectamos si es móvil (pantalla < 768px) para empezar con 3, si es PC con 5.
+    const [gridColumns, setGridColumns] = useState(window.innerWidth < 768 ? 3 : 5);
+
+    // Estados Generales
     const [edicionSeleccionada, setEdicionSeleccionada] = useState("kvsm_titanes");
     const [tipoSeleccionado, setTipoSeleccionado] = useState("");
     const [busqueda, setBusqueda] = useState("");
@@ -79,10 +82,9 @@ export default function DeckBuilder() {
         }
     }, [location]);
 
-    // Buscador con CACHÉ LOCAL
+    // Buscador con CACHÉ
     useEffect(() => {
         const fetchCartas = async () => {
-            // Nota: Quitamos la condición de vacio para que cargue la edición por defecto al inicio
             if (!busqueda && !edicionSeleccionada && !tipoSeleccionado) { setCartas([]); return; }
             
             const cacheKey = `search-${busqueda}-${edicionSeleccionada}-${tipoSeleccionado}`;
@@ -189,10 +191,33 @@ export default function DeckBuilder() {
                     <button onClick={() => setShowFilters(!showFilters)} className={`p-2 rounded-lg border md:hidden ${showFilters ? 'bg-orange-600 border-orange-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
                     </button>
+                    
                     <div className="flex-1 relative">
                         <input type="text" placeholder="Buscar carta..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="w-full p-2.5 pl-9 rounded-lg bg-slate-800 border border-slate-700 text-sm focus:border-orange-500 focus:outline-none transition-all focus:bg-slate-700" />
                         <span className="absolute left-3 top-2.5 text-slate-500">🔍</span>
                     </div>
+
+                    {/* --- CONTROLES DE ZOOM (+ / -) --- */}
+                    <div className="flex items-center bg-slate-800 rounded-lg p-1 gap-1 border border-slate-700 shadow-sm ml-1">
+                        <button 
+                            onClick={() => setGridColumns(prev => Math.max(2, prev - 1))} 
+                            className="w-8 h-8 flex items-center justify-center text-slate-300 hover:bg-slate-700 hover:text-white rounded font-bold transition text-lg"
+                            title="Cartas más grandes"
+                        >
+                            -
+                        </button>
+                        <span className="text-xs font-bold text-slate-500 w-4 text-center select-none">
+                            {gridColumns}
+                        </span>
+                        <button 
+                            onClick={() => setGridColumns(prev => Math.min(8, prev + 1))} 
+                            className="w-8 h-8 flex items-center justify-center text-slate-300 hover:bg-slate-700 hover:text-white rounded font-bold transition text-lg"
+                            title="Cartas más pequeñas"
+                        >
+                            +
+                        </button>
+                    </div>
+
                     {/* Filtros PC */}
                     <div className="hidden md:flex gap-2 ml-2">
                         <select value={edicionSeleccionada} onChange={(e) => setEdicionSeleccionada(e.target.value)} className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-xs hover:border-orange-500 transition cursor-pointer">
@@ -226,7 +251,11 @@ export default function DeckBuilder() {
                         {loading ? (
                             <div className="flex justify-center mt-20"><div className="animate-spin rounded-full h-10 w-10 border-4 border-orange-500 border-t-transparent"></div></div>
                         ) : (
-                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2">
+                            // GRID DINÁMICO: Usamos 'style' para el control preciso de columnas
+                            <div 
+                                className="grid gap-2 transition-all duration-300 ease-in-out"
+                                style={{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }}
+                            >
                                 {cartas.map((carta) => (
                                     <div key={carta._id} className="relative group cursor-pointer animate-fade-in card-transition transform hover:-translate-y-1 hover:z-10" onClick={() => handleAdd(carta)}>
                                         
@@ -246,12 +275,11 @@ export default function DeckBuilder() {
                                             </div>
                                         </div>
 
-                                        {/* CAMBIO 2: BOTÓN DE ZOOM CON LUPA */}
+                                        {/* BOTÓN DE ZOOM CON LUPA */}
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); setCardToZoom(carta); }}
                                             className="absolute top-1 right-1 z-20 bg-blue-600/90 hover:bg-blue-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-lg md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                                         >
-                                            {/* Icono Lupa SVG */}
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                             </svg>
@@ -272,7 +300,7 @@ export default function DeckBuilder() {
                 </div>
             </div>
 
-            {/* ================= SOLO MÓVIL: FOOTER PEGAJOSO (Sin iconos grandes) ================= */}
+            {/* ================= SOLO MÓVIL: FOOTER PEGAJOSO ================= */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-3 pb-4 z-50 flex items-center justify-between shadow-[0_-5px_15px_rgba(0,0,0,0.5)]">
                 <div className="flex flex-col">
                     <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Cartas</span>
@@ -280,7 +308,6 @@ export default function DeckBuilder() {
                         {totalCartas}<span className="text-slate-600 text-sm">/50</span>
                     </span>
                 </div>
-                {/* CAMBIO 3: Botones limpios solo texto */}
                 <div className="flex gap-3">
                     <button onClick={() => setModalMazoOpen(true)} disabled={mazo.length === 0} className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-wide transition shadow-lg disabled:opacity-50">
                         Ver Mazo
@@ -311,7 +338,6 @@ export default function DeckBuilder() {
                                 </h3>
                                 <ul className="space-y-1">
                                     {mazoAgrupado[tipo].map(c => (
-                                        // CAMBIO 4: Animación animate-slide-in en la lista
                                         <li key={c.slug} className="flex justify-between items-center bg-slate-700/40 p-1.5 rounded hover:bg-slate-700 transition-all group border border-transparent hover:border-slate-600 animate-slide-in">
                                             <div className="flex items-center gap-2 overflow-hidden cursor-pointer w-full" onClick={() => setCardToZoom(c)}>
                                                 <div className="bg-slate-900 text-orange-500 font-bold w-5 h-5 flex items-center justify-center rounded text-[10px] border border-slate-600 shadow-inner">{c.cantidad}</div>
