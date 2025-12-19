@@ -89,7 +89,8 @@ export default function DeckBuilder() {
         const fetchCartas = async () => {
             if (!busqueda && !edicionSeleccionada && !tipoSeleccionado) { setCartas([]); return; }
             
-            const cacheKey = `search-${busqueda}-${edicionSeleccionada}-${tipoSeleccionado}`;
+            // ✅ PONLO ASÍ (Esto fuerza a borrar la memoria vieja):
+const cacheKey = `search-v2-${busqueda}-${edicionSeleccionada}-${tipoSeleccionado}`;
             const cachedData = localStorage.getItem(cacheKey);
             if (cachedData) { setCartas(JSON.parse(cachedData)); return; }
 
