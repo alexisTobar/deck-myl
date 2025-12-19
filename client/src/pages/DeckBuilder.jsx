@@ -235,12 +235,23 @@ export default function DeckBuilder() {
             <div className="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
                 {/* Header Buscador */}
                 <div className="bg-slate-900 border-b border-slate-800 p-2 z-30 flex items-center gap-2 shadow-md">
+                    
+                    {/* --- BOTÓN NUEVO: SALIR / ATRÁS --- */}
+                    <button 
+                        onClick={() => navigate("/my-decks")} 
+                        className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white hover:border-red-500/50 hover:bg-red-500/10 transition"
+                        title="Salir"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                    </button>
+                    {/* ---------------------------------- */}
+
                     <button onClick={() => setShowFilters(!showFilters)} className={`p-2 rounded-lg border md:hidden ${showFilters ? 'bg-orange-600 border-orange-500' : 'bg-slate-800 border-slate-700'}`}>
                         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
                     </button>
                     
                     <div className="flex-1 relative">
-                        <input type="text" placeholder="Buscar carta..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="w-full p-2.5 pl-9 rounded-lg bg-slate-800 border border-slate-700 text-sm focus:border-orange-500 focus:outline-none transition-all" />
+                        <input type="text" placeholder="Buscar..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="w-full p-2.5 pl-9 rounded-lg bg-slate-800 border border-slate-700 text-sm focus:border-orange-500 focus:outline-none transition-all" />
                         <span className="absolute left-3 top-2.5 text-slate-500">🔍</span>
                     </div>
 
@@ -361,7 +372,7 @@ export default function DeckBuilder() {
 
             {/* ================= MODALES Y LUPA ================= */}
             
-            {/* LUPA (ZOOM CARD) - AQUÍ ESTÁ EL ARREGLO DEL CLICK */}
+            {/* LUPA (ZOOM CARD) */}
             {cardToZoom && (
                 <div className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4 animate-fade-in" onClick={() => setCardToZoom(null)}>
                     <div className="relative max-w-lg w-full flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
@@ -369,7 +380,7 @@ export default function DeckBuilder() {
                         <div className="mt-6 flex items-center gap-6">
                             <button 
                                 onClick={(e) => { 
-                                    e.stopPropagation(); // <--- ESTO EVITA QUE SE CIERRE
+                                    e.stopPropagation(); 
                                     handleRemove(cardToZoom.slug); 
                                 }} 
                                 className="w-12 h-12 rounded-full bg-slate-800 border border-slate-600 text-red-500 text-2xl font-bold flex items-center justify-center hover:bg-red-900/50 transition"
@@ -384,7 +395,7 @@ export default function DeckBuilder() {
                             
                             <button 
                                 onClick={(e) => { 
-                                    e.stopPropagation(); // <--- ESTO EVITA QUE SE CIERRE
+                                    e.stopPropagation(); 
                                     handleAdd(cardToZoom); 
                                 }} 
                                 disabled={(mazo.find(c => c.slug === cardToZoom.slug)?.cantidad || 0) >= 3} 
