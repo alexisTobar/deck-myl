@@ -71,7 +71,14 @@ export default function DeckBuilder() {
             const deck = location.state.deckToEdit;
             setNombreMazo(deck.name);
             setEditingDeckId(deck._id);
-            const cartasCargadas = deck.cards.map(c => ({ ...c, cantidad: c.quantity, type: c.type }));
+            // Aseguramos que cargue las propiedades necesarias
+            const cartasCargadas = deck.cards.map(c => ({ 
+                ...c, 
+                cantidad: c.quantity, 
+                type: c.type,
+                // Aseguramos que la imagen persista
+                imgUrl: c.imgUrl || c.imageUrl || c.img 
+            }));
             setMazo(cartasCargadas);
             window.history.replaceState({}, document.title);
         }
@@ -173,6 +180,9 @@ export default function DeckBuilder() {
 
     const totalCartas = mazo.reduce((acc, c) => acc + c.cantidad, 0);
 
+    // --- FUNCIÓN HELPER PARA IMÁGENES SEGURAS ---
+    const getImg = (c) => c.imgUrl || c.imageUrl || c.img || "https://via.placeholder.com/250x350?text=No+Image";
+
     return (
         <div className="h-screen flex flex-col md:flex-row font-sans bg-slate-900 text-white overflow-hidden">
             <style>{animationStyles}</style>
@@ -231,7 +241,8 @@ export default function DeckBuilder() {
                                 {cartas.map((carta) => (
                                     <div key={carta._id} className="relative group cursor-pointer animate-fade-in card-transition transform hover:-translate-y-1 hover:z-10" onClick={() => handleAdd(carta)}>
                                         <div className="rounded overflow-hidden border border-slate-800 relative bg-slate-800 shadow-sm group-hover:shadow-orange-500/30 group-hover:border-orange-500 transition-all">
-                                            <img src={carta.imgUrl} alt={carta.name} className="w-full h-auto object-cover" loading="lazy" />
+                                            {/* ✅ USO DE IMAGEN SEGURA */}
+                                            <img src={getImg(carta)} alt={carta.name} className="w-full h-auto object-cover" loading="lazy" />
                                             {mazo.filter(c => c.slug === carta.slug).length > 0 && (
                                                 <div className="absolute top-0 left-0 bg-orange-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-br-lg shadow-md z-10 animate-bounce">{mazo.find(c => c.slug === carta.slug).cantidad}</div>
                                             )}
@@ -309,7 +320,8 @@ export default function DeckBuilder() {
                                             {mazoAgrupado[tipo].map(c => (
                                                 <div key={c.slug} className="flex items-center justify-between bg-slate-900 p-2 rounded-lg border border-slate-800 shadow-sm">
                                                     <div className="flex items-center gap-3 overflow-hidden flex-1">
-                                                        <img src={c.imgUrl} className="w-10 h-10 object-cover rounded border border-slate-700" alt="" />
+                                                        {/* ✅ USO DE IMAGEN SEGURA */}
+                                                        <img src={getImg(c)} className="w-10 h-10 object-cover rounded border border-slate-700" alt="" />
                                                         <span className="text-xs font-bold text-slate-200 truncate">{c.name}</span>
                                                     </div>
                                                     <div className="flex items-center gap-3 bg-slate-800 rounded-lg px-2 py-1 border border-slate-700">
@@ -381,7 +393,7 @@ export default function DeckBuilder() {
                          {!vistaPorTipo && ( <button onClick={handleTakeScreenshot} disabled={guardando} className="bg-blue-600 text-white px-3 rounded-lg font-bold text-xs flex items-center gap-1 hover:bg-blue-500 transition">{guardando ? '⏳' : '📸 FOTO'}</button> )}
                     </div>
                     
-                    {/* CUERPO DEL MODAL (Aquí está el arreglo de espacios) */}
+                    {/* CUERPO DEL MODAL */}
                     <div className="flex-1 overflow-y-auto p-4 bg-slate-900/80">
                         <div ref={galleryRef} className="galeria-content max-w-3xl mx-auto pb-20">
                             {mazo.length === 0 ? ( <div className="text-center py-20 text-slate-500">Tu mazo está vacío</div> ) : (
@@ -389,14 +401,12 @@ export default function DeckBuilder() {
                                     getSortedTypes().map(tipo => (
                                         <div key={tipo} className="mb-12 animate-fade-in">
                                             <h3 className="text-orange-400 font-bold border-b border-slate-700 mb-6 pb-2 flex justify-between text-sm uppercase tracking-wider">{tipo} <span>{mazoAgrupado[tipo].reduce((a, c) => a + c.cantidad, 0)}</span></h3>
-                                            {/* AQUÍ SE APLICA EL GAP GRANDE VERTICAL */}
                                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-x-4 gap-y-16">
                                                 {mazoAgrupado[tipo].map(carta => <CardItem key={carta.slug} carta={carta} onAdd={handleAdd} onRemove={handleRemove} onZoom={setCardToZoom} />)}
                                             </div>
                                         </div>
                                     ))
                                 ) : (
-                                    // AQUÍ TAMBIÉN PARA VISTA "TODO"
                                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-x-4 gap-y-16 mt-4 animate-fade-in pb-10">
                                         {mazo.map(carta => <CardItem key={carta.slug} carta={carta} onAdd={handleAdd} onRemove={handleRemove} onZoom={setCardToZoom} />)}
                                     </div>
@@ -423,7 +433,8 @@ export default function DeckBuilder() {
             {cardToZoom && (
                 <div className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4 animate-fade-in" onClick={() => setCardToZoom(null)}>
                     <div className="relative max-w-lg w-full flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
-                        <img src={cardToZoom.imgUrl} alt={cardToZoom.name} className="w-full max-h-[70vh] object-contain rounded-lg shadow-[0_0_50px_rgba(255,100,0,0.3)]" />
+                        {/* ✅ USO DE IMAGEN SEGURA */}
+                        <img src={getImg(cardToZoom)} alt={cardToZoom.name} className="w-full max-h-[70vh] object-contain rounded-lg shadow-[0_0_50px_rgba(255,100,0,0.3)]" />
                         <div className="mt-6 flex items-center gap-6">
                              <button onClick={() => { handleRemove(cardToZoom.slug); setCardToZoom(null); }} className="w-12 h-12 rounded-full bg-slate-800 border border-slate-600 text-red-500 text-2xl font-bold flex items-center justify-center hover:bg-red-900/50 transition">-</button>
                              <div className="text-white font-bold flex flex-col items-center"><span className="text-orange-500 text-sm tracking-widest uppercase">CANTIDAD</span><span className="text-3xl">{mazo.find(c => c.slug === cardToZoom.slug)?.cantidad || 0}</span></div>
@@ -441,13 +452,17 @@ function CardItem({ carta, onAdd, onRemove, onZoom }) {
     const copias = Array.from({ length: carta.cantidad });
     const offset = 20; 
     const totalHeight = 150 + ((carta.cantidad - 1) * offset);
+    // --- FUNCIÓN HELPER PARA IMÁGENES SEGURAS ---
+    const getImg = (c) => c.imgUrl || c.imageUrl || c.img || "https://via.placeholder.com/250x350?text=No+Image";
+
     return (
         <div className="relative w-full select-none animate-fade-in" style={{ height: `${totalHeight}px` }} onClick={() => onZoom(carta)}>
              {copias.map((_, index) => {
                 const isTop = index === copias.length - 1;
                 return (
                     <div key={index} className="absolute top-0 left-0 w-full rounded border border-slate-800 overflow-hidden bg-slate-800 shadow-sm" style={{ transform: `translateY(${index * offset}px)`, zIndex: index }}>
-                        <img src={carta.imgUrl} alt={carta.name} crossOrigin="anonymous" className="w-full h-auto block" />
+                        {/* ✅ USO DE IMAGEN SEGURA */}
+                        <img src={getImg(carta)} alt={carta.name} crossOrigin="anonymous" className="w-full h-auto block" />
                         {isTop && (
                             <div className="hide-on-capture absolute bottom-0 left-0 right-0 bg-black/70 p-1 flex justify-center gap-3 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                                 <button onClick={(e) => { e.stopPropagation(); onRemove(carta.slug); }} className="text-red-400 font-bold text-lg leading-none w-6 h-6 flex items-center justify-center bg-white/10 rounded hover:bg-white/20 transition">-</button>
