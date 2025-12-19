@@ -2,21 +2,24 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import BACKEND_URL from "../config";
 
-// --- COMPONENTES UI SIMPLES (Iconos SVG para no depender de librerías) ---
+// --- ICONOS SVG ---
 const IconSearch = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
 const IconTrash = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
 const IconEdit = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>;
 const IconDownload = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>;
 const IconSort = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" /></svg>;
+// Nuevos Iconos para Privacidad
+const IconWorld = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+const IconLock = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>;
 
 export default function MyDecks() {
     const [decks, setDecks] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [selectedDeck, setSelectedDeck] = useState(null); // Modal Detalles
-    const [deckToDelete, setDeckToDelete] = useState(null); // Modal Confirmación Borrar
+    const [selectedDeck, setSelectedDeck] = useState(null); 
+    const [deckToDelete, setDeckToDelete] = useState(null); 
     const [searchTerm, setSearchTerm] = useState("");
-    const [sortBy, setSortBy] = useState("newest"); // newest, name, size
-    const [toast, setToast] = useState({ show: false, msg: "", type: "" }); // Notificaciones
+    const [sortBy, setSortBy] = useState("newest");
+    const [toast, setToast] = useState({ show: false, msg: "", type: "" }); 
 
     const navigate = useNavigate();
 
@@ -43,6 +46,35 @@ export default function MyDecks() {
             showToast("Error de conexión con el servidor", "error");
         } finally {
             setLoading(false);
+        }
+    };
+
+    // --- NUEVA FUNCIÓN: CAMBIAR PRIVACIDAD ---
+    const togglePrivacy = async (deck) => {
+        const token = localStorage.getItem("token");
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/decks/privacy/${deck._id}`, {
+                method: "PUT",
+                headers: { "auth-token": token }
+            });
+            
+            if (res.ok) {
+                const updatedDeck = await res.json();
+                
+                // Actualizamos la lista principal
+                setDecks(prev => prev.map(d => d._id === deck._id ? { ...d, isPublic: updatedDeck.isPublic } : d));
+                
+                // Actualizamos el modal si está abierto
+                if (selectedDeck && selectedDeck._id === deck._id) {
+                    setSelectedDeck(prev => ({ ...prev, isPublic: updatedDeck.isPublic }));
+                }
+
+                showToast(updatedDeck.isPublic ? "¡Mazo ahora es PÚBLICO! 🌍" : "Mazo ahora es PRIVADO 🔒", "success");
+            } else {
+                showToast("No se pudo cambiar la privacidad", "error");
+            }
+        } catch (error) {
+            showToast("Error de conexión", "error");
         }
     };
 
@@ -103,25 +135,13 @@ export default function MyDecks() {
         return c.imgUrl || c.imageUrl || c.imagen || c.img || null;
     };
 
-    // --- FILTRADO Y ORDENAMIENTO (Memoizado para rendimiento) ---
+    // --- FILTRADO Y ORDENAMIENTO ---
     const processedDecks = useMemo(() => {
         let result = [...decks];
-
-        // Filtro
-        if (searchTerm) {
-            result = result.filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase()));
-        }
-
-        // Orden
-        if (sortBy === "name") {
-            result.sort((a, b) => a.name.localeCompare(b.name));
-        } else if (sortBy === "size") {
-            result.sort((a, b) => getDeckTotal(b.cards) - getDeckTotal(a.cards));
-        } else {
-            // Newest (asumiendo que vienen ordenados del backend o por orden de array invertido)
-            // Si tu backend manda fecha, usa: new Date(b.createdAt) - new Date(a.createdAt)
-            result.reverse(); 
-        }
+        if (searchTerm) result = result.filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase()));
+        if (sortBy === "name") result.sort((a, b) => a.name.localeCompare(b.name));
+        else if (sortBy === "size") result.sort((a, b) => getDeckTotal(b.cards) - getDeckTotal(a.cards));
+        else result.reverse(); 
         return result;
     }, [decks, searchTerm, sortBy]);
 
@@ -150,7 +170,6 @@ export default function MyDecks() {
                             </div>
                         </div>
                         
-                        {/* Buscador y Filtros */}
                         <div className="flex items-center gap-3 w-full md:w-auto bg-slate-900 p-1.5 rounded-xl border border-slate-700">
                             <div className="relative flex-1 md:w-64">
                                 <span className="absolute left-3 top-2.5 text-slate-500"><IconSearch /></span>
@@ -188,8 +207,6 @@ export default function MyDecks() {
 
             {/* --- CONTENIDO PRINCIPAL --- */}
             <div className="max-w-7xl mx-auto p-6">
-                
-                {/* Estado Vacío */}
                 {decks.length === 0 ? (
                     <div className="text-center py-32 bg-slate-800/30 rounded-3xl border border-slate-700 border-dashed mx-auto max-w-2xl mt-10">
                         <div className="text-6xl mb-4 opacity-50">📜</div>
@@ -209,6 +226,7 @@ export default function MyDecks() {
                         {processedDecks.map((deck) => {
                             const bgImage = getCardImage(deck.cards);
                             const realTotal = getDeckTotal(deck.cards);
+                            const isPublic = deck.isPublic; // Verificamos estado
 
                             return (
                                 <div 
@@ -226,6 +244,19 @@ export default function MyDecks() {
                                             </div>
                                         )}
                                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
+                                    </div>
+
+                                    {/* BADGE PÚBLICO/PRIVADO (En la esquina superior) */}
+                                    <div className="absolute top-3 right-3 z-20">
+                                        {isPublic ? (
+                                            <span className="bg-blue-600/80 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg border border-blue-400/30">
+                                                <IconWorld /> Público
+                                            </span>
+                                        ) : (
+                                            <span className="bg-slate-900/80 backdrop-blur text-slate-300 text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg border border-slate-600">
+                                                <IconLock /> Privado
+                                            </span>
+                                        )}
                                     </div>
 
                                     {/* Contenido Card */}
@@ -260,17 +291,30 @@ export default function MyDecks() {
                         <div className="p-6 border-b border-slate-700 flex justify-between items-start bg-slate-900/50">
                             <div>
                                 <h2 className="text-3xl font-bold text-white capitalize">{selectedDeck.name}</h2>
-                                <p className="text-slate-400 text-sm mt-1 flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                                    {getDeckTotal(selectedDeck.cards)} Cartas en total
-                                </p>
+                                <div className="flex items-center gap-3 mt-1">
+                                    <p className="text-slate-400 text-sm flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                        {getDeckTotal(selectedDeck.cards)} Cartas
+                                    </p>
+                                    
+                                    {/* STATUS INDICATOR EN MODAL */}
+                                    {selectedDeck.isPublic ? (
+                                        <span className="text-blue-400 text-xs font-bold border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 rounded flex items-center gap-1">
+                                            🌍 Público
+                                        </span>
+                                    ) : (
+                                        <span className="text-slate-400 text-xs font-bold border border-slate-500/30 bg-slate-500/10 px-2 py-0.5 rounded flex items-center gap-1">
+                                            🔒 Privado
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                             <button onClick={() => setSelectedDeck(null)} className="p-2 hover:bg-slate-700 rounded-full transition text-slate-400 hover:text-white">
                                 ✕
                             </button>
                         </div>
 
-                        {/* Body Modal (Grid de cartas o Lista) */}
+                        {/* Body Modal (Grid de cartas) */}
                         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-900/30">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 {selectedDeck.cards.map((card, idx) => (
@@ -293,14 +337,28 @@ export default function MyDecks() {
                         </div>
 
                         {/* Footer Actions */}
-                        <div className="p-4 border-t border-slate-700 bg-slate-800 flex flex-col sm:flex-row gap-3">
-                            <button onClick={() => handleExport(selectedDeck)} className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-lg font-semibold transition shadow-lg shadow-emerald-900/20">
+                        <div className="p-4 border-t border-slate-700 bg-slate-800 grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {/* BOTÓN 1: CAMBIAR PRIVACIDAD */}
+                            <button 
+                                onClick={() => togglePrivacy(selectedDeck)}
+                                className={`flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold transition shadow-lg border ${
+                                    selectedDeck.isPublic 
+                                    ? "bg-slate-700 text-slate-300 border-slate-600 hover:bg-slate-600" 
+                                    : "bg-blue-600 text-white border-blue-500 hover:bg-blue-500 shadow-blue-900/20"
+                                }`}
+                            >
+                                {selectedDeck.isPublic ? <><IconLock /> Hacer Privado</> : <><IconWorld /> Publicar</>}
+                            </button>
+
+                            <button onClick={() => handleExport(selectedDeck)} className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-lg font-semibold transition shadow-lg shadow-emerald-900/20">
                                 <IconDownload /> Exportar
                             </button>
-                            <button onClick={() => navigate("/builder", { state: { deckToEdit: selectedDeck } })} className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-lg font-semibold transition shadow-lg shadow-blue-900/20">
+                            
+                            <button onClick={() => navigate("/builder", { state: { deckToEdit: selectedDeck } })} className="flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-500 text-white py-2.5 rounded-lg font-semibold transition shadow-lg shadow-orange-900/20">
                                 <IconEdit /> Editar
                             </button>
-                            <button onClick={() => setDeckToDelete(selectedDeck)} className="flex-1 flex items-center justify-center gap-2 bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-600/30 py-2.5 rounded-lg font-semibold transition">
+                            
+                            <button onClick={() => setDeckToDelete(selectedDeck)} className="flex items-center justify-center gap-2 bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-600/30 py-2.5 rounded-lg font-semibold transition">
                                 <IconTrash /> Eliminar
                             </button>
                         </div>
