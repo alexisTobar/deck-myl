@@ -5,6 +5,7 @@ import DeckBuilder from "./pages/DeckBuilder"; // El antiguo Home (Renombrado)
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import MyDecks from "./pages/MyDecks";
+import Community from "./pages/Community";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/my-decks" element={<MyDecks />} />
+        <Route path="/community" element={<Community />} />
 
         {/* Redirección por defecto */}
         <Route path="*" element={<Navigate to="/" />} />

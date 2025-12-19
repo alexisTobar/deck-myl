@@ -13,24 +13,23 @@ export default function Navbar() {
     };
 
     return (
-        <nav className="bg-slate-900 border-b border-slate-700 px-6 py-4 flex justify-between items-center sticky top-0 z-50 shadow-md">
-            {/* LOGO QUE LLEVA AL INICIO */}
+        <nav className="bg-slate-900 border-b border-slate-700 px-6 py-4 flex justify-between items-center sticky top-0 z-50 shadow-md backdrop-blur-md bg-opacity-90">
             {/* LOGO PRINCIPAL */}
-            {/* LOGO PRINCIPAL (Ahora más grande) */}
             <Link to="/" className="hover:scale-105 transition-transform duration-200 flex items-center">
-                {/* h-14 (56px) para móvil 
-                   md:h-16 (64px) para PC
-                   w-auto mantiene la proporción
-                */}
                 <Logo className="h-16 md:h-18 w-auto drop-shadow-lg" showText={false} />
             </Link>
 
             <div className="flex items-center gap-6">
 
-                {/* ENLACES PÚBLICOS DEL MENÚ */}
-                <div className="hidden md:flex gap-4 text-sm font-medium text-slate-300">
+                {/* --- SECCIÓN DE ENLACES (NUEVA RUTA AÑADIDA) --- */}
+                <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
                     <Link to="/" className="hover:text-orange-400 transition">Inicio</Link>
-                    {/* El constructor ahora es una sección aparte */}
+                    
+                    {/* Botón de Comunidad Destacado */}
+                    <Link to="/community" className="flex items-center gap-2 text-white bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 px-3 py-1.5 rounded-full font-bold shadow-lg shadow-blue-500/20 transition-all hover:scale-105">
+                        🌍 Comunidad
+                    </Link>
+
                     <Link to="/builder" className="hover:text-orange-400 transition">Constructor</Link>
                 </div>
 
@@ -39,15 +38,15 @@ export default function Navbar() {
                     {token ? (
                         <>
                             <div className="hidden sm:flex flex-col items-end mr-2">
-                                <span className="text-xs text-slate-400">Gladiador</span>
-                                <span className="text-sm font-bold text-white">{user?.username || "Usuario"}</span>
+                                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Gladiador</span>
+                                <span className="text-sm font-bold text-white leading-none">{user?.username || "Usuario"}</span>
                             </div>
 
                             <Link
                                 to="/my-decks"
-                                className="text-slate-300 hover:text-white font-bold text-sm transition hover:bg-slate-800 px-3 py-2 rounded"
+                                className="text-slate-300 hover:text-white font-bold text-sm transition hover:bg-slate-800 px-3 py-2 rounded flex items-center gap-2"
                             >
-                                📂 Mis Mazos
+                                📂 <span className="hidden lg:inline">Mis Mazos</span>
                             </Link>
 
                             <button
