@@ -20,11 +20,23 @@ const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 const animationStyles = `
   @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  
+  /* --- NUEVA ANIMACIÓN "POP" ELÁSTICO --- */
+  @keyframes popElastic {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.4); } /* Crece mucho */
+    70% { transform: scale(0.9); } /* Se encoge un poco */
+    100% { transform: scale(1); opacity: 1; } /* Vuelve a normal */
+  }
+
   .animate-slide-in { animation: slideInRight 0.3s ease-out forwards; }
   .animate-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-  .card-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
   .animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .card-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+  
+  /* Clase para el contador */
+  .animate-pop { animation: popElastic 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 `;
 
 export default function DeckBuilder() {
@@ -297,13 +309,32 @@ export default function DeckBuilder() {
                             <div className="grid gap-2 transition-all duration-300 ease-in-out" style={{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }}>
                                 {cartas.map((carta) => (
                                     <div key={carta._id} className="relative group cursor-pointer animate-fade-in card-transition transform hover:-translate-y-1 hover:z-10" onClick={() => handleAdd(carta)}>
-                                        <div className="rounded overflow-hidden border border-slate-800 relative bg-slate-800 shadow-sm group-hover:shadow-orange-500/30 group-hover:border-orange-500 transition-all">
+                                        <div className="rounded-xl overflow-hidden border-2 border-slate-800 relative bg-slate-800 shadow-lg group-hover:shadow-orange-500/50 group-hover:border-orange-500 transition-all duration-300 transform group-hover:scale-[1.02]">
+
+                                            {/* Imagen de la carta */}
                                             <img src={getImg(carta)} alt={carta.name} className="w-full h-auto object-cover" loading="lazy" />
+
+                                            {/* --- CONTADOR NUEVO Y MEJORADO --- */}
                                             {mazo.filter(c => c.slug === carta.slug).length > 0 && (
-                                                <div className="absolute top-0 left-0 bg-orange-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-br-lg shadow-md z-10 animate-bounce">{mazo.find(c => c.slug === carta.slug).cantidad}</div>
+                                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                                                    {/* Fondo oscuro suave para que resalte el número */}
+                                                    <div className="absolute inset-0 bg-black/20"></div>
+
+                                                    {/* La Burbuja Elástica */}
+                                                    <div
+                                                        key={mazo.find(c => c.slug === carta.slug).cantidad} // <--- ESTO REINICIA LA ANIMACIÓN
+                                                        className="animate-pop w-14 h-14 rounded-full bg-gradient-to-br from-orange-500 to-red-600 border-4 border-slate-900 shadow-2xl flex items-center justify-center transform"
+                                                    >
+                                                        <span className="text-white font-black text-2xl drop-shadow-md">
+                                                            {mazo.find(c => c.slug === carta.slug).cantidad}
+                                                        </span>
+                                                    </div>
+                                                </div>
                                             )}
-                                            <div className="hidden md:flex absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 items-center justify-center transition-opacity z-10 pointer-events-none">
-                                                <span className="text-white font-bold text-3xl drop-shadow-md">+</span>
+
+                                            {/* Efecto Hover PC (+ gigante) */}
+                                            <div className="hidden md:flex absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 items-center justify-center transition-opacity z-0 pointer-events-none">
+                                                <span className="text-white font-bold text-4xl drop-shadow-md translate-y-8 group-hover:translate-y-0 transition-transform duration-300">+</span>
                                             </div>
                                         </div>
                                         <button onClick={(e) => { e.stopPropagation(); setCardToZoom(carta); }} className="absolute top-1 right-1 z-20 bg-blue-600/90 hover:bg-blue-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-lg md:opacity-0 md:group-hover:opacity-100 transition-opacity">
