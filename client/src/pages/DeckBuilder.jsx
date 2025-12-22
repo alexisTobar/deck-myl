@@ -6,6 +6,7 @@ import BACKEND_URL from "../config";
 // --- CONSTANTES ---
 const EDICIONES_IMPERIO = { "kvsm_titanes": "KVSM Titanes", "libertadores": "Libertadores", "onyria": "Onyria", "toolkit_cenizas_de_fuego": "Toolkit Cenizas", "toolkit_hielo_inmortal": "Toolkit Hielo", "lootbox_2024": "Lootbox 2024", "secretos_arcanos": "Secretos Arcanos", "bestiarium": "Bestiarium", "escuadronmecha": "Escuadrón Mecha", "amenazakaiju": "Amenaza Kaiju", "zodiaco": "Zodiaco", "espiritu_samurai": "Espíritu Samurai" };
 const EDICIONES_PB = { "colmillos_avalon": "Colmillos de Avalon", "extensiones_pb_2023": "Extensiones PB 2023", "espada_sagrada_aniversario": "Espada Sagrada (Aniv)", "Relatos": "Relatos", "hijos-de-daana-aniversario": "Hijos de Daana (Aniv)", "25 aniversario": "25 Aniversario", "Festividades": "Festividades", "aniversario-de-ra": "Aniversario de Ra", "colmillos_inframundo": "Colmillos del Inframundo", "encrucijada": "Encrucijada", "festividades": "Festividades (Extra)", "helenica_aniversario": "Helénica (Aniv)", "inferno": "Inferno", "jo lanzamiento ra": "Jo Lanzamiento Ra", "kit-de-batalla-de-ra": "Kit de Batalla de Ra", "kit-raciales-2023": "Kit Raciales 2023", "kit-raciales-2024": "Kit Raciales 2024", "leyendas_pb_2.0": "Leyendas PB 2.0", "lootbox-2023": "Lootbox 2023", "lootbox-pb-2024": "Lootbox PB 2024", "promo_daana": "Promo Daana", "promo_helenica": "Promo Helénica", "relatos-de-espada-sagrada-aniversario": "Relatos Espada Sagrada", "relatos-de-helenica": "Relatos Helénica", "toolkit-pb-2025": "Toolkit PB 2025", "toolkit_pb_fuerza_y_destino": "Toolkit Fuerza y Destino", "toolkit_pb_magia_y_divinidad": "Toolkit Magia y Divinidad", "toolkit_pb_nobleza_y_poder": "Toolkit Nobleza y Poder" };
+
 const RAZAS_PB = ["Caballero", "Héroe", "Defensor", "Eterno", "Dragón", "Olímpico", "Desafiante", "Faraón", "Faerie", "Titán", "Sombra", "Sacerdote"];
 const TIPOS_ID_TO_NAME = { 1: "Aliado", 2: "Talismán", 3: "Arma", 4: "Tótem", 5: "Oro" };
 const TIPOS_FILTRO = [ { id: 1, label: "Aliado", value: 1 }, { id: 2, label: "Talismán", value: 2 }, { id: 3, label: "Arma", value: 3 }, { id: 4, label: "Tótem", value: 4 }, { id: 5, label: "Oro", value: 5 } ];
@@ -16,27 +17,45 @@ const getImg = (c) => {
     return c.imgUrl || c.imageUrl || c.img || c.imagen || c.image || (c.image && c.image.secure_url) || "https://via.placeholder.com/250x350?text=No+Image"; 
 };
 
+const animationStyles = `
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes popElastic { 0% { transform: scale(0.5); opacity: 0; } 50% { transform: scale(1.2); } 100% { transform: scale(1); opacity: 1; } }
+  .animate-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
+  .animate-pop { animation: popElastic 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+  .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+`;
+
 export default function DeckBuilder() {
     const navigate = useNavigate();
     const location = useLocation();
     const gridContainerRef = useRef(null);
+    const galleryRef = useRef(null);
 
-    // Determinar formato por URL
+    // Formato detectado por la URL
     const isPB = location.pathname.includes("primer-bloque");
     const formato = isPB ? "primer_bloque" : "imperio";
 
-    // Estados
-    const [gridColumns, setGridColumns] = useState(window.innerWidth < 768 ? 3 : 5);
+    // Estados de Filtros
     const [edicionSeleccionada, setEdicionSeleccionada] = useState("");
     const [tipoSeleccionado, setTipoSeleccionado] = useState("");
     const [razaSeleccionada, setRazaSeleccionada] = useState("");
     const [busqueda, setBusqueda] = useState("");
     const [cartas, setCartas] = useState([]);
     const [loading, setLoading] = useState(false);
+    
+    // Estados del Mazo
     const [mazo, setMazo] = useState([]);
     const [nombreMazo, setNombreMazo] = useState("");
     const [editingDeckId, setEditingDeckId] = useState(null);
     const [isPublic, setIsPublic] = useState(false);
+
+    // Visibilidad UI
+    const [gridColumns] = useState(window.innerWidth < 768 ? 3 : 5);
+    const [modalMazoOpen, setModalMazoOpen] = useState(false);
     const [modalGuardarOpen, setModalGuardarOpen] = useState(false);
     const [guardando, setGuardando] = useState(false);
     const [cardToZoom, setCardToZoom] = useState(null);
@@ -44,19 +63,18 @@ export default function DeckBuilder() {
 
     const edicionesActivas = useMemo(() => isPB ? EDICIONES_PB : EDICIONES_IMPERIO, [isPB]);
 
-    // Efectos Visuales
-    const themeColor = isPB ? "yellow-500" : "orange-500";
+    // Visuales Dinámicos
     const glowClass = isPB 
-        ? "shadow-[0_0_15px_rgba(234,179,8,0.5)] border-yellow-500" 
-        : "shadow-[0_0_15px_rgba(249,115,22,0.5)] border-orange-500";
+        ? "shadow-[0_0_15px_rgba(234,179,8,0.5)] border-yellow-500/60" 
+        : "shadow-[0_0_15px_rgba(249,115,22,0.5)] border-orange-500/60";
 
-    // Selección inicial de edición
+    // Selección automática de edición
     useEffect(() => {
         const claves = Object.keys(edicionesActivas);
         if (claves.length > 0) setEdicionSeleccionada(claves[0]);
     }, [edicionesActivas]);
 
-    // Carga de deck para editar
+    // Cargar mazo si venimos de "Editar"
     useEffect(() => {
         if (location.state?.deckToEdit) {
             const d = location.state.deckToEdit;
@@ -67,7 +85,7 @@ export default function DeckBuilder() {
         }
     }, [location]);
 
-    // Buscador
+    // Buscador API
     useEffect(() => {
         const fetchCartas = async () => {
             if (!edicionSeleccionada && !busqueda && !razaSeleccionada) return;
@@ -90,7 +108,7 @@ export default function DeckBuilder() {
 
     const handleAdd = (carta) => {
         const existe = mazo.find(c => c.slug === carta.slug);
-        if (mazo.reduce((acc, c) => acc + c.cantidad, 0) >= 50 && !existe) return alert("Mazo lleno");
+        if (mazo.reduce((acc, c) => acc + c.cantidad, 0) >= 50 && !existe) return alert("Mazo lleno (Máx 50)");
         if (existe) {
             if (existe.cantidad < 3) setMazo(mazo.map(c => c.slug === carta.slug ? { ...c, cantidad: c.cantidad + 1 } : c));
         } else {
@@ -104,7 +122,7 @@ export default function DeckBuilder() {
     };
 
     const handleSaveDeck = async () => {
-        if (!nombreMazo.trim()) return alert("Nombre requerido");
+        if (!nombreMazo.trim()) return alert("El mazo necesita un nombre");
         const token = localStorage.getItem("token");
         if (!token) return navigate("/login");
         setGuardando(true);
@@ -117,8 +135,18 @@ export default function DeckBuilder() {
                 body: JSON.stringify({ name: nombreMazo, cards: mazo.map(c => ({...c, quantity: c.cantidad})), format: formato, isPublic: isPublic }) 
             });
             if (res.ok) navigate("/my-decks");
+            else alert("Error al guardar");
         } catch (e) { console.error(e); } finally { setGuardando(false); }
     };
+
+    const handleTakeScreenshot = useCallback(async () => {
+        if (!galleryRef.current) return;
+        setGuardando(true);
+        try {
+            const dataUrl = await toPng(galleryRef.current, { quality: 1.0, backgroundColor: '#0f172a' });
+            const link = document.createElement('a'); link.download = `${nombreMazo || "Mazo"}.png`; link.href = dataUrl; link.click();
+        } catch (err) { alert('Error captura'); } finally { setGuardando(false); }
+    }, [nombreMazo]);
 
     const mazoAgrupado = useMemo(() => {
         const g = {};
@@ -130,69 +158,68 @@ export default function DeckBuilder() {
 
     return (
         <div className={`h-screen flex flex-col md:flex-row font-sans ${isPB ? 'bg-[#0c0e14]' : 'bg-[#110d0a]'} text-white overflow-hidden`}>
+            <style>{animationStyles}</style>
             
             {/* IZQUIERDA: BUSCADOR */}
             <div className="flex-1 flex flex-col h-full relative overflow-hidden">
                 
-                {/* Cabecera */}
-                <div className={`bg-slate-900/50 backdrop-blur-md border-b ${isPB ? 'border-yellow-900/30' : 'border-orange-900/30'} p-3 flex justify-between items-center px-6`}>
+                {/* Cabecera con Botón Volver */}
+                <div className={`bg-slate-900/50 backdrop-blur-md border-b ${isPB ? 'border-yellow-900/30' : 'border-orange-900/30'} p-3 flex justify-between items-center px-4`}>
                     <div className="flex items-center gap-3">
-                        <div className={`w-3 h-3 rounded-full animate-pulse ${isPB ? 'bg-yellow-500 shadow-[0_0_8px_#eab308]' : 'bg-orange-500 shadow-[0_0_8px_#f97316]'}`}></div>
-                        <h2 className={`text-sm font-black uppercase tracking-widest ${isPB ? 'text-yellow-500' : 'text-orange-500'}`}>
-                            {isPB ? '📜 Primer Bloque' : '🏛️ Imperio'}
-                        </h2>
+                        <button onClick={() => navigate(isPB ? "/primer-bloque" : "/imperio")} className={`p-1.5 rounded-lg border ${isPB ? 'border-yellow-500/30 text-yellow-500' : 'border-orange-500/30 text-orange-500'} hover:bg-slate-800 transition-colors`}>
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                        </button>
+                        <div className="flex items-center gap-2">
+                            <div className={`w-3 h-3 rounded-full animate-pulse ${isPB ? 'bg-yellow-500 shadow-[0_0_8px_#eab308]' : 'bg-orange-500 shadow-[0_0_8px_#f97316]'}`}></div>
+                            <h2 className={`text-xs font-black uppercase tracking-widest ${isPB ? 'text-yellow-500' : 'text-orange-500'}`}>
+                                Constructor {isPB ? 'PB' : 'Imperio'}
+                            </h2>
+                        </div>
                     </div>
+                    <button onClick={() => {if(window.confirm("¿Salir del constructor?")) navigate(isPB ? "/primer-bloque" : "/imperio")}} className="text-[10px] font-bold text-slate-500 hover:text-red-500 transition uppercase">Cancelar</button>
                 </div>
 
-                {/* Barra de Filtros */}
-                <div className="p-4 flex flex-wrap gap-2 items-center bg-slate-900/20">
-                    <div className="flex-1 min-w-[200px] relative">
-                        <input 
-                            type="text" placeholder="Buscar carta..." value={busqueda} 
-                            onChange={(e) => setBusqueda(e.target.value)} 
-                            className={`w-full p-2.5 pl-10 rounded-xl bg-slate-900 border border-slate-700 outline-none focus:ring-1 ${isPB ? 'focus:ring-yellow-500' : 'focus:ring-orange-500'}`}
-                        />
+                {/* Filtros */}
+                <div className="p-4 flex flex-wrap gap-2 items-center bg-slate-900/20 border-b border-slate-800">
+                    <div className="flex-1 min-w-[150px] relative">
+                        <input type="text" placeholder="Buscar..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className={`w-full p-2.5 pl-10 rounded-xl bg-slate-900 border border-slate-700 outline-none focus:ring-1 ${isPB ? 'focus:ring-yellow-500' : 'focus:ring-orange-500'}`} />
                         <span className="absolute left-3 top-3 opacity-40">🔍</span>
                     </div>
-
-                    <select value={edicionSeleccionada} onChange={(e) => setEdicionSeleccionada(e.target.value)} className="bg-slate-800 border border-slate-700 p-2 rounded-xl text-xs font-bold outline-none">
+                    <select value={edicionSeleccionada} onChange={(e) => setEdicionSeleccionada(e.target.value)} className="bg-slate-800 border border-slate-700 p-2 rounded-xl text-[10px] font-bold outline-none max-w-[120px]">
                         {Object.entries(edicionesActivas).map(([s, l]) => <option key={s} value={s}>{l}</option>)}
                     </select>
-
-                    <select value={tipoSeleccionado} onChange={(e) => setTipoSeleccionado(e.target.value)} className="bg-slate-800 border border-slate-700 p-2 rounded-xl text-xs font-bold outline-none">
-                        <option value="">Todos los Tipos</option>
+                    <select value={tipoSeleccionado} onChange={(e) => setTipoSeleccionado(e.target.value)} className="bg-slate-800 border border-slate-700 p-2 rounded-xl text-[10px] font-bold outline-none">
+                        <option value="">Tipos</option>
                         {TIPOS_FILTRO.map(t => <option key={t.id} value={t.value}>{t.label}</option>)}
                     </select>
-
                     {isPB && (
-                        <select value={razaSeleccionada} onChange={(e) => setRazaSeleccionada(e.target.value)} className="bg-slate-800 border border-yellow-500/50 text-yellow-400 p-2 rounded-xl text-xs font-bold outline-none">
+                        <select value={razaSeleccionada} onChange={(e) => setRazaSeleccionada(e.target.value)} className="bg-slate-800 border border-yellow-500/40 text-yellow-500 p-2 rounded-xl text-[10px] font-black outline-none">
                             <option value="">Todas las Razas</option>
                             {RAZAS_PB.map(r => <option key={r} value={r}>{r}</option>)}
                         </select>
                     )}
                 </div>
 
-                {/* Grid de Cartas */}
+                {/* Grid Resultados */}
                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar" ref={gridContainerRef}>
                     {loading ? (
-                        <div className="flex flex-col items-center mt-20 gap-4">
-                            <div className={`w-12 h-12 border-4 ${isPB ? 'border-yellow-500' : 'border-orange-500'} border-t-transparent rounded-full animate-spin`}></div>
-                        </div>
+                        <div className="flex justify-center mt-20"><div className={`w-10 h-10 border-4 ${isPB ? 'border-yellow-500' : 'border-orange-500'} border-t-transparent rounded-full animate-spin`}></div></div>
                     ) : (
-                        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
                             {cartas.map(c => {
                                 const cant = mazo.find(x => x.slug === c.slug)?.cantidad || 0;
                                 return (
-                                    <div key={c.slug} className="relative group cursor-pointer" onClick={() => handleAdd(c)}>
+                                    <div key={c.slug} className="relative cursor-pointer group" onClick={() => handleAdd(c)}>
                                         <div className={`rounded-xl overflow-hidden border-2 transition-all duration-300 ${cant > 0 ? glowClass : 'border-slate-800'}`}>
                                             <img src={getImg(c)} className={`w-full h-auto ${cant > 0 ? 'brightness-110' : 'brightness-75 group-hover:brightness-100'}`} alt={c.name} />
+                                            {cant > 0 && (
+                                                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                                    <div className={`w-10 h-10 rounded-full ${isPB ? 'bg-yellow-500 text-black' : 'bg-orange-600 text-white'} flex items-center justify-center font-black shadow-2xl animate-pop text-lg border-2 border-white`}>{cant}</div>
+                                                </div>
+                                            )}
                                         </div>
-                                        {cant > 0 && (
-                                            <div className={`absolute -top-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shadow-xl ${isPB ? 'bg-yellow-500 text-black' : 'bg-orange-600 text-white'}`}>
-                                                {cant}
-                                            </div>
-                                        )}
-                                        <h3 className="text-[9px] text-center mt-1 font-bold text-slate-400 truncate uppercase">{c.name}</h3>
+                                        <button onClick={(e) => { e.stopPropagation(); setCardToZoom(c); }} className="absolute top-1 right-1 bg-blue-600/90 text-white w-7 h-7 rounded-full flex items-center justify-center text-[10px] shadow-lg">👁️</button>
+                                        <h3 className="text-[8px] text-center mt-1 font-bold text-slate-500 truncate uppercase">{c.name}</h3>
                                     </div>
                                 );
                             })}
@@ -202,10 +229,10 @@ export default function DeckBuilder() {
             </div>
 
             {/* SIDEBAR PC */}
-            <div className={`hidden md:flex w-80 border-l border-slate-800 flex-col h-screen`}>
-                <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/30">
-                    <h2 className={`font-black italic ${isPB ? 'text-yellow-500' : 'text-orange-500'}`}>MI MAZO</h2>
-                    <span className="text-xs font-bold px-2 py-1 rounded bg-slate-800">{totalCartas}/50</span>
+            <div className="hidden md:flex w-80 border-l border-slate-800 flex-col h-screen bg-slate-900/20">
+                <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950/40">
+                    <h2 className={`font-black italic ${isPB ? 'text-yellow-500' : 'text-orange-500'}`}>MI DECK</h2>
+                    <span className={`text-xs font-bold px-2 py-1 rounded ${totalCartas === 50 ? 'bg-green-600 text-white' : 'bg-slate-800 text-slate-400'}`}>{totalCartas}/50</span>
                 </div>
                 <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
                     {ORDER_TYPES.map(t => mazoAgrupado[t] && (
@@ -213,8 +240,8 @@ export default function DeckBuilder() {
                             <h3 className={`${isPB ? 'text-yellow-600' : 'text-orange-600'} text-[10px] font-black border-b border-slate-800 mb-1`}>{t}</h3>
                             <ul className="space-y-1">
                                 {mazoAgrupado[t].map(c => (
-                                    <li key={c.slug} className="flex justify-between items-center text-xs p-1.5 bg-slate-800/40 rounded hover:bg-slate-800 transition-all">
-                                        <span className="truncate flex-1 cursor-pointer" onClick={() => setCardToZoom(c)}>{c.cantidad} x {c.name}</span>
+                                    <li key={c.slug} className="flex justify-between items-center text-xs p-1.5 bg-slate-800/40 rounded hover:bg-slate-800 transition-all border border-transparent hover:border-slate-700">
+                                        <span className="truncate flex-1 cursor-pointer font-medium" onClick={() => setCardToZoom(c)}>{c.cantidad} x {c.name}</span>
                                         <div className="flex gap-1">
                                             <button onClick={() => handleAdd(c)} className="text-green-500 font-bold px-1">+</button>
                                             <button onClick={() => handleRemove(c.slug)} className="text-red-500 font-bold px-1">-</button>
@@ -225,35 +252,89 @@ export default function DeckBuilder() {
                         </div>
                     ))}
                 </div>
-                <div className="p-4 border-t border-slate-800 flex flex-col gap-2 bg-slate-900/30">
-                    <button onClick={() => setModalGuardarOpen(true)} className={`w-full py-3 rounded-xl font-black text-xs shadow-lg transition-all ${isPB ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-orange-600 hover:bg-orange-500'}`}>
-                        💾 GUARDAR DECK
-                    </button>
+                <div className="p-4 border-t border-slate-800 flex flex-col gap-2">
+                    <button onClick={() => setModalMazoOpen(true)} className="w-full bg-blue-600 py-2.5 rounded-xl font-black text-[10px] shadow-lg hover:bg-blue-500 transition">👁️ GALERÍA VISUAL</button>
+                    <button onClick={() => setModalGuardarOpen(true)} className={`w-full py-3 rounded-xl font-black text-xs shadow-lg transition-all ${isPB ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-orange-600 hover:bg-orange-500'}`}>💾 GUARDAR GRIMORIO</button>
                 </div>
             </div>
 
             {/* FOOTER MÓVIL */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-2 pb-4 z-50 flex items-center justify-between">
+            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-2 pb-4 z-50 flex items-center justify-between shadow-2xl">
                 <div className="flex flex-col px-3">
-                    <span className="text-[10px] text-slate-500 font-bold">TOTAL</span>
-                    <span className={`text-lg font-black ${totalCartas === 50 ? 'text-green-500' : 'text-white'}`}>{totalCartas}/50</span>
+                    <span className="text-[10px] text-slate-500 font-bold">CARTAS</span>
+                    <span className={`text-lg font-black leading-none ${totalCartas === 50 ? 'text-green-500' : 'text-white'}`}>{totalCartas}/50</span>
                 </div>
                 <div className="flex gap-2 pr-2">
-                    <button onClick={() => setShowMobileList(true)} className="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-xs border border-slate-700">LISTA</button>
-                    <button onClick={() => setModalGuardarOpen(true)} className={`${isPB ? 'bg-yellow-600' : 'bg-orange-600'} text-white px-4 py-2 rounded-lg font-bold text-xs shadow-lg`}>GUARDAR</button>
+                    <button onClick={() => setShowMobileList(true)} className="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase border border-slate-700">Lista</button>
+                    <button onClick={() => setModalMazoOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase shadow-md">Ver</button>
+                    <button onClick={() => setModalGuardarOpen(true)} className={`${isPB ? 'bg-yellow-600' : 'bg-orange-600'} text-white px-4 py-2 rounded-lg font-bold text-xs shadow-lg`}>💾</button>
                 </div>
             </div>
 
+            {/* MODAL LISTA MÓVIL */}
+            {showMobileList && (
+                <div className="md:hidden fixed inset-0 z-[60] bg-black/80 flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
+                    <div className="bg-slate-900 rounded-t-3xl h-[75vh] p-5 overflow-auto border-t border-slate-700 shadow-2xl animate-slide-up" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6 border-b border-slate-800 pb-2">
+                            <h3 className="text-xl font-black uppercase italic tracking-tighter">Mi Mazo ({totalCartas}/50)</h3>
+                            <button onClick={() => setShowMobileList(false)} className="text-white bg-slate-800 w-10 h-10 rounded-full">✕</button>
+                        </div>
+                        {ORDER_TYPES.map(t => mazoAgrupado[t] && (
+                            <div key={t} className="mb-4 bg-slate-800/20 p-3 rounded-2xl border border-slate-800">
+                                <h4 className={`${isPB ? 'text-yellow-600' : 'text-orange-600'} text-[10px] font-black uppercase mb-3`}>{t}</h4>
+                                {mazoAgrupado[t].map(c => (
+                                    <div key={c.slug} className="flex justify-between items-center py-2.5 border-b border-slate-800 last:border-0">
+                                        <div className="flex items-center gap-3">
+                                            <img src={getImg(c)} className="w-10 h-12 rounded shadow-md object-cover" />
+                                            <span className="text-sm font-medium truncate max-w-[120px]">{c.name}</span>
+                                        </div>
+                                        <div className="flex items-center gap-4 bg-slate-950 p-1.5 px-4 rounded-full border border-slate-800">
+                                            <button onClick={() => handleRemove(c.slug)} className="text-red-500 font-black text-xl">-</button>
+                                            <span className="font-black text-sm w-4 text-center">{c.cantidad}</span>
+                                            <button onClick={() => handleAdd(c)} disabled={c.cantidad >= 3} className="text-green-500 font-black text-xl disabled:opacity-20">+</button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* MODAL ZOOM */}
             {cardToZoom && (
-                <div className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4" onClick={() => setCardToZoom(null)}>
+                <div className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4 animate-fade-in" onClick={() => setCardToZoom(null)}>
                     <div className="relative max-w-sm w-full flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
-                        <img src={getImg(cardToZoom)} className={`w-full h-auto rounded-2xl shadow-2xl border-4 ${isPB ? 'border-yellow-500/50' : 'border-orange-500/50'}`} alt="zoom" />
-                        <div className="mt-8 flex items-center gap-8 bg-slate-900 p-4 rounded-3xl border border-slate-700">
-                            <button onClick={() => handleRemove(cardToZoom.slug)} className="w-12 h-12 rounded-full bg-red-600 text-white text-3xl font-bold">-</button>
-                            <span className="text-3xl font-black">{mazo.find(x => x.slug === cardToZoom.slug)?.cantidad || 0}</span>
-                            <button onClick={() => handleAdd(cardToZoom)} className="w-12 h-12 rounded-full bg-green-600 text-white text-3xl font-bold">+</button>
+                        <img src={getImg(cardToZoom)} className={`w-full h-auto rounded-3xl shadow-2xl border-4 ${isPB ? 'border-yellow-500/40' : 'border-orange-500/40'}`} alt="zoom" />
+                        <div className="mt-8 flex items-center gap-8 bg-slate-900 p-4 rounded-full border border-slate-700 shadow-2xl">
+                            <button onClick={() => handleRemove(cardToZoom.slug)} className="w-14 h-14 rounded-full bg-red-600 text-white text-3xl font-black shadow-lg">-</button>
+                            <span className="text-4xl font-black">{mazo.find(x => x.slug === cardToZoom.slug)?.cantidad || 0}</span>
+                            <button onClick={() => handleAdd(cardToZoom)} disabled={(mazo.find(x => x.slug === cardToZoom.slug)?.cantidad || 0) >= 3} className="w-14 h-14 rounded-full bg-green-600 text-white text-3xl font-black shadow-lg disabled:opacity-20">+</button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL GALERÍA */}
+            {modalMazoOpen && (
+                <div className="fixed inset-0 bg-slate-950 z-[100] flex flex-col animate-slide-up">
+                    <div className="p-4 bg-slate-900 border-b border-slate-800 flex justify-between items-center px-6">
+                        <h2 className="text-lg font-black uppercase italic tracking-tighter">Galería Visual</h2>
+                        <button onClick={() => setModalMazoOpen(false)} className="bg-slate-800 p-2 rounded-full text-white">✕</button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                        <div ref={galleryRef} className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 mt-4 pb-20">
+                            {mazo.map(c => (
+                                <div key={c.slug} className="cursor-pointer relative" onClick={() => setCardToZoom(c)}>
+                                    <img src={getImg(c)} className="w-full h-auto rounded-xl border border-slate-800 shadow-lg" />
+                                    <div className={`absolute bottom-0 right-0 ${isPB ? 'bg-yellow-500 text-black' : 'bg-orange-600 text-white'} px-3 py-0.5 font-black text-xs rounded-tl-xl border-l border-t border-slate-900 shadow-2xl`}>x{c.cantidad}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="p-6 bg-slate-900 border-t border-slate-800 flex justify-center gap-4">
+                        <button onClick={handleTakeScreenshot} disabled={guardando} className="bg-blue-600 text-white px-8 py-3 rounded-2xl font-black uppercase shadow-lg shadow-blue-900/20 active:scale-95 transition">📸 Descargar Deck</button>
+                        <button onClick={() => setModalMazoOpen(false)} className="bg-slate-800 text-white px-8 py-3 rounded-2xl font-black uppercase shadow-lg">Cerrar</button>
                     </div>
                 </div>
             )}
@@ -261,48 +342,21 @@ export default function DeckBuilder() {
             {/* MODAL GUARDAR */}
             {modalGuardarOpen && (
                 <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setModalGuardarOpen(false)}>
-                    <div className="bg-slate-800 p-6 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl text-white" onClick={e => e.stopPropagation()}>
-                        <h3 className={`text-xl font-black mb-6 uppercase ${isPB ? 'text-yellow-500' : 'text-orange-500'}`}>Guardar Estrategia</h3>
-                        <input 
-                            autoFocus value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} 
-                            className="w-full p-3 rounded-2xl bg-slate-900 border border-slate-600 outline-none focus:border-blue-500 mb-4" 
-                            placeholder="Nombre del mazo..." 
-                        />
-                        <label className="flex items-center gap-3 bg-slate-900 p-4 rounded-2xl cursor-pointer">
-                            <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-5 h-5 accent-blue-600" />
-                            <span className="text-sm font-bold text-slate-300">Hacer público en comunidad 🌍</span>
-                        </label>
+                    <div className="bg-slate-800 p-7 rounded-[32px] w-full max-w-sm border border-slate-700 shadow-2xl text-white" onClick={e => e.stopPropagation()}>
+                        <h3 className={`text-2xl font-black mb-6 uppercase tracking-tighter ${isPB ? 'text-yellow-500' : 'text-orange-500'}`}>Guardar Deck</h3>
+                        <div className="space-y-4">
+                            <input autoFocus value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} className="w-full p-4 rounded-2xl bg-slate-900 border border-slate-700 outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner" placeholder="Nombre de la estrategia..." />
+                            <label className="flex items-center gap-4 bg-slate-900 p-4 rounded-2xl border border-slate-700 cursor-pointer shadow-inner" onClick={() => setIsPublic(!isPublic)}>
+                                <div className={`w-7 h-7 rounded-xl border-2 flex items-center justify-center transition-all ${isPublic ? 'bg-blue-600 border-blue-500 shadow-[0_0_10px_rgba(37,99,235,0.5)]' : 'border-slate-600 bg-slate-800'}`}>
+                                    {isPublic && <span className="text-white text-sm font-black">✓</span>}
+                                </div>
+                                <span className="text-sm font-bold text-slate-300 select-none">Hacer público en comunidad 🌍</span>
+                            </label>
+                        </div>
                         <div className="flex justify-end gap-3 mt-8">
                             <button onClick={() => setModalGuardarOpen(false)} className="text-slate-400 font-bold px-4 hover:text-white transition">Cancelar</button>
-                            <button onClick={handleSaveDeck} disabled={guardando || !nombreMazo.trim()} className={`${isPB ? 'bg-yellow-600' : 'bg-orange-600'} text-white px-8 py-2 rounded-xl font-black shadow-lg`}>CONFIRMAR</button>
+                            <button onClick={handleSaveDeck} disabled={guardando || !nombreMazo.trim()} className={`bg-${isPB ? 'yellow-600' : 'orange-600'} text-white px-8 py-3 rounded-2xl font-black uppercase shadow-lg shadow-black/40 hover:opacity-90 active:scale-95 transition-all`}>Confirmar</button>
                         </div>
-                    </div>
-                </div>
-            )}
-
-            {/* MODAL MÓVIL LISTA */}
-            {showMobileList && (
-                <div className="md:hidden fixed inset-0 z-[60] bg-black/80 flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
-                    <div className="bg-slate-900 rounded-t-3xl h-[70vh] p-4 overflow-auto border-t border-slate-700" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-black uppercase italic">MI LISTA ({totalCartas}/50)</h3>
-                            <button onClick={() => setShowMobileList(false)} className="text-2xl">✕</button>
-                        </div>
-                        {ORDER_TYPES.map(t => mazoAgrupado[t] && (
-                            <div key={t} className="mb-4">
-                                <h4 className={`${isPB ? 'text-yellow-600' : 'text-orange-600'} text-[10px] font-black uppercase mb-2`}>{t}</h4>
-                                {mazoAgrupado[t].map(c => (
-                                    <div key={c.slug} className="flex justify-between items-center py-2 border-b border-slate-800">
-                                        <span className="text-sm">{c.name}</span>
-                                        <div className="flex items-center gap-4">
-                                            <button onClick={() => handleRemove(c.slug)} className="text-red-500 font-bold px-2 text-xl">-</button>
-                                            <span className="font-bold">{c.cantidad}</span>
-                                            <button onClick={() => handleAdd(c)} className="text-green-500 font-bold px-2 text-xl">+</button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ))}
                     </div>
                 </div>
             )}
