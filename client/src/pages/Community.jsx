@@ -11,7 +11,7 @@ export default function Community() {
     // Filtro activo inicial
     const [activeFormat, setActiveFormat] = useState("imperio"); 
 
-    // Usuario actual
+    // Usuario actual para el sistema de likes
     const token = localStorage.getItem("token");
     const user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null;
     const userId = user?.id || user?._id;
@@ -65,10 +65,10 @@ export default function Community() {
         return c.imgUrl || c.imageUrl || c.img || "https://via.placeholder.com/250x350?text=No+Image";
     };
 
-    // ✅ ESTO ARREGLA EL PROBLEMA: Filtra asegurándose de que siempre haya un valor
+    // Filtrado por pestaña activa
     const filteredDecks = useMemo(() => {
         return decks.filter(d => {
-            const f = d.format || "imperio"; // Si no tiene formato, por defecto imperio
+            const f = d.format || "imperio";
             return f === activeFormat;
         });
     }, [decks, activeFormat]);
@@ -89,7 +89,7 @@ export default function Community() {
     );
 
     return (
-        <div className="min-h-screen bg-[#0B1120] text-white pb-24 font-sans selection:bg-orange-500 selection:text-white">
+        <div className="min-h-screen bg-[#0B1120] text-white pb-24 font-sans">
             
             {/* --- HEADER CON TABS --- */}
             <div className="bg-slate-900/80 backdrop-blur-xl border-b border-slate-800 sticky top-0 z-30 px-6 py-4 shadow-2xl">
@@ -103,7 +103,6 @@ export default function Community() {
                         </h1>
                     </div>
 
-                    {/* SELECTOR DE PESTAÑAS */}
                     <div className="flex bg-slate-800 p-1 rounded-xl border border-slate-700">
                         <button 
                             onClick={() => setActiveFormat("imperio")}
@@ -167,7 +166,9 @@ export default function Community() {
                         <div className="p-6 border-b border-slate-700 bg-slate-900 flex justify-between">
                             <div>
                                 <h2 className="text-2xl font-black text-white uppercase">{selectedDeck.name}</h2>
-                                <p className="text-orange-400 font-bold text-sm">Por: {selectedDeck.user?.username || "Juegos Vikingos"}</p>
+                                <p className="text-orange-400 font-bold text-sm">
+                                    Por: @{selectedDeck.user?.username || selectedDeck.author?.username || selectedDeck.creator?.username || "Usuario de Mitos"}
+                                </p>
                             </div>
                             <button onClick={() => setSelectedDeck(null)} className="text-white text-2xl">✕</button>
                         </div>
@@ -186,11 +187,16 @@ export default function Community() {
     );
 }
 
+// --- COMPONENTES DE TARJETA ---
+
 function PodiumCard({ deck, rank, userId, onLike, onClick, getImg }) {
     const isGold = rank === 1;
     const isSilver = rank === 2;
     const bgImage = getImg(deck.cards?.[0]);
     const badgeColor = isGold ? "bg-yellow-400 text-black" : isSilver ? "bg-slate-300 text-black" : "bg-orange-700 text-white";
+    
+    // Lógica en cascada para el autor
+    const authorName = deck.user?.username || deck.author?.username || deck.creator?.username || "Usuario de Mitos";
 
     return (
         <div onClick={onClick} className={`${isGold ? 'md:w-80 h-[28rem] border-yellow-500 z-10' : 'md:w-64 h-80 border-slate-700'} w-full relative rounded-3xl overflow-hidden border-4 shadow-2xl cursor-pointer group transition-all duration-500 hover:-translate-y-2 flex-shrink-0`}>
@@ -201,7 +207,7 @@ function PodiumCard({ deck, rank, userId, onLike, onClick, getImg }) {
             <div className={`absolute top-4 left-4 ${badgeColor} font-black text-xl w-12 h-12 flex items-center justify-center rounded-full shadow-lg z-20`}>{rank}</div>
             <div className="absolute bottom-0 p-6 z-20 w-full">
                 <h3 className="font-bold text-xl drop-shadow-md text-white truncate">{deck.name}</h3>
-                <p className="text-slate-300 text-xs mb-4 font-medium italic">@{deck.user?.username || "Juegos Vikingos"}</p>
+                <p className="text-slate-300 text-xs mb-4 font-medium italic">@{authorName}</p>
                 <button onClick={(e) => onLike(deck._id, e)} className="bg-white/10 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 backdrop-blur-md border border-white/10">
                     {deck.likes?.includes(userId) ? '❤️' : '🤍'} {deck.likes?.length || 0}
                 </button>
@@ -212,6 +218,8 @@ function PodiumCard({ deck, rank, userId, onLike, onClick, getImg }) {
 
 function StandardCard({ deck, userId, onLike, onClick, getImg }) {
     const bgImage = getImg(deck.cards?.[0]);
+    const authorName = deck.user?.username || deck.author?.username || deck.creator?.username || "Usuario de Mitos";
+
     return (
         <div onClick={onClick} className="group relative bg-slate-800 rounded-2xl overflow-hidden border border-slate-700/50 hover:border-orange-500/50 transition-all hover:shadow-xl cursor-pointer h-64 flex flex-col">
             <div className="h-32 bg-slate-900 relative overflow-hidden">
@@ -220,7 +228,7 @@ function StandardCard({ deck, userId, onLike, onClick, getImg }) {
                 <div className="absolute bottom-2 left-3 font-bold truncate w-11/12 text-white drop-shadow-md">{deck.name}</div>
             </div>
             <div className="p-4 flex-1 flex flex-col justify-between bg-slate-800">
-                <div className="text-[10px] text-slate-400 font-bold truncate">@{deck.user?.username || "Juegos Vikingos"}</div>
+                <div className="text-[10px] text-slate-400 font-bold truncate">@{authorName}</div>
                 <div className="flex justify-between items-center mt-2">
                     <button onClick={(e) => onLike(deck._id, e)} className="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition">
                         {deck.likes?.includes(userId) ? '❤️' : '🤍'} {deck.likes?.length || 0}
