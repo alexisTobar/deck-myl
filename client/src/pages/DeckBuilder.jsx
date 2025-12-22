@@ -14,16 +14,13 @@ const EDICIONES_IMPERIO = {
     "espiritu_samurai": "Espíritu Samurai"
 };
 
-// 2. FORMATO PRIMER BLOQUE (Actualizado con tu lista real de BD)
+// 2. FORMATO PRIMER BLOQUE
 const EDICIONES_PB = {
-    // Estas son las que me mostraste que fallaban, ahora están corregidas:
     "colmillos_avalon": "Colmillos de Avalon",
     "extensiones_pb_2023": "Extensiones PB 2023",
     "espada_sagrada_aniversario": "Espada Sagrada (Aniv)",
-    "Relatos": "Relatos", // Ojo con la mayúscula, así está en tu BD
-    "hijos-de-daana-aniversario": "Hijos de Daana (Aniv)", // Ojo con los guiones
-
-    // El resto de tus ediciones:
+    "Relatos": "Relatos",
+    "hijos-de-daana-aniversario": "Hijos de Daana (Aniv)",
     "25 aniversario": "25 Aniversario",
     "Festividades": "Festividades",
     "aniversario-de-ra": "Aniversario de Ra",
@@ -64,7 +61,6 @@ const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 // --- HELPER UNIVERSAL DE IMÁGENES (GLOBAL) ---
 const getImg = (c) => {
     if (!c) return "https://via.placeholder.com/250x350?text=Error";
-    // Prioridad: 1. imgUrl (GitHub PB) -> 2. imageUrl (Imperio) -> 3. img (Legacy)
     return c.imgUrl || c.imageUrl || c.img || "https://via.placeholder.com/250x350?text=No+Image";
 };
 
@@ -94,8 +90,12 @@ export default function DeckBuilder() {
 
     // --- ESTADOS ---
     const [gridColumns, setGridColumns] = useState(window.innerWidth < 768 ? 3 : 5);
-    const [formato, setFormato] = useState("imperio"); 
-    const [edicionSeleccionada, setEdicionSeleccionada] = useState(""); // Iniciamos vacío para ver todo
+    
+    // ✅ CAMBIO 1: Inicializamos el formato leyendo lo que nos mandó el selector
+    // Si location.state.selectedFormat existe, lo usa. Si no, usa "imperio" por defecto.
+    const [formato, setFormato] = useState(location.state?.selectedFormat || "imperio"); 
+    
+    const [edicionSeleccionada, setEdicionSeleccionada] = useState(""); 
     const [tipoSeleccionado, setTipoSeleccionado] = useState("");
     const [busqueda, setBusqueda] = useState("");
     const [cartas, setCartas] = useState([]);
@@ -120,7 +120,7 @@ export default function DeckBuilder() {
 
     const cambiarFormato = (nuevoFormato) => {
         setFormato(nuevoFormato);
-        setEdicionSeleccionada(""); // Resetear edición al cambiar formato es clave
+        setEdicionSeleccionada(""); 
         setTipoSeleccionado("");
         setBusqueda("");
         setCartas([]);
@@ -154,30 +154,33 @@ export default function DeckBuilder() {
             }));
 
             setMazo(cartasCargadas);
+            // Limpiamos el estado para que no interfiera
             window.history.replaceState({}, document.title);
         }
     }, [location]);
 
+    // ✅ CAMBIO 2: EFECTO NUEVO PARA LIMPIAR AL ENTRAR DESDE SELECTOR
+    useEffect(() => {
+        // Si venimos del selector con un formato específico
+        if (location.state?.selectedFormat) {
+            setFormato(location.state.selectedFormat);
+            // Reseteamos filtros para evitar mezclas o pantallas vacías
+            setEdicionSeleccionada("");
+            setTipoSeleccionado("");
+            setBusqueda("");
+            // Limpiamos el history state para evitar bucles si refresca
+            window.history.replaceState({}, document.title);
+        }
+    }, []);
+
     // --- BUSCADOR DE CARTAS ---
     useEffect(() => {
         const fetchCartas = async () => {
-            if (!busqueda && !edicionSeleccionada && !tipoSeleccionado) { 
-                // Si no hay filtros, mostramos cartas vacías o podríamos cargar un default
-                // Para este caso, dejaremos que el usuario seleccione una edición para empezar
-                if(formato === 'imperio' && !edicionSeleccionada) {
-                     setCartas([]); 
-                     return;
-                }
-                // Si es PB y no ha seleccionado nada, podríamos mostrar todo, pero es mucho.
-                // Mejor esperar selección.
-                if(formato === 'primer_bloque' && !edicionSeleccionada && !busqueda) {
-                    setCartas([]);
-                    return;
-                }
-            }
-
-            // ⚠️ CACHÉ FIX: v6-final asegura que lea las nuevas ediciones y URLs
-            const cacheKey = `search-v10-RELOAD-${formato}-${busqueda}-${edicionSeleccionada}-${tipoSeleccionado}`;
+            // ✅ CAMBIO 3: Eliminamos los "if" que bloqueaban la carga (pantalla en blanco)
+            // Ahora cargará siempre, independientemente de si hay filtros o no.
+            
+            // Usamos un caché nuevo para asegurar la separación de formatos
+            const cacheKey = `search-v11-FORMAT-SPLIT-${formato}-${busqueda}-${edicionSeleccionada}-${tipoSeleccionado}`;
             const cachedData = localStorage.getItem(cacheKey);
             if (cachedData) { setCartas(JSON.parse(cachedData)); return; }
 
