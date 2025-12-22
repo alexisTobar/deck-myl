@@ -59,7 +59,6 @@ const TIPOS_FILTRO = [
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 
 // --- HELPER UNIVERSAL DE IMÁGENES (MEJORADO) ---
-// Ahora busca en todas las propiedades posibles para asegurar que la imagen cargue
 const getImg = (c) => {
     if (!c) return "https://via.placeholder.com/250x350?text=Error";
     
@@ -68,7 +67,7 @@ const getImg = (c) => {
            c.img || 
            c.imagen || 
            c.image || 
-           (c.image && c.image.secure_url) || // Si viene de Cloudinary anidado
+           (c.image && c.image.secure_url) || 
            (c.image && c.image.url) || 
            "https://via.placeholder.com/250x350?text=No+Image";
 };
@@ -100,7 +99,7 @@ export default function DeckBuilder() {
     // --- ESTADOS ---
     const [gridColumns, setGridColumns] = useState(window.innerWidth < 768 ? 3 : 5);
     
-    // Inicializamos el formato leyendo lo que nos mandó el selector
+    // Inicialización estricta del formato
     const [formato, setFormato] = useState(location.state?.selectedFormat || "imperio"); 
     
     const [edicionSeleccionada, setEdicionSeleccionada] = useState(""); 
@@ -122,16 +121,20 @@ export default function DeckBuilder() {
     const [cardToZoom, setCardToZoom] = useState(null); 
     const [showScrollTop, setShowScrollTop] = useState(false);
 
+    // Ediciones activas según formato
     const edicionesActivas = useMemo(() => {
         return formato === 'imperio' ? EDICIONES_IMPERIO : EDICIONES_PB;
     }, [formato]);
 
+    // ✅ FUNCIÓN OPTIMIZADA: Evita recargas si el formato es el mismo
     const cambiarFormato = (nuevoFormato) => {
+        if (formato === nuevoFormato) return; // Si ya estás en el formato, no hace nada
+
         setFormato(nuevoFormato);
         setEdicionSeleccionada(""); 
         setTipoSeleccionado("");
         setBusqueda("");
-        setCartas([]);
+        setCartas([]); // Limpia la pantalla inmediatamente
     };
 
     // --- DETECTAR SCROLL ---
@@ -145,13 +148,13 @@ export default function DeckBuilder() {
 
     const scrollToTop = () => gridContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // --- CARGAR MAZO PARA EDITAR ---
+    // --- CARGAR DATOS INICIALES (Editar o Nuevo) ---
     useEffect(() => {
         if (location.state && location.state.deckToEdit) {
+            // Modo Edición
             const deck = location.state.deckToEdit;
             setNombreMazo(deck.name);
             setEditingDeckId(deck._id);
-            
             if(deck.format) setFormato(deck.format);
 
             const cartasCargadas = deck.cards.map(c => ({
@@ -160,54 +163,45 @@ export default function DeckBuilder() {
                 type: c.type,
                 imgUrl: getImg(c)
             }));
-
             setMazo(cartasCargadas);
-            window.history.replaceState({}, document.title);
-        }
-    }, [location]);
-
-    // --- LIMPIAR AL ENTRAR DESDE SELECTOR ---
-    useEffect(() => {
-        if (location.state?.selectedFormat) {
+        } else if (location.state?.selectedFormat) {
+            // Modo Nuevo con formato preseleccionado
             setFormato(location.state.selectedFormat);
+            setCartas([]);
             setEdicionSeleccionada("");
-            setTipoSeleccionado("");
             setBusqueda("");
-            window.history.replaceState({}, document.title);
         }
+        window.history.replaceState({}, document.title);
     }, []);
 
-    // --- BUSCADOR DE CARTAS ---
+    // --- BUSCADOR DE CARTAS (Separación estricta por API) ---
     useEffect(() => {
         const fetchCartas = async () => {
-            // Cache optimizado por formato y filtros
-            const cacheKey = `search-v12-ROBUST-${formato}-${busqueda}-${edicionSeleccionada}-${tipoSeleccionado}`;
+            const cacheKey = `search-v14-FORMATO-${formato}-${busqueda}-${edicionSeleccionada}-${tipoSeleccionado}`;
             const cachedData = localStorage.getItem(cacheKey);
             if (cachedData) { setCartas(JSON.parse(cachedData)); return; }
 
             setLoading(true);
             try {
                 const params = new URLSearchParams();
-                params.append("format", formato); 
+                params.append("format", formato); // 🔥 CLAVE: Envía siempre el formato
                 if (busqueda) params.append("q", busqueda);
                 if (edicionSeleccionada) params.append("edition", edicionSeleccionada);
                 if (tipoSeleccionado) params.append("type", tipoSeleccionado);
 
-                console.log(`Buscando cartas en: ${BACKEND_URL}/api/cards/search?${params.toString()}`);
+                console.log(`Buscando: ${BACKEND_URL}/api/cards/search?${params.toString()}`);
                 const res = await fetch(`${BACKEND_URL}/api/cards/search?${params.toString()}`);
                 
                 if (!res.ok) throw new Error("Error en la petición API");
 
                 const data = await res.json();
-
-                // Verificación de seguridad: Aseguramos que sea un array
                 const safeData = Array.isArray(data) ? data : (data.results || []);
                 
                 setCartas(safeData);
                 localStorage.setItem(cacheKey, JSON.stringify(safeData));
             } catch (error) { 
                 console.error("Error cargando cartas:", error);
-                setCartas([]); // Limpia para no mostrar basura anterior
+                setCartas([]); 
             } finally { 
                 setLoading(false); 
             }
@@ -263,7 +257,7 @@ export default function DeckBuilder() {
                 body: JSON.stringify({ 
                     name: nombreMazo, 
                     cards: cardsPayload,
-                    format: formato 
+                    format: formato // Guardamos el formato actual
                 })
             });
 
@@ -302,7 +296,7 @@ export default function DeckBuilder() {
             link.download = `${nombreMazo ? nombreMazo.replace(/\s+/g, '-') : "MiMazo"}-DeckMyL.png`;
             link.href = dataUrl;
             link.click();
-        } catch (err) { console.error('Error captura:', err); alert('Error al generar imagen. Verifica CORS en el servidor.'); }
+        } catch (err) { console.error('Error captura:', err); alert('Error al generar imagen.'); }
         finally { setGuardando(false); }
     }, [nombreMazo]);
 

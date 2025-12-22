@@ -8,17 +8,37 @@ const IconTrash = () => <svg className="w-5 h-5" fill="none" stroke="currentColo
 const IconEdit = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>;
 const IconDownload = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>;
 const IconSort = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" /></svg>;
-// Nuevos Iconos para Privacidad
 const IconWorld = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 const IconLock = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>;
+
+// --- HELPER PARA ESTILOS DE FORMATO ---
+const getFormatStyles = (format) => {
+    if (format === 'primer_bloque') {
+        return { 
+            label: '📜 Primer Bloque', 
+            badgeClass: 'bg-yellow-600/90 text-yellow-100 border-yellow-500/50',
+            textClass: 'text-yellow-400'
+        };
+    }
+    // Por defecto Imperio
+    return { 
+        label: '🏛️ Imperio', 
+        badgeClass: 'bg-orange-600/90 text-orange-100 border-orange-500/50',
+        textClass: 'text-orange-400'
+    };
+};
 
 export default function MyDecks() {
     const [decks, setDecks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedDeck, setSelectedDeck] = useState(null); 
     const [deckToDelete, setDeckToDelete] = useState(null); 
+    
+    // Filtros
     const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState("newest");
+    const [filterFormat, setFilterFormat] = useState("all"); // Nuevo filtro de formato
+
     const [toast, setToast] = useState({ show: false, msg: "", type: "" }); 
 
     const navigate = useNavigate();
@@ -49,7 +69,7 @@ export default function MyDecks() {
         }
     };
 
-    // --- NUEVA FUNCIÓN: CAMBIAR PRIVACIDAD ---
+    // --- CAMBIAR PRIVACIDAD ---
     const togglePrivacy = async (deck) => {
         const token = localStorage.getItem("token");
         try {
@@ -60,15 +80,10 @@ export default function MyDecks() {
             
             if (res.ok) {
                 const updatedDeck = await res.json();
-                
-                // Actualizamos la lista principal
                 setDecks(prev => prev.map(d => d._id === deck._id ? { ...d, isPublic: updatedDeck.isPublic } : d));
-                
-                // Actualizamos el modal si está abierto
                 if (selectedDeck && selectedDeck._id === deck._id) {
                     setSelectedDeck(prev => ({ ...prev, isPublic: updatedDeck.isPublic }));
                 }
-
                 showToast(updatedDeck.isPublic ? "¡Mazo ahora es PÚBLICO! 🌍" : "Mazo ahora es PRIVADO 🔒", "success");
             } else {
                 showToast("No se pudo cambiar la privacidad", "error");
@@ -111,7 +126,8 @@ export default function MyDecks() {
 
     const handleExport = (deck) => {
         const totalCards = getDeckTotal(deck.cards);
-        let content = `MAZO: ${deck.name}\nFormato: Mitos y Leyendas\nTotal Cartas: ${totalCards}\n----------------------------\n`;
+        const formatName = deck.format === 'primer_bloque' ? "Primer Bloque" : "Imperio";
+        let content = `MAZO: ${deck.name}\nFormato: ${formatName}\nTotal Cartas: ${totalCards}\n----------------------------\n`;
         
         deck.cards.forEach(card => {
             const cleanName = card.name ? card.name.trim() : "Desconocida";
@@ -138,12 +154,22 @@ export default function MyDecks() {
     // --- FILTRADO Y ORDENAMIENTO ---
     const processedDecks = useMemo(() => {
         let result = [...decks];
+        
+        // Filtro Texto
         if (searchTerm) result = result.filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase()));
+        
+        // Filtro Formato
+        if (filterFormat !== "all") {
+            result = result.filter(d => d.format === filterFormat);
+        }
+
+        // Ordenamiento
         if (sortBy === "name") result.sort((a, b) => a.name.localeCompare(b.name));
         else if (sortBy === "size") result.sort((a, b) => getDeckTotal(b.cards) - getDeckTotal(a.cards));
         else result.reverse(); 
+        
         return result;
-    }, [decks, searchTerm, sortBy]);
+    }, [decks, searchTerm, sortBy, filterFormat]);
 
     if (loading) return (
         <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -170,26 +196,40 @@ export default function MyDecks() {
                             </div>
                         </div>
                         
-                        <div className="flex items-center gap-3 w-full md:w-auto bg-slate-900 p-1.5 rounded-xl border border-slate-700">
-                            <div className="relative flex-1 md:w-64">
+                        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto bg-slate-900 p-1.5 rounded-xl border border-slate-700">
+                            {/* Buscador */}
+                            <div className="relative flex-1 w-full sm:w-auto">
                                 <span className="absolute left-3 top-2.5 text-slate-500"><IconSearch /></span>
                                 <input 
                                     type="text" 
-                                    placeholder="Buscar mazo..." 
+                                    placeholder="Buscar..." 
                                     className="w-full bg-slate-800 text-sm text-white rounded-lg pl-10 pr-3 py-2 outline-none focus:ring-1 focus:ring-orange-500 transition"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
-                            <div className="relative">
+
+                            {/* Filtro Formato */}
+                            <select 
+                                className="bg-slate-800 text-sm text-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-orange-500 cursor-pointer hover:bg-slate-700 transition w-full sm:w-auto"
+                                value={filterFormat}
+                                onChange={(e) => setFilterFormat(e.target.value)}
+                            >
+                                <option value="all">📚 Todos</option>
+                                <option value="imperio">🏛️ Imperio</option>
+                                <option value="primer_bloque">📜 Primer Bloque</option>
+                            </select>
+
+                            {/* Ordenamiento */}
+                            <div className="relative w-full sm:w-auto">
                                 <select 
-                                    className="bg-slate-800 text-sm text-slate-300 rounded-lg pl-3 pr-8 py-2 outline-none focus:ring-1 focus:ring-orange-500 appearance-none cursor-pointer hover:bg-slate-700 transition"
+                                    className="w-full bg-slate-800 text-sm text-slate-300 rounded-lg pl-3 pr-8 py-2 outline-none focus:ring-1 focus:ring-orange-500 appearance-none cursor-pointer hover:bg-slate-700 transition"
                                     value={sortBy}
                                     onChange={(e) => setSortBy(e.target.value)}
                                 >
-                                    <option value="newest">Más recientes</option>
-                                    <option value="name">Nombre (A-Z)</option>
-                                    <option value="size">Cantidad Cartas</option>
+                                    <option value="newest">Recientes</option>
+                                    <option value="name">A-Z</option>
+                                    <option value="size">Tamaño</option>
                                 </select>
                                 <span className="absolute right-2 top-2.5 text-slate-500 pointer-events-none"><IconSort /></span>
                             </div>
@@ -199,7 +239,7 @@ export default function MyDecks() {
                             onClick={() => navigate("/builder")} 
                             className="w-full md:w-auto bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
                         >
-                            <span className="text-lg">+</span> Nuevo Mazo
+                            <span className="text-lg">+</span> Nuevo
                         </button>
                     </div>
                 </div>
@@ -218,15 +258,16 @@ export default function MyDecks() {
                     </div>
                 ) : processedDecks.length === 0 ? (
                      <div className="text-center py-20 text-slate-500">
-                        <p>No se encontraron mazos con ese nombre.</p>
-                        <button onClick={() => setSearchTerm("")} className="text-orange-500 hover:underline mt-2">Limpiar búsqueda</button>
+                        <p>No se encontraron mazos con esos filtros.</p>
+                        <button onClick={() => { setSearchTerm(""); setFilterFormat("all"); }} className="text-orange-500 hover:underline mt-2">Limpiar filtros</button>
                      </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6">
                         {processedDecks.map((deck) => {
                             const bgImage = getCardImage(deck.cards);
                             const realTotal = getDeckTotal(deck.cards);
-                            const isPublic = deck.isPublic; // Verificamos estado
+                            const isPublic = deck.isPublic; 
+                            const formatStyle = getFormatStyles(deck.format); // Obtenemos estilo según formato
 
                             return (
                                 <div 
@@ -246,15 +287,22 @@ export default function MyDecks() {
                                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
                                     </div>
 
-                                    {/* BADGE PÚBLICO/PRIVADO (En la esquina superior) */}
+                                    {/* --- BADGE FORMATO (IZQUIERDA) --- */}
+                                    <div className="absolute top-3 left-3 z-20">
+                                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg border backdrop-blur-md ${formatStyle.badgeClass}`}>
+                                            {formatStyle.label}
+                                        </span>
+                                    </div>
+
+                                    {/* --- BADGE PÚBLICO/PRIVADO (DERECHA) --- */}
                                     <div className="absolute top-3 right-3 z-20">
                                         {isPublic ? (
                                             <span className="bg-blue-600/80 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg border border-blue-400/30">
-                                                <IconWorld /> Público
+                                                <IconWorld />
                                             </span>
                                         ) : (
                                             <span className="bg-slate-900/80 backdrop-blur text-slate-300 text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg border border-slate-600">
-                                                <IconLock /> Privado
+                                                <IconLock />
                                             </span>
                                         )}
                                     </div>
@@ -291,7 +339,12 @@ export default function MyDecks() {
                         <div className="p-6 border-b border-slate-700 flex justify-between items-start bg-slate-900/50">
                             <div>
                                 <h2 className="text-3xl font-bold text-white capitalize">{selectedDeck.name}</h2>
-                                <div className="flex items-center gap-3 mt-1">
+                                <div className="flex flex-wrap items-center gap-3 mt-2">
+                                    {/* Badge Formato Modal */}
+                                    <span className={`text-xs font-bold px-2 py-0.5 rounded border ${getFormatStyles(selectedDeck.format).badgeClass}`}>
+                                        {getFormatStyles(selectedDeck.format).label}
+                                    </span>
+
                                     <p className="text-slate-400 text-sm flex items-center gap-2">
                                         <span className="w-2 h-2 rounded-full bg-green-500"></span>
                                         {getDeckTotal(selectedDeck.cards)} Cartas

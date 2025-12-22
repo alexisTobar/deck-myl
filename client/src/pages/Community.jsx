@@ -1,6 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import BACKEND_URL from "../config";
+
+// --- ICONOS ---
+const IconTrophy = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>;
+const IconCopy = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>;
+const IconUser = () => <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>;
 
 export default function Community() {
     const [decks, setDecks] = useState([]);
@@ -8,6 +13,9 @@ export default function Community() {
     const [selectedDeck, setSelectedDeck] = useState(null);
     const navigate = useNavigate();
     
+    // ESTADO PARA EL FILTRO DE FORMATO (Por defecto Imperio)
+    const [activeFormat, setActiveFormat] = useState("imperio"); 
+
     // Usuario actual
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user"));
@@ -48,7 +56,6 @@ export default function Community() {
         });
         setDecks(updatedDecks);
 
-        // Actualizar modal si está abierto
         if (selectedDeck && selectedDeck._id === deckId) {
             setSelectedDeck(prev => {
                 const hasLiked = prev.likes.includes(userId);
@@ -61,17 +68,35 @@ export default function Community() {
         } catch (error) { console.error(error); }
     };
 
-    const getBgImage = (cards) => (cards && cards.length > 0) ? (cards[0].imgUrl || cards[0].imageUrl) : null;
+    const handleCloneDeck = async (deck) => {
+        if (!token) return navigate("/login");
+        if(!confirm(`¿Copiar "${deck.name}" a tu colección?`)) return;
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/decks/clone/${deck._id}`, { method: "POST", headers: { "auth-token": token } });
+            if (res.ok) { alert("¡Mazo copiado!"); navigate("/my-decks"); }
+        } catch (e) { alert("Error al copiar"); }
+    };
 
-    // Lógica del Podio: Ordenamos por Likes
-    const sortedByLikes = [...decks].sort((a, b) => b.likes.length - a.likes.length);
-    const top1 = sortedByLikes[0];
-    const top2 = sortedByLikes[1];
-    const top3 = sortedByLikes[2];
+    // --- LÓGICA DE FILTRADO Y PODIO ---
+    const { top1, top2, top3, recentDecks, formatCount } = useMemo(() => {
+        // 1. Primero filtramos por el formato activo (Imperio o PB)
+        const filteredByFormat = decks.filter(d => d.format === activeFormat);
+        
+        // 2. Calculamos el podio SOLO con los de este formato
+        const sortedByLikes = [...filteredByFormat].sort((a, b) => b.likes.length - a.likes.length);
+        
+        // 3. Calculamos los recientes (excluyendo el top 3 para no repetir, opcional)
+        // Aquí ordenamos por fecha descendente
+        const sortedByDate = [...filteredByFormat].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    // El resto (excluyendo el top 3 para no repetir, o dejándolos si prefieres)
-    // Aquí mostramos "Recientes" ordenados por fecha
-    const recentDecks = [...decks].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        return {
+            top1: sortedByLikes[0],
+            top2: sortedByLikes[1],
+            top3: sortedByLikes[2],
+            recentDecks: sortedByDate, // Mostramos todos ordenados por fecha
+            formatCount: filteredByFormat.length
+        };
+    }, [decks, activeFormat]);
 
     if (loading) return (
         <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -84,75 +109,73 @@ export default function Community() {
             
             {/* --- HEADER --- */}
             <div className="bg-slate-900/80 backdrop-blur-xl border-b border-slate-800 sticky top-0 z-30 px-6 py-4 shadow-2xl">
-                <div className="max-w-7xl mx-auto flex items-center gap-4">
-                    <div className="p-2 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg shadow-lg shadow-orange-900/20">
-                        <span className="text-2xl text-white font-bold">⚔️</span>
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="p-2 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg shadow-lg shadow-orange-900/20">
+                            <span className="text-2xl text-white font-bold">⚔️</span>
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-black text-white tracking-tight">
+                                La Arena <span className="text-orange-500">Global</span>
+                            </h1>
+                            <p className="text-xs text-slate-400 font-medium">Compite por la gloria eterna</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-2xl font-black text-white tracking-tight">
-                            La Arena <span className="text-orange-500">Global</span>
-                        </h1>
-                        <p className="text-xs text-slate-400 font-medium">Compite por la gloria eterna</p>
+
+                    {/* --- SELECTOR DE FORMATO (TABS) --- */}
+                    <div className="bg-slate-800 p-1 rounded-xl flex gap-1 shadow-inner border border-slate-700">
+                        <button 
+                            onClick={() => setActiveFormat('imperio')}
+                            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all duration-300 ${activeFormat === 'imperio' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}
+                        >
+                            🏛️ IMPERIO
+                        </button>
+                        <button 
+                            onClick={() => setActiveFormat('primer_bloque')}
+                            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all duration-300 ${activeFormat === 'primer_bloque' ? 'bg-yellow-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}
+                        >
+                            📜 PRIMER BLOQUE
+                        </button>
                     </div>
                 </div>
             </div>
 
             <div className="max-w-7xl mx-auto px-4 mt-8">
                 
-                {/* --- SECCIÓN PODIO (NUEVA UI) --- */}
-                {top1 && (
-                    <div className="mb-20">
-                        <h2 className="text-2xl font-bold mb-10 flex items-center gap-2 text-white">
-                            <span className="text-3xl">🏆</span> Salón de la Fama
+                {/* --- SECCIÓN PODIO (Filtrada por Formato) --- */}
+                {top1 ? (
+                    <div className="mb-20 animate-fade-in">
+                        <h2 className={`text-2xl font-bold mb-10 flex items-center justify-center gap-2 ${activeFormat === 'imperio' ? 'text-orange-500' : 'text-yellow-500'}`}>
+                            <span className="text-3xl">🏆</span> Campeones de {activeFormat === 'imperio' ? 'Imperio' : 'Primer Bloque'}
                         </h2>
                         
-                        {/* CONTENEDOR PODIO: Flex en móvil, Grid alineado abajo en PC */}
                         <div className="flex flex-col md:flex-row items-end justify-center gap-6 md:gap-8">
-                            
-                            {/* 2DO LUGAR (Plata) - Izquierda */}
-                            <PodiumCard 
-                                deck={top2} 
-                                rank={2} 
-                                userId={userId} 
-                                onLike={handleLike} 
-                                onClick={() => setSelectedDeck(top2)} 
-                            />
-
-                            {/* 1ER LUGAR (Oro) - Centro (Más grande) */}
-                            <PodiumCard 
-                                deck={top1} 
-                                rank={1} 
-                                userId={userId} 
-                                onLike={handleLike} 
-                                onClick={() => setSelectedDeck(top1)} 
-                            />
-
-                            {/* 3ER LUGAR (Bronce) - Derecha */}
-                            <PodiumCard 
-                                deck={top3} 
-                                rank={3} 
-                                userId={userId} 
-                                onLike={handleLike} 
-                                onClick={() => setSelectedDeck(top3)} 
-                            />
+                            <PodiumCard deck={top2} rank={2} userId={userId} onLike={handleLike} onClick={() => setSelectedDeck(top2)} />
+                            <PodiumCard deck={top1} rank={1} userId={userId} onLike={handleLike} onClick={() => setSelectedDeck(top1)} />
+                            <PodiumCard deck={top3} rank={3} userId={userId} onLike={handleLike} onClick={() => setSelectedDeck(top3)} />
                         </div>
+                    </div>
+                ) : (
+                    <div className="text-center py-20">
+                        <p className="text-slate-500 text-xl">Aún no hay campeones en este formato.</p>
                     </div>
                 )}
 
                 {/* --- SECCIÓN RECIENTES --- */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
                     <h2 className="text-xl font-bold flex items-center gap-2">
-                        <span className="text-orange-500">🔥</span> Nuevos Desafíos
+                        <span>🔥</span> Recientes en {activeFormat === 'imperio' ? 'Imperio' : 'Primer Bloque'}
                     </h2>
+                    <span className="text-xs text-slate-500 font-bold bg-slate-800 px-3 py-1 rounded-full">{formatCount} Mazos</span>
                 </div>
                 
-                {decks.length === 0 ? (
+                {recentDecks.length === 0 ? (
                     <div className="text-center py-20 bg-slate-800/30 rounded-3xl border border-slate-800 border-dashed">
                         <p className="text-6xl mb-4 opacity-20">📭</p>
-                        <p className="text-slate-500 font-medium">La arena está vacía.</p>
+                        <p className="text-slate-500 font-medium">No hay mazos en esta categoría.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up">
                         {recentDecks.map(deck => (
                             <StandardCard 
                                 key={deck._id} 
@@ -166,28 +189,27 @@ export default function Community() {
                 )}
             </div>
 
-            {/* --- MODAL DETALLE (Igual que antes pero pulido) --- */}
+            {/* --- MODAL DETALLE --- */}
             {selectedDeck && (
                 <ModalDetail 
                     deck={selectedDeck} 
                     userId={userId} 
                     onClose={() => setSelectedDeck(null)} 
                     onLike={handleLike} 
+                    onClone={() => handleCloneDeck(selectedDeck)}
                 />
             )}
         </div>
     );
 }
 
-// --- COMPONENTE TARJETA DE PODIO (EL CAMBIO GRANDE) ---
+// --- TARJETA PODIO ---
 function PodiumCard({ deck, rank, userId, onLike, onClick }) {
-    if (!deck) return <div className="hidden md:block w-full md:w-64 h-40 opacity-0"></div>; // Espacio vacío si no hay mazo
+    if (!deck) return <div className="hidden md:block w-full md:w-64 h-40 opacity-0"></div>; 
 
     const isGold = rank === 1;
     const isSilver = rank === 2;
-    const isBronze = rank === 3;
-
-    // Configuración según rango
+    // Ajustes visuales según ranking
     const heightClass = isGold ? "h-96 md:h-[28rem]" : isSilver ? "h-80 md:h-96" : "h-72 md:h-80";
     const widthClass = isGold ? "w-full md:w-[22rem] z-10" : "w-full md:w-72";
     const borderClass = isGold ? "border-yellow-400 shadow-yellow-500/20" : isSilver ? "border-slate-300 shadow-slate-500/20" : "border-orange-700 shadow-orange-900/20";
@@ -195,47 +217,37 @@ function PodiumCard({ deck, rank, userId, onLike, onClick }) {
     const medalIcon = isGold ? "🥇" : isSilver ? "🥈" : "🥉";
     const bgImage = (deck.cards && deck.cards[0]) ? (deck.cards[0].imgUrl || deck.cards[0].imageUrl) : null;
 
-    // Order en Flex móvil: 1ro arriba. En Desktop: 2-1-3.
-    // Usamos 'order-first' en mobile para que el #1 salga primero, pero en md el orden natural del HTML manda (o usamos clases order)
-    // Para simplificar: En móvil será columna normal.
-
     return (
         <div 
             onClick={onClick}
             className={`${widthClass} ${heightClass} relative rounded-3xl overflow-hidden border-4 ${borderClass} shadow-2xl cursor-pointer group transition-all duration-500 hover:-translate-y-2 hover:shadow-orange-500/10 flex-shrink-0`}
         >
-            {/* Fondo con Imagen */}
             <div className="absolute inset-0 bg-slate-900">
                 {bgImage ? (
                     <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110 opacity-60" style={{ backgroundImage: `url(${bgImage})` }}></div>
                 ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900"></div>
                 )}
-                {/* DEGRADADO PARA LEER TEXTO (CRUCIAL) */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
             </div>
 
-            {/* Medalla Flotante */}
             <div className={`absolute top-4 left-4 ${badgeColor} font-black text-xl w-12 h-12 flex items-center justify-center rounded-full shadow-lg z-20`}>
                 {rank}
             </div>
-            <div className="absolute top-4 right-4 text-4xl drop-shadow-md z-20 animate-pulse">
-                {medalIcon}
-            </div>
+            <div className="absolute top-4 right-4 text-4xl drop-shadow-md z-20 animate-pulse">{medalIcon}</div>
 
-            {/* Contenido Texto (Abajo) */}
             <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
-                <h3 className={`font-black text-white leading-tight mb-1 drop-shadow-lg ${isGold ? 'text-3xl' : 'text-xl'}`}>
+                <h3 className={`font-black text-white leading-tight mb-1 drop-shadow-lg truncate ${isGold ? 'text-3xl' : 'text-xl'}`}>
                     {deck.name}
                 </h3>
+                {/* 🔹 CORRECCIÓN: deck.user.username */}
                 <p className="text-slate-300 text-sm mb-4 font-medium flex items-center gap-1">
-                    Creado por <span className="text-orange-400 font-bold">{deck.user?.name || "Anónimo"}</span>
+                    Creado por <span className="text-orange-400 font-bold">{deck.user?.username || "Anónimo"}</span>
                 </p>
 
-                {/* Botones de Acción */}
                 <div className="flex gap-3 mt-2">
                     <button className="flex-1 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/10 font-bold py-2 rounded-xl text-sm transition flex items-center justify-center gap-2">
-                        👁️ Ver Mazo
+                        👁️ Ver
                     </button>
                     <button 
                         onClick={(e) => onLike(deck._id, e)}
@@ -250,24 +262,23 @@ function PodiumCard({ deck, rank, userId, onLike, onClick }) {
     );
 }
 
-// --- COMPONENTE TARJETA ESTÁNDAR (GRID RECIENTES) ---
+// --- TARJETA ESTÁNDAR ---
 function StandardCard({ deck, userId, onLike, onClick }) {
     const bgImage = (deck.cards && deck.cards[0]) ? (deck.cards[0].imgUrl || deck.cards[0].imageUrl) : null;
     const totalCards = deck.cards.reduce((acc,c) => acc + (c.quantity||1), 0);
 
     return (
         <div onClick={onClick} className="group relative bg-slate-800 rounded-2xl overflow-hidden border border-slate-700/50 hover:border-orange-500/50 transition-all hover:shadow-xl cursor-pointer h-64 flex flex-col">
-            {/* Imagen Header */}
             <div className="h-32 relative overflow-hidden bg-slate-900">
                 {bgImage && <div className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:opacity-80 transition-transform duration-500 group-hover:scale-105" style={{ backgroundImage: `url(${bgImage})` }}></div>}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent"></div>
                 <div className="absolute bottom-2 left-3 font-bold text-white drop-shadow-md truncate w-11/12 text-lg">{deck.name}</div>
             </div>
 
-            {/* Cuerpo */}
             <div className="p-4 flex-1 flex flex-col justify-between bg-slate-800">
                 <div className="flex justify-between items-start text-xs text-slate-400">
-                    <span>{deck.user?.name}</span>
+                    {/* 🔹 CORRECCIÓN: deck.user.username */}
+                    <span className="font-bold text-orange-200 truncate max-w-[100px]">{deck.user?.username || "Anónimo"}</span>
                     <span className="bg-slate-700 px-2 py-0.5 rounded text-slate-300">{totalCards} Cartas</span>
                 </div>
                 
@@ -286,14 +297,15 @@ function StandardCard({ deck, userId, onLike, onClick }) {
 }
 
 // --- COMPONENTE MODAL ---
-function ModalDetail({ deck, userId, onClose, onLike }) {
+function ModalDetail({ deck, userId, onClose, onLike, onClone }) {
     return (
         <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
             <div className="bg-slate-800 w-full max-w-4xl max-h-[90vh] rounded-3xl border border-slate-700 flex flex-col shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
                 <div className="p-6 border-b border-slate-700 bg-slate-900 flex justify-between items-start">
                     <div>
                         <h2 className="text-2xl font-black text-white">{deck.name}</h2>
-                        <p className="text-sm text-slate-400 mt-1">Forjado por <span className="text-orange-400 font-bold">{deck.user?.name}</span></p>
+                        {/* 🔹 CORRECCIÓN: deck.user.username */}
+                        <p className="text-sm text-slate-400 mt-1">Forjado por <span className="text-orange-400 font-bold">{deck.user?.username}</span></p>
                     </div>
                     <button onClick={onClose} className="bg-slate-800 p-2 rounded-full text-slate-400 hover:text-white transition">✕</button>
                 </div>
@@ -301,7 +313,7 @@ function ModalDetail({ deck, userId, onClose, onLike }) {
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
                         {deck.cards.map((card, idx) => (
                             <div key={idx} className="relative group">
-                                <img src={card.imgUrl || "https://via.placeholder.com/150"} alt={card.name} className="w-full h-auto rounded-lg shadow-sm border border-slate-800 group-hover:border-orange-500/50 transition-colors" />
+                                <img src={card.imgUrl || card.imageUrl || "https://via.placeholder.com/150"} alt={card.name} className="w-full h-auto rounded-lg shadow-sm border border-slate-800 group-hover:border-orange-500/50 transition-colors" />
                                 <div className="absolute bottom-0 right-0 bg-black/80 text-orange-400 font-bold text-xs px-2 py-0.5 rounded-tl-lg">x{card.quantity || 1}</div>
                             </div>
                         ))}
@@ -311,6 +323,9 @@ function ModalDetail({ deck, userId, onClose, onLike }) {
                      <button onClick={(e) => onLike(deck._id, e)} className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-lg transition shadow-lg ${deck.likes.includes(userId) ? 'bg-red-600 text-white shadow-red-900/30' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
                         <span>{deck.likes.includes(userId) ? '❤️' : '🤍'}</span>
                         <span>{deck.likes.length} Likes</span>
+                    </button>
+                    <button onClick={onClone} className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-lg bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-900/30 transition">
+                        <IconCopy /> Copiar
                     </button>
                 </div>
             </div>
