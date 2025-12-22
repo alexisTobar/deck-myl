@@ -58,10 +58,19 @@ const TIPOS_FILTRO = [
 
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 
-// --- HELPER UNIVERSAL DE IMÁGENES (GLOBAL) ---
+// --- HELPER UNIVERSAL DE IMÁGENES (MEJORADO) ---
+// Ahora busca en todas las propiedades posibles para asegurar que la imagen cargue
 const getImg = (c) => {
     if (!c) return "https://via.placeholder.com/250x350?text=Error";
-    return c.imgUrl || c.imageUrl || c.img || "https://via.placeholder.com/250x350?text=No+Image";
+    
+    return c.imgUrl || 
+           c.imageUrl || 
+           c.img || 
+           c.imagen || 
+           c.image || 
+           (c.image && c.image.secure_url) || // Si viene de Cloudinary anidado
+           (c.image && c.image.url) || 
+           "https://via.placeholder.com/250x350?text=No+Image";
 };
 
 const animationStyles = `
@@ -91,8 +100,7 @@ export default function DeckBuilder() {
     // --- ESTADOS ---
     const [gridColumns, setGridColumns] = useState(window.innerWidth < 768 ? 3 : 5);
     
-    // ✅ CAMBIO 1: Inicializamos el formato leyendo lo que nos mandó el selector
-    // Si location.state.selectedFormat existe, lo usa. Si no, usa "imperio" por defecto.
+    // Inicializamos el formato leyendo lo que nos mandó el selector
     const [formato, setFormato] = useState(location.state?.selectedFormat || "imperio"); 
     
     const [edicionSeleccionada, setEdicionSeleccionada] = useState(""); 
@@ -154,21 +162,17 @@ export default function DeckBuilder() {
             }));
 
             setMazo(cartasCargadas);
-            // Limpiamos el estado para que no interfiera
             window.history.replaceState({}, document.title);
         }
     }, [location]);
 
-    // ✅ CAMBIO 2: EFECTO NUEVO PARA LIMPIAR AL ENTRAR DESDE SELECTOR
+    // --- LIMPIAR AL ENTRAR DESDE SELECTOR ---
     useEffect(() => {
-        // Si venimos del selector con un formato específico
         if (location.state?.selectedFormat) {
             setFormato(location.state.selectedFormat);
-            // Reseteamos filtros para evitar mezclas o pantallas vacías
             setEdicionSeleccionada("");
             setTipoSeleccionado("");
             setBusqueda("");
-            // Limpiamos el history state para evitar bucles si refresca
             window.history.replaceState({}, document.title);
         }
     }, []);
@@ -176,11 +180,8 @@ export default function DeckBuilder() {
     // --- BUSCADOR DE CARTAS ---
     useEffect(() => {
         const fetchCartas = async () => {
-            // ✅ CAMBIO 3: Eliminamos los "if" que bloqueaban la carga (pantalla en blanco)
-            // Ahora cargará siempre, independientemente de si hay filtros o no.
-            
-            // Usamos un caché nuevo para asegurar la separación de formatos
-            const cacheKey = `search-v11-FORMAT-SPLIT-${formato}-${busqueda}-${edicionSeleccionada}-${tipoSeleccionado}`;
+            // Cache optimizado por formato y filtros
+            const cacheKey = `search-v12-ROBUST-${formato}-${busqueda}-${edicionSeleccionada}-${tipoSeleccionado}`;
             const cachedData = localStorage.getItem(cacheKey);
             if (cachedData) { setCartas(JSON.parse(cachedData)); return; }
 
@@ -192,12 +193,24 @@ export default function DeckBuilder() {
                 if (edicionSeleccionada) params.append("edition", edicionSeleccionada);
                 if (tipoSeleccionado) params.append("type", tipoSeleccionado);
 
+                console.log(`Buscando cartas en: ${BACKEND_URL}/api/cards/search?${params.toString()}`);
                 const res = await fetch(`${BACKEND_URL}/api/cards/search?${params.toString()}`);
+                
+                if (!res.ok) throw new Error("Error en la petición API");
+
                 const data = await res.json();
 
-                setCartas(data);
-                localStorage.setItem(cacheKey, JSON.stringify(data));
-            } catch (error) { console.error(error); } finally { setLoading(false); }
+                // Verificación de seguridad: Aseguramos que sea un array
+                const safeData = Array.isArray(data) ? data : (data.results || []);
+                
+                setCartas(safeData);
+                localStorage.setItem(cacheKey, JSON.stringify(safeData));
+            } catch (error) { 
+                console.error("Error cargando cartas:", error);
+                setCartas([]); // Limpia para no mostrar basura anterior
+            } finally { 
+                setLoading(false); 
+            }
         };
 
         const timer = setTimeout(() => { fetchCartas(); }, 300);
@@ -289,7 +302,7 @@ export default function DeckBuilder() {
             link.download = `${nombreMazo ? nombreMazo.replace(/\s+/g, '-') : "MiMazo"}-DeckMyL.png`;
             link.href = dataUrl;
             link.click();
-        } catch (err) { console.error('Error captura:', err); alert('Error al generar imagen.'); }
+        } catch (err) { console.error('Error captura:', err); alert('Error al generar imagen. Verifica CORS en el servidor.'); }
         finally { setGuardando(false); }
     }, [nombreMazo]);
 
@@ -377,15 +390,15 @@ export default function DeckBuilder() {
                             <div className="flex justify-center mt-20"><div className="animate-spin rounded-full h-10 w-10 border-4 border-orange-500 border-t-transparent"></div></div>
                         ) : (
                             <div className="grid gap-2 transition-all duration-300 ease-in-out" style={{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }}>
-                                {cartas.map((carta) => (
+                                {cartas.length > 0 ? cartas.map((carta) => (
                                     <div key={carta._id || carta.slug} className="relative group cursor-pointer animate-fade-in card-transition transform hover:-translate-y-1 hover:z-10" onClick={() => handleAdd(carta)}>
                                         <div className="rounded-xl overflow-hidden border-2 border-slate-800 relative bg-slate-800 shadow-lg group-hover:shadow-orange-500/50 group-hover:border-orange-500 transition-all duration-300 transform group-hover:scale-[1.02]">
                                             
-                                            {/* IMAGEN CON FALLBACK DE ERROR */}
+                                            {/* IMAGEN CON FALLBACK DE ERROR Y BUSQUEDA ROBUSTA */}
                                             <img 
                                                 src={getImg(carta)} 
                                                 alt={carta.name} 
-                                                className="w-full h-auto object-cover" 
+                                                className="w-full h-auto object-cover min-h-[100px]" 
                                                 loading="lazy" 
                                                 onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/250x350?text=No+Image"; }}
                                             />
@@ -410,7 +423,11 @@ export default function DeckBuilder() {
                                         </button>
                                         <h3 className="text-[9px] sm:text-[10px] text-center text-slate-400 mt-1 truncate group-hover:text-orange-400 transition-colors">{carta.name}</h3>
                                     </div>
-                                ))}
+                                )) : (
+                                    <div className="col-span-full text-center text-slate-500 mt-10">
+                                        <p>No se encontraron cartas.</p>
+                                    </div>
+                                )}
                             </div>
                         )}
                         {showScrollTop && (<button onClick={scrollToTop} className="fixed bottom-20 right-4 md:bottom-8 md:right-8 z-40 bg-slate-800/80 backdrop-blur border border-slate-600 p-2 rounded-full shadow-lg text-orange-500 hover:bg-slate-700 transition animate-bounce">⬆</button>)}
