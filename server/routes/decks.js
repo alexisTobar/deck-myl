@@ -7,26 +7,21 @@ const verifyToken = require('../middleware/verifyToken');
 // ==========================================
 
 // 1. OBTENER MAZOS DE LA COMUNIDAD (GET)
-// Nota: Esta ruta va ANTES de /:id para evitar conflictos
 router.get('/community/all', async (req, res) => {
     try {
-        // ¿Queremos solo los Top 3? (viene en la url: ?top=true)
         const isTop = req.query.top === 'true';
 
-        // Buscamos solo los que sean públicos (isPublic: true)
-        // .populate('user', 'name') sirve para traer el nombre del creador en vez de solo su ID
-        let query = Deck.find({ isPublic: true }).populate('user', 'name');
+        // ✅ MEJORA: .populate('user', 'username') para traer el nick "Juegos Vikingos"
+        let query = Deck.find({ isPublic: true }).populate('user', 'username');
 
         if (isTop) {
-            // Traemos todos los públicos y los ordenamos por cantidad de likes (Mayor a menor)
             const allPublic = await query;
             const top3 = allPublic
-                .sort((a, b) => b.likes.length - a.likes.length)
+                .sort((a, b) => (b.likes ? b.likes.length : 0) - (a.likes ? a.likes.length : 0))
                 .slice(0, 3);
             
             return res.json(top3);
         } else {
-            // Si no es top, traemos los más recientes primero
             query = query.sort({ createdAt: -1 });
             const decks = await query;
             res.json(decks);
@@ -55,27 +50,28 @@ router.get('/my-decks', verifyToken, async (req, res) => {
 // 3. GUARDAR UN MAZO NUEVO (POST)
 router.post('/', verifyToken, async (req, res) => {
     try {
-        const { name, cards } = req.body;
+        // ✅ MEJORA: Ahora recibimos 'format' e 'isPublic' del frontend
+        const { name, cards, format, isPublic } = req.body;
 
         if (!name || !cards || cards.length === 0) {
             return res.status(400).json({ error: "El mazo debe tener nombre y cartas" });
         }
 
-        // Formateamos las cartas para asegurar que guardamos la imagen y datos clave
         const formattedCards = cards.map(c => ({
             cardId: c._id || c.cardId,
-            quantity: c.cantidad || c.quantity || 1, // Aseguramos que sea al menos 1
+            quantity: c.cantidad || c.quantity || 1,
             name: c.name,
             slug: c.slug,
             type: c.type,
-            imgUrl: c.imgUrl || c.imageUrl || c.img // Guardamos la URL segura
+            imgUrl: c.imgUrl || c.imageUrl || c.img
         }));
 
         const newDeck = new Deck({
             user: req.user.id,
             name: name,
             cards: formattedCards,
-            isPublic: false, // Por defecto nacen privados
+            format: format || 'imperio', // ✅ Guardamos el formato (imperio o primer_bloque)
+            isPublic: isPublic || false, // ✅ Guardamos si el usuario lo quiso hacer público de entrada
             likes: []
         });
 
@@ -92,21 +88,16 @@ router.post('/', verifyToken, async (req, res) => {
 router.put('/privacy/:id', verifyToken, async (req, res) => {
     try {
         const deck = await Deck.findById(req.params.id);
-        
         if (!deck) return res.status(404).json({ error: 'Mazo no encontrado' });
 
-        // Verificamos que seas el dueño
         if (deck.user.toString() !== req.user.id) {
-            return res.status(401).json({ error: 'No tienes permiso para editar este mazo' });
+            return res.status(401).json({ error: 'No autorizado' });
         }
 
-        // Invertimos el valor (Si es true pasa a false, si es false pasa a true)
         deck.isPublic = !deck.isPublic;
-        
         await deck.save();
         res.json(deck);
     } catch (err) {
-        console.error(err);
         res.status(500).json({ error: 'Error al cambiar privacidad' });
     }
 });
@@ -117,19 +108,15 @@ router.put('/like/:id', verifyToken, async (req, res) => {
         const deck = await Deck.findById(req.params.id);
         if (!deck) return res.status(404).json({ error: 'Mazo no encontrado' });
 
-        // Lógica de Toggle (Si ya está, lo quita. Si no está, lo pone)
         if (deck.likes.includes(req.user.id)) {
-            // Quitar like (filtrar el array para sacar mi ID)
             deck.likes = deck.likes.filter(id => id.toString() !== req.user.id);
         } else {
-            // Dar like
             deck.likes.push(req.user.id);
         }
 
         await deck.save();
-        res.json(deck.likes); // Devolvemos solo el array de likes actualizado
+        res.json(deck.likes);
     } catch (err) {
-        console.error(err);
         res.status(500).json({ error: 'Error al dar like' });
     }
 });
@@ -137,10 +124,11 @@ router.put('/like/:id', verifyToken, async (req, res) => {
 // 6. ACTUALIZAR CONTENIDO DEL MAZO (PUT)
 router.put('/:id', verifyToken, async (req, res) => {
     try {
-        const { name, cards } = req.body;
+        // ✅ MEJORA: También permitimos actualizar el formato y la privacidad al editar
+        const { name, cards, format, isPublic } = req.body;
 
         const deck = await Deck.findOne({ _id: req.params.id, user: req.user.id });
-        if (!deck) return res.status(404).json({ error: "Mazo no encontrado o no autorizado" });
+        if (!deck) return res.status(404).json({ error: "No encontrado" });
 
         const formattedCards = cards.map(c => ({
             cardId: c.cardId || c._id,
@@ -153,13 +141,15 @@ router.put('/:id', verifyToken, async (req, res) => {
 
         deck.name = name;
         deck.cards = formattedCards;
+        if (format) deck.format = format; // ✅ Actualizamos formato si viene
+        if (isPublic !== undefined) deck.isPublic = isPublic; // ✅ Actualizamos privacidad si viene
 
         await deck.save();
         res.json(deck);
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: "Error al actualizar el mazo" });
+        res.status(500).json({ error: "Error al actualizar" });
     }
 });
 
@@ -167,17 +157,12 @@ router.put('/:id', verifyToken, async (req, res) => {
 router.delete('/:id', verifyToken, async (req, res) => {
     try {
         const deck = await Deck.findOne({ _id: req.params.id, user: req.user.id });
-
-        if (!deck) {
-            return res.status(404).json({ error: "Mazo no encontrado o no te pertenece" });
-        }
+        if (!deck) return res.status(404).json({ error: "No autorizado" });
 
         await Deck.findByIdAndDelete(req.params.id);
-        res.json({ message: "Mazo eliminado correctamente" });
-
+        res.json({ message: "Eliminado" });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al eliminar el mazo" });
+        res.status(500).json({ error: "Error al eliminar" });
     }
 });
 

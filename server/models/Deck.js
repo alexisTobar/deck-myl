@@ -3,13 +3,12 @@ const mongoose = require('mongoose');
 const CardSchema = new mongoose.Schema({
     slug: String,
     name: String,
-    imgUrl: String, // La imagen segura que arreglamos
+    imgUrl: String, 
     imageUrl: String,
     img: String,
     quantity: { type: Number, default: 1 },
     type: String,
     cost: Number,
-    // ... otros campos que uses
 });
 
 const DeckSchema = new mongoose.Schema({
@@ -24,14 +23,21 @@ const DeckSchema = new mongoose.Schema({
     },
     cards: [CardSchema],
     
-    // --- NUEVOS CAMPOS PARA LA COMUNIDAD ---
+    // ✅ CAMBIO CRUCIAL: Agregar el campo format
+    format: {
+        type: String,
+        required: true,
+        enum: ['imperio', 'primer_bloque'], // Solo permite estos dos valores
+        default: 'imperio'
+    },
+    
     isPublic: {
         type: Boolean,
-        default: false // Por defecto son privados
+        default: false 
     },
     likes: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User' // Guardamos la ID de quien dio like para que no repita
+        ref: 'User' 
     }],
     createdAt: {
         type: Date,
