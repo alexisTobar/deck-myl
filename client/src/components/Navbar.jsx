@@ -9,12 +9,17 @@ export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState("");
 
+  // ✅ LÓGICA CLAVE: Si estamos en el constructor, NO mostramos el Navbar ni el Dock
+  // Esto evita que el Dock del Home tape los botones del Builder
+  if (location.pathname.includes("builder")) {
+    return null;
+  }
+
   // --- DETECCIÓN DE FORMATO ACTUAL ---
   const isImperio = location.pathname.includes("/imperio");
   const isPB = location.pathname.includes("/primer-bloque");
   const formatPrefix = isImperio ? "/imperio" : isPB ? "/primer-bloque" : "";
 
-  // Colores dinámicos para el Dock
   const themeColor = isPB ? "text-yellow-500" : isImperio ? "text-orange-500" : "text-blue-400";
   const activeBg = isPB ? "bg-yellow-500/10" : isImperio ? "bg-orange-500/10" : "bg-blue-500/10";
   const themeBtn = isPB ? "bg-yellow-600" : isImperio ? "bg-orange-600" : "bg-blue-600";
@@ -40,7 +45,6 @@ export default function Navbar() {
     navigate("/");
   };
 
-  // Clase para los links del Dock inferior
   const getMobileLinkClass = (path) => 
     location.pathname === path 
       ? `${themeColor} ${activeBg} font-bold` 
@@ -59,7 +63,7 @@ export default function Navbar() {
 
   return (
     <>
-      {/* --- NAVBAR DESKTOP (PC) --- */}
+      {/* --- NAVBAR DESKTOP --- */}
       <nav className="hidden md:flex bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-50 px-10 justify-between items-center shadow-xl">
         <Link to="/" className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-500 italic">
           MITOSAPP ⚔️
@@ -70,7 +74,7 @@ export default function Navbar() {
           <Link to={formatPrefix ? `${formatPrefix}/community` : "/community"} className={location.pathname.includes("/community") ? themeColor : "text-slate-400 hover:text-white"}>Comunidad</Link>
           <Link to="/my-decks" className={location.pathname === "/my-decks" ? themeColor : "text-slate-400 hover:text-white"}>Mis Mazos</Link>
           
-          <button onClick={handleCreateClick} className={`${themeBtn} text-white px-5 py-2 rounded-xl transition shadow-lg hover:brightness-110`}>
+          <button onClick={handleCreateClick} className={`${themeBtn} text-white px-5 py-2 rounded-xl transition shadow-lg`}>
             + Crear Mazo
           </button>
         </div>
@@ -92,7 +96,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* --- ✅ BOTONES MÓVILES (DOCK INFERIOR RESTAURADO) --- */}
+      {/* --- DOCK MÓVIL (Solo visible en Home, Comunidad y Mis Mazos) --- */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 px-2 py-2 flex justify-around items-center z-[100] pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
         
         <Link to={formatPrefix || "/"} className={`flex flex-col items-center p-2 rounded-xl transition-all ${getMobileLinkClass(formatPrefix || "/")}`}>
@@ -105,7 +109,6 @@ export default function Navbar() {
             <span className="text-[10px] mt-1 font-bold">Comunidad</span>
         </Link>
 
-        {/* BOTÓN CENTRAL FLOTANTE PARA CREAR */}
         <button 
             onClick={handleCreateClick}
             className={`-translate-y-6 ${themeBtn} w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl border-4 border-slate-950 active:scale-90 transition-transform`}
@@ -122,10 +125,9 @@ export default function Navbar() {
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
             <span className="text-[10px] mt-1 font-bold">{isLoggedIn ? "Perfil" : "Entrar"}</span>
         </Link>
-
       </div>
 
-      {/* --- MODAL DE SELECCIÓN (Destino) --- */}
+      {/* --- MODAL DE FORMATO --- */}
       {showFormatModal && (
         <div className="fixed inset-0 z-[110] bg-black/90 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setShowFormatModal(false)}>
             <div className="bg-slate-800 border border-slate-600 p-6 rounded-[32px] shadow-2xl max-w-sm w-full text-center relative overflow-hidden" onClick={e => e.stopPropagation()}>
