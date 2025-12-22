@@ -4,18 +4,19 @@ import { useState, useEffect } from "react";
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [showFormatModal, setShowFormatModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState("");
 
-  // --- DETECCIÓN DE FORMATO ACTUAL ---
+  // --- LÓGICA DE ERA ACTUAL ---
   const isImperio = location.pathname.includes("/imperio");
   const isPB = location.pathname.includes("/primer-bloque");
-  const isBuilder = location.pathname.includes("builder"); // Detectamos si es el constructor
+  const isBuilder = location.pathname.includes("builder");
   const formatPrefix = isImperio ? "/imperio" : isPB ? "/primer-bloque" : "";
 
-  const themeColor = isPB ? "text-yellow-500" : isImperio ? "text-orange-500" : "text-blue-400";
-  const themeBtn = isPB ? "bg-yellow-600" : isImperio ? "bg-orange-600" : "bg-blue-600";
+  // Colores dinámicos según la Era
+  const themeColor = isPB ? "text-yellow-400" : isImperio ? "text-orange-500" : "text-blue-400";
+  const themeGlow = isPB ? "shadow-yellow-500/20" : isImperio ? "shadow-orange-500/20" : "shadow-blue-500/20";
+  const themeBtn = isPB ? "bg-gradient-to-r from-yellow-600 to-yellow-500" : "bg-gradient-to-r from-orange-600 to-orange-500";
 
   useEffect(() => {
     const checkSession = () => {
@@ -23,7 +24,7 @@ export default function Navbar() {
       const user = JSON.parse(localStorage.getItem("user"));
       if (token && user) {
         setIsLoggedIn(true);
-        setUsername(user.username || "Usuario");
+        setUsername(user.username || "Invocador");
       } else {
         setIsLoggedIn(false);
       }
@@ -38,57 +39,124 @@ export default function Navbar() {
     navigate("/");
   };
 
-  const handleGoToBuilder = (selectedFormat) => {
-    setShowFormatModal(false);
-    const path = selectedFormat === 'imperio' ? "/imperio/builder" : "/primer-bloque/builder";
-    navigate(path);
-  };
-
   return (
     <>
-      {/* --- NAVBAR DESKTOP --- */}
-      {/* Si es builder, lo hacemos un poco más pequeño para ganar espacio */}
-      <nav className={`${isBuilder ? 'py-2 px-6' : 'py-4 px-10'} hidden md:flex bg-slate-900 border-b border-slate-800 sticky top-0 z-50 justify-between items-center shadow-xl`}>
-        <Link to="/" className={`${isBuilder ? 'text-xl' : 'text-2xl'} font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-500 italic`}>
-          MITOSAPP ⚔️
-        </Link>
-        
-        <div className="flex gap-8 items-center font-bold text-[10px] uppercase tracking-tighter">
-          <Link to="/" className="text-slate-400 hover:text-white">Cambiar Era</Link>
-          <Link to={formatPrefix || "/"} className={location.pathname === (formatPrefix || "/") ? themeColor : "text-slate-400 hover:text-white"}>Home Era</Link>
-          <Link to="/community" className="text-slate-400 hover:text-white">Comunidad</Link>
-          <Link to="/my-decks" className="text-slate-400 hover:text-white">Mis Mazos</Link>
-        </div>
-
-        <div className="flex items-center gap-4">
-          {isLoggedIn ? (
-            <div className="flex items-center gap-3">
-              <span className="text-white font-bold text-[10px]">{username}</span>
-              <button onClick={handleLogout} className="text-red-500 text-[10px] font-black hover:underline">SALIR</button>
+      {/* --- NAVBAR PRINCIPAL (WEB & MOBILE BASE) --- */}
+      <nav className={`sticky top-0 z-[100] w-full border-b border-white/5 bg-slate-950/80 backdrop-blur-xl transition-all duration-300 ${isBuilder ? 'py-2' : 'py-3'}`}>
+        <div className="max-w-[1400px] mx-auto px-4 md:px-10 flex justify-between items-center">
+          
+          {/* LOGO CON GLOW */}
+          <Link to="/" className="group flex items-center gap-2">
+            <div className={`p-1.5 rounded-xl bg-slate-900 border border-white/10 group-hover:border-orange-500/50 transition-all shadow-2xl ${themeGlow}`}>
+               <span className="text-xl">⚔️</span>
             </div>
-          ) : (
-            <Link to="/login" className={`${themeBtn} text-white px-4 py-1.5 rounded-lg text-[10px] font-black`}>INGRESAR</Link>
-          )}
+            <div className="flex flex-col leading-none">
+              <span className="text-lg font-black tracking-tighter text-white group-hover:text-orange-500 transition-colors">
+                MITOS<span className="text-orange-600">APP</span>
+              </span>
+              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Digital Edition</span>
+            </div>
+          </Link>
+
+          {/* MENÚ CENTRAL (ESCRITORIO) */}
+          <div className="hidden lg:flex items-center gap-1 bg-slate-900/50 p-1 rounded-2xl border border-white/5">
+            <NavLink to="/" label="Portal" icon="🏠" />
+            <NavLink to="/community" label="Comunidad" icon="🌍" />
+            <NavLink to="/my-decks" label="Mis Mazos" icon="🃏" />
+            
+            {/* ✅ BOTÓN DINÁMICO: Solo aparece si está en una Era */}
+            {(isImperio || isPB) && (
+              <Link 
+                to={`${formatPrefix}/builder`}
+                className={`ml-2 px-5 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider text-white shadow-xl hover:scale-105 active:scale-95 transition-all ${themeBtn}`}
+              >
+                🛠️ Construir Mazo
+              </Link>
+            )}
+          </div>
+
+          {/* ÁREA DE USUARIO */}
+          <div className="flex items-center gap-3">
+            {isLoggedIn ? (
+              <div className="flex items-center gap-4">
+                <div className="hidden md:flex flex-col items-end">
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Bienvenido</span>
+                  <span className={`text-sm font-bold ${themeColor}`}>{username}</span>
+                </div>
+                <button 
+                  onClick={handleLogout}
+                  className="group flex items-center gap-2 bg-slate-900 hover:bg-red-600/10 border border-white/5 hover:border-red-600/50 p-2 md:px-4 md:py-2 rounded-xl transition-all"
+                >
+                  <span className="hidden md:block text-[10px] font-black text-slate-400 group-hover:text-red-500 uppercase">Salir</span>
+                  <svg className="w-5 h-5 text-slate-500 group-hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </button>
+              </div>
+            ) : (
+              <Link to="/login" className="px-6 py-2 rounded-xl bg-white text-black text-xs font-black uppercase hover:bg-orange-500 hover:text-white transition-all shadow-xl">
+                Ingresar
+              </Link>
+            )}
+          </div>
         </div>
       </nav>
 
-      {/* --- DOCK MÓVIL --- */}
-      {/* El Dock móvil solo se muestra si NO estamos en el builder para no tapar los controles de cartas */}
+      {/* --- DOCK MÓVIL (VISIBLE SOLO EN MÓVIL Y FUERA DEL BUILDER) --- */}
       {!isBuilder && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 px-2 py-2 flex justify-around items-center z-[100] pb-6 shadow-2xl text-white">
-          <Link to="/" className="flex flex-col items-center p-2 text-slate-400"><span className="text-[10px] font-bold">Portal</span></Link>
-          <Link to="/community" className="flex flex-col items-center p-2 text-slate-400"><span className="text-[10px] font-bold">Comunidad</span></Link>
-          <button onClick={() => setShowFormatModal(true)} className={`-translate-y-6 ${themeBtn} w-14 h-14 rounded-full flex items-center justify-center text-white border-4 border-slate-900 shadow-2xl`}>+</button>
-          <Link to="/my-decks" className="flex flex-col items-center p-2 text-slate-400"><span className="text-[10px] font-bold">Mazos</span></Link>
-          {isLoggedIn ? (
-            <button onClick={handleLogout} className="p-2 text-red-500 font-bold text-[10px]">Salir</button>
-          ) : (
-            <Link to="/login" className="p-2 text-blue-400 font-bold text-[10px]">Login</Link>
-          )}
+        <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-[400px]">
+          <div className="bg-slate-900/90 backdrop-blur-2xl border border-white/10 p-2 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex justify-around items-center">
+            <MobileIcon to="/" icon="🏠" label="Inicio" active={location.pathname === "/"} />
+            <MobileIcon to="/community" icon="🌍" label="Arena" active={location.pathname.includes("community")} />
+            
+            {/* Botón Central de Construcción (Si aplica) */}
+            {(isImperio || isPB) ? (
+              <Link to={`${formatPrefix}/builder`} className={`-translate-y-6 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl border-4 border-slate-950 active:scale-90 transition-all ${themeBtn}`}>
+                <span className="text-2xl">🛠️</span>
+              </Link>
+            ) : (
+              <div className="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-slate-600 border-4 border-slate-950 -translate-y-6">
+                <span className="text-xl">🔒</span>
+              </div>
+            )}
+
+            <MobileIcon to="/my-decks" icon="🃏" label="Mazo" active={location.pathname === "/my-decks"} />
+            {isLoggedIn ? (
+               <button onClick={handleLogout} className="flex flex-col items-center gap-1 p-2">
+                  <span className="text-xl">🚪</span>
+                  <span className="text-[9px] font-black uppercase text-slate-500">Salir</span>
+               </button>
+            ) : (
+               <MobileIcon to="/login" icon="👤" label="Login" active={location.pathname === "/login"} />
+            )}
+          </div>
         </div>
       )}
-
-      {/* Modal de selección de Era se mantiene igual... */}
     </>
+  );
+}
+
+// Sub-componente para links de escritorio
+function NavLink({ to, label, icon }) {
+  const location = useLocation();
+  const isActive = location.pathname === to || (to !== "/" && location.pathname.includes(to));
+  
+  return (
+    <Link 
+      to={to} 
+      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all ${isActive ? 'bg-white/10 text-white shadow-inner' : 'text-slate-500 hover:text-slate-200'}`}
+    >
+      <span>{icon}</span> {label}
+    </Link>
+  );
+}
+
+// Sub-componente para iconos móviles
+function MobileIcon({ to, icon, label, active }) {
+  return (
+    <Link to={to} className="flex flex-col items-center gap-1 p-2">
+      <span className={`text-xl transition-all ${active ? 'scale-110' : 'opacity-50 grayscale'}`}>{icon}</span>
+      <span className={`text-[9px] font-black uppercase tracking-tighter ${active ? 'text-orange-500' : 'text-slate-500'}`}>{label}</span>
+    </Link>
   );
 }

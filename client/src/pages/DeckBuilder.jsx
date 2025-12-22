@@ -9,12 +9,12 @@ const EDICIONES_PB = { "colmillos_avalon": "Colmillos de Avalon", "extensiones_p
 
 const RAZAS_PB = ["Caballero", "Héroe", "Defensor", "Eterno", "Dragón", "Olímpico", "Desafiante", "Faraón", "Faerie", "Titán", "Sombra", "Sacerdote"];
 const TIPOS_ID_TO_NAME = { 1: "Aliado", 2: "Talismán", 3: "Arma", 4: "Tótem", 5: "Oro" };
-const TIPOS_FILTRO = [ { id: 1, label: "Aliado", value: 1 }, { id: 2, label: "Talismán", value: 2 }, { id: 3, label: "Arma", value: 3 }, { id: 4, label: "Tótem", value: 4 }, { id: 5, label: "Oro", value: 5 } ];
+const TIPOS_FILTRO = [{ id: 1, label: "Aliado", value: 1 }, { id: 2, label: "Talismán", value: 2 }, { id: 3, label: "Arma", value: 3 }, { id: 4, label: "Tótem", value: 4 }, { id: 5, label: "Oro", value: 5 }];
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 
-const getImg = (c) => { 
-    if (!c) return "https://via.placeholder.com/250x350?text=Error"; 
-    return c.imgUrl || c.imageUrl || c.img || c.imagen || c.image || (c.image && c.image.secure_url) || "https://via.placeholder.com/250x350?text=No+Image"; 
+const getImg = (c) => {
+    if (!c) return "https://via.placeholder.com/250x350?text=Error";
+    return c.imgUrl || c.imageUrl || c.img || c.imagen || c.image || (c.image && c.image.secure_url) || "https://via.placeholder.com/250x350?text=No+Image";
 };
 
 const animationStyles = `
@@ -46,7 +46,7 @@ export default function DeckBuilder() {
     const [busqueda, setBusqueda] = useState("");
     const [cartas, setCartas] = useState([]);
     const [loading, setLoading] = useState(false);
-    
+
     // Estados del Mazo
     const [mazo, setMazo] = useState([]);
     const [nombreMazo, setNombreMazo] = useState("");
@@ -64,8 +64,8 @@ export default function DeckBuilder() {
     const edicionesActivas = useMemo(() => isPB ? EDICIONES_PB : EDICIONES_IMPERIO, [isPB]);
 
     // Visuales Dinámicos
-    const glowClass = isPB 
-        ? "shadow-[0_0_15px_rgba(234,179,8,0.5)] border-yellow-500/60" 
+    const glowClass = isPB
+        ? "shadow-[0_0_15px_rgba(234,179,8,0.5)] border-yellow-500/60"
         : "shadow-[0_0_15px_rgba(249,115,22,0.5)] border-orange-500/60";
 
     // Selección automática de edición
@@ -80,7 +80,7 @@ export default function DeckBuilder() {
             const d = location.state.deckToEdit;
             setNombreMazo(d.name);
             setEditingDeckId(d._id);
-            if(d.isPublic !== undefined) setIsPublic(d.isPublic);
+            if (d.isPublic !== undefined) setIsPublic(d.isPublic);
             setMazo(d.cards.map(c => ({ ...c, cantidad: c.quantity || 1, imgUrl: getImg(c) })));
         }
     }, [location]);
@@ -99,7 +99,7 @@ export default function DeckBuilder() {
                 const res = await fetch(`${BACKEND_URL}/api/cards/search?${params.toString()}`);
                 const data = await res.json();
                 setCartas(Array.isArray(data) ? data : (data.results || []));
-            } catch (e) { console.error(e); } 
+            } catch (e) { console.error(e); }
             finally { setLoading(false); }
         };
         const timer = setTimeout(fetchCartas, 300);
@@ -129,10 +129,10 @@ export default function DeckBuilder() {
         try {
             const url = editingDeckId ? `${BACKEND_URL}/api/decks/${editingDeckId}` : `${BACKEND_URL}/api/decks`;
             const method = editingDeckId ? "PUT" : "POST";
-            const res = await fetch(url, { 
-                method, 
-                headers: { "Content-Type": "application/json", "auth-token": token }, 
-                body: JSON.stringify({ name: nombreMazo, cards: mazo.map(c => ({...c, quantity: c.cantidad})), format: formato, isPublic: isPublic }) 
+            const res = await fetch(url, {
+                method,
+                headers: { "Content-Type": "application/json", "auth-token": token },
+                body: JSON.stringify({ name: nombreMazo, cards: mazo.map(c => ({ ...c, quantity: c.cantidad })), format: formato, isPublic: isPublic })
             });
             if (res.ok) navigate("/my-decks");
             else alert("Error al guardar");
@@ -159,10 +159,10 @@ export default function DeckBuilder() {
     return (
         <div className={`h-screen flex flex-col md:flex-row font-sans ${isPB ? 'bg-[#0c0e14]' : 'bg-[#110d0a]'} text-white overflow-hidden`}>
             <style>{animationStyles}</style>
-            
+
             {/* IZQUIERDA: BUSCADOR */}
             <div className="flex-1 flex flex-col h-full relative overflow-hidden">
-                
+
                 {/* Cabecera con Botón Volver */}
                 <div className={`bg-slate-900/50 backdrop-blur-md border-b ${isPB ? 'border-yellow-900/30' : 'border-orange-900/30'} p-3 flex justify-between items-center px-4`}>
                     <div className="flex items-center gap-3">
@@ -176,7 +176,7 @@ export default function DeckBuilder() {
                             </h2>
                         </div>
                     </div>
-                    <button onClick={() => {if(window.confirm("¿Salir del constructor?")) navigate(isPB ? "/primer-bloque" : "/imperio")}} className="text-[10px] font-bold text-slate-500 hover:text-red-500 transition uppercase">Cancelar</button>
+                    <button onClick={() => { if (window.confirm("¿Salir del constructor?")) navigate(isPB ? "/primer-bloque" : "/imperio") }} className="text-[10px] font-bold text-slate-500 hover:text-red-500 transition uppercase">Cancelar</button>
                 </div>
 
                 {/* Filtros */}
@@ -302,15 +302,62 @@ export default function DeckBuilder() {
             )}
 
             {/* MODAL ZOOM */}
+            {/* MODAL ZOOM REPARADO PARA MÓVIL */}
             {cardToZoom && (
-                <div className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4 animate-fade-in" onClick={() => setCardToZoom(null)}>
-                    <div className="relative max-w-sm w-full flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
-                        <img src={getImg(cardToZoom)} className={`w-full h-auto rounded-3xl shadow-2xl border-4 ${isPB ? 'border-yellow-500/40' : 'border-orange-500/40'}`} alt="zoom" />
-                        <div className="mt-8 flex items-center gap-8 bg-slate-900 p-4 rounded-full border border-slate-700 shadow-2xl">
-                            <button onClick={() => handleRemove(cardToZoom.slug)} className="w-14 h-14 rounded-full bg-red-600 text-white text-3xl font-black shadow-lg">-</button>
-                            <span className="text-4xl font-black">{mazo.find(x => x.slug === cardToZoom.slug)?.cantidad || 0}</span>
-                            <button onClick={() => handleAdd(cardToZoom)} disabled={(mazo.find(x => x.slug === cardToZoom.slug)?.cantidad || 0) >= 3} className="w-14 h-14 rounded-full bg-green-600 text-white text-3xl font-black shadow-lg disabled:opacity-20">+</button>
+                <div
+                    className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4 touch-none"
+                    onClick={() => setCardToZoom(null)} // Cerrar al tocar el fondo
+                >
+                    {/* Botón Cerrar flotante para móviles */}
+                    <button
+                        className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-2xl font-bold border border-white/20 z-[210] transition-all active:scale-90"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setCardToZoom(null);
+                        }}
+                    >
+                        ✕
+                    </button>
+
+                    <div
+                        className="relative max-w-sm w-full flex flex-col items-center animate-in zoom-in duration-200"
+                        onClick={(e) => e.stopPropagation()} // Evita que se cierre al tocar la carta
+                    >
+                        {/* Imagen de la Carta */}
+                        <img
+                            src={getImg(cardToZoom)}
+                            className="w-full h-auto rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] border-4 border-white/10"
+                            alt="zoom"
+                        />
+
+                        {/* Controles de Cantidad (Estilo Pro) */}
+                        <div className="mt-8 flex items-center gap-8 bg-slate-900/90 p-4 px-8 rounded-full border border-slate-700 shadow-2xl backdrop-blur-md">
+                            <button
+                                onClick={() => handleRemove(cardToZoom.slug)}
+                                className="w-12 h-12 rounded-full bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white text-3xl font-black transition-all border border-red-500/30 active:scale-90"
+                            >
+                                -
+                            </button>
+
+                            <div className="flex flex-col items-center min-w-[60px]">
+                                <span className="text-4xl font-black text-white leading-none">
+                                    {mazo.find(x => x.slug === cardToZoom.slug)?.cantidad || 0}
+                                </span>
+                                <span className="text-[10px] font-bold text-slate-500 uppercase mt-1">En Mazo</span>
+                            </div>
+
+                            <button
+                                onClick={() => handleAdd(cardToZoom)}
+                                className="w-12 h-12 rounded-full bg-green-600/20 hover:bg-green-600 text-green-500 hover:text-white text-3xl font-black transition-all border border-green-500/30 active:scale-90"
+                            >
+                                +
+                            </button>
                         </div>
+
+                        {/* Texto de ayuda para el usuario */}
+                        <p className="mt-6 text-slate-500 text-xs font-bold uppercase tracking-widest animate-pulse">
+                            Toca fuera para volver
+                        </p>
                     </div>
                 </div>
             )}
