@@ -13,12 +13,10 @@ export default function Navbar() {
   const isImperio = location.pathname.includes("/imperio");
   const isPB = location.pathname.includes("/primer-bloque");
   
-  // Determinamos el prefijo para las rutas (Comunidad, Inicio, etc)
   const formatPrefix = isImperio ? "/imperio" : isPB ? "/primer-bloque" : "";
-  const formatKey = isImperio ? "imperio" : isPB ? "primer_bloque" : "";
 
-  // Colores dinámicos para el tema visual
-  const themeText = isPB ? "text-yellow-500" : "text-orange-500";
+  // Colores dinámicos
+  const themeText = isPB ? "text-yellow-500" : isImperio ? "text-orange-500" : "text-blue-400";
   const themeBtn = isPB ? "bg-yellow-600 hover:bg-yellow-500" : "bg-orange-600 hover:bg-orange-500";
 
   useEffect(() => {
@@ -47,7 +45,6 @@ export default function Navbar() {
       ? `${themeText} font-bold` 
       : "text-slate-400 hover:text-white transition-colors";
 
-  // Maneja la creación de mazo o apertura de modal
   const handleCreateClick = () => {
     if (formatPrefix) navigate(`${formatPrefix}/builder`);
     else setShowFormatModal(true);
@@ -67,9 +64,16 @@ export default function Navbar() {
         </Link>
         
         <div className="hidden md:flex gap-8 items-center font-bold text-xs uppercase tracking-tighter">
-          {/* ✅ Rutas inteligentes: Si estás en Imperio, Inicio y Comunidad te llevan a Imperio */}
+          {/* ✅ Corregido: Si no hay prefijo, va a "/" o "/community" global */}
           <Link to={formatPrefix || "/"} className={getLinkClass(formatPrefix || "/")}>Inicio</Link>
-          <Link to={`${formatPrefix}/community`} className={getLinkClass(`${formatPrefix}/community`)}>Comunidad</Link>
+          
+          <Link 
+            to={formatPrefix ? `${formatPrefix}/community` : "/community"} 
+            className={getLinkClass(formatPrefix ? `${formatPrefix}/community` : "/community")}
+          >
+            Comunidad
+          </Link>
+
           <Link to="/my-decks" className={getLinkClass("/my-decks")}>Mis Mazos</Link>
           
           <button onClick={handleCreateClick} className={`${themeBtn} text-white px-5 py-2 rounded-xl transition shadow-lg`}>
@@ -97,9 +101,9 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* MODAL DE FORMATO (PARA CUANDO ESTÁS EN EL HOME PRINCIPAL) */}
+      {/* MODAL DE FORMATO */}
       {showFormatModal && (
-        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowFormatModal(false)}>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowFormatModal(false)}>
             <div className="bg-slate-800 border border-slate-600 p-6 rounded-[32px] shadow-2xl max-w-sm w-full text-center relative overflow-hidden" onClick={e => e.stopPropagation()}>
                 <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-yellow-500`}></div>
                 <h3 className="text-2xl font-black text-white mb-6 uppercase italic">Elige tu Destino</h3>

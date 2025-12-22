@@ -3,8 +3,8 @@ import Navbar from "./components/Navbar";
 import HomePortal from "./pages/Home";           
 import ImperioHome from "./pages/ImperioHome";   
 import PBHome from "./pages/PrimerBloqueHome";    
-import ImperioBuilder from "./pages/ImperioBuilder"; // Nuevo
-import PBBuilder from "./pages/PBBuilder";           // Nuevo
+import ImperioBuilder from "./pages/ImperioBuilder"; 
+import PBBuilder from "./pages/PBBuilder";           
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import MyDecks from "./pages/MyDecks";
@@ -31,6 +31,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/my-decks" element={<MyDecks />} />
+        {/* ✅ Nueva Ruta Global para Comunidad */}
+        <Route path="/community" element={<Community />} />
 
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
