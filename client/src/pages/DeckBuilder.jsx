@@ -3,8 +3,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { toPng } from 'html-to-image';
 import BACKEND_URL from "../config";
 
-// --- CONFIGURACIÓN DE CONSTANTES ---
-const EDICIONES = {
+// --- CONFIGURACIÓN DE CONSTANTES POR FORMATO ---
+
+// 1. FORMATO IMPERIO
+const EDICIONES_IMPERIO = {
     "kvsm_titanes": "KVSM Titanes", "libertadores": "Libertadores", "onyria": "Onyria",
     "toolkit_cenizas_de_fuego": "Toolkit Cenizas", "toolkit_hielo_inmortal": "Toolkit Hielo",
     "lootbox_2024": "Lootbox 2024", "secretos_arcanos": "Secretos Arcanos", "bestiarium": "Bestiarium",
@@ -12,30 +14,74 @@ const EDICIONES = {
     "espiritu_samurai": "Espíritu Samurai"
 };
 
+// 2. FORMATO PRIMER BLOQUE (Actualizado con tu lista real de BD)
+const EDICIONES_PB = {
+    // Estas son las que me mostraste que fallaban, ahora están corregidas:
+    "colmillos_avalon": "Colmillos de Avalon",
+    "extensiones_pb_2023": "Extensiones PB 2023",
+    "espada_sagrada_aniversario": "Espada Sagrada (Aniv)",
+    "Relatos": "Relatos", // Ojo con la mayúscula, así está en tu BD
+    "hijos-de-daana-aniversario": "Hijos de Daana (Aniv)", // Ojo con los guiones
+
+    // El resto de tus ediciones:
+    "25 aniversario": "25 Aniversario",
+    "Festividades": "Festividades",
+    "aniversario-de-ra": "Aniversario de Ra",
+    "colmillos_inframundo": "Colmillos del Inframundo",
+    "encrucijada": "Encrucijada",
+    "festividades": "Festividades (Extra)",
+    "helenica_aniversario": "Helénica (Aniv)",
+    "inferno": "Inferno",
+    "jo lanzamiento ra": "Jo Lanzamiento Ra",
+    "kit-de-batalla-de-ra": "Kit de Batalla de Ra",
+    "kit-raciales-2023": "Kit Raciales 2023",
+    "kit-raciales-2024": "Kit Raciales 2024",
+    "leyendas_pb_2.0": "Leyendas PB 2.0",
+    "lootbox-2023": "Lootbox 2023",
+    "lootbox-pb-2024": "Lootbox PB 2024",
+    "promo_daana": "Promo Daana",
+    "promo_helenica": "Promo Helénica",
+    "relatos-de-espada-sagrada-aniversario": "Relatos Espada Sagrada",
+    "relatos-de-helenica": "Relatos Helénica",
+    "toolkit-pb-2025": "Toolkit PB 2025",
+    "toolkit_pb_fuerza_y_destino": "Toolkit Fuerza y Destino",
+    "toolkit_pb_magia_y_divinidad": "Toolkit Magia y Divinidad",
+    "toolkit_pb_nobleza_y_poder": "Toolkit Nobleza y Poder"
+};
+
 const TIPOS_ID_TO_NAME = { 1: "Aliado", 2: "Talismán", 3: "Arma", 4: "Tótem", 5: "Oro" };
-const TIPOS_FILTRO = [{ id: 1, label: "Aliado", value: 1 }, { id: 2, label: "Talismán", value: 2 }, { id: 3, label: "Arma", value: 3 }, { id: 4, label: "Tótem", value: 4 }, { id: 5, label: "Oro", value: 5 }];
+
+const TIPOS_FILTRO = [
+    { id: 1, label: "Aliado", value: 1 }, 
+    { id: 2, label: "Talismán", value: 2 }, 
+    { id: 3, label: "Arma", value: 3 }, 
+    { id: 4, label: "Tótem", value: 4 }, 
+    { id: 5, label: "Oro", value: 5 }
+];
+
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 
-// --- ESTILOS DE ANIMACIÓN ---
+// --- HELPER UNIVERSAL DE IMÁGENES (GLOBAL) ---
+const getImg = (c) => {
+    if (!c) return "https://via.placeholder.com/250x350?text=Error";
+    // Prioridad: 1. imgUrl (GitHub PB) -> 2. imageUrl (Imperio) -> 3. img (Legacy)
+    return c.imgUrl || c.imageUrl || c.img || "https://via.placeholder.com/250x350?text=No+Image";
+};
+
 const animationStyles = `
   @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  
-  /* --- NUEVA ANIMACIÓN "POP" ELÁSTICO --- */
   @keyframes popElastic {
     0% { transform: scale(0.5); opacity: 0; }
-    50% { transform: scale(1.4); } /* Crece mucho */
-    70% { transform: scale(0.9); } /* Se encoge un poco */
-    100% { transform: scale(1); opacity: 1; } /* Vuelve a normal */
+    50% { transform: scale(1.4); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
   }
-
   .animate-slide-in { animation: slideInRight 0.3s ease-out forwards; }
   .animate-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   .animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
   .card-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-  
-  /* Clase para el contador */
   .animate-pop { animation: popElastic 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 `;
 
@@ -46,35 +92,41 @@ export default function DeckBuilder() {
     const gridContainerRef = useRef(null);
     const galleryRef = useRef(null);
 
-    // --- ESTADO DE COLUMNAS (Responsive) ---
+    // --- ESTADOS ---
     const [gridColumns, setGridColumns] = useState(window.innerWidth < 768 ? 3 : 5);
-
-    // --- ESTADOS DE DATOS ---
-    const [edicionSeleccionada, setEdicionSeleccionada] = useState("kvsm_titanes");
+    const [formato, setFormato] = useState("imperio"); 
+    const [edicionSeleccionada, setEdicionSeleccionada] = useState(""); // Iniciamos vacío para ver todo
     const [tipoSeleccionado, setTipoSeleccionado] = useState("");
     const [busqueda, setBusqueda] = useState("");
     const [cartas, setCartas] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // --- ESTADOS DEL MAZO ---
     const [mazo, setMazo] = useState([]);
     const [nombreMazo, setNombreMazo] = useState("");
-    const [editingDeckId, setEditingDeckId] = useState(null); // ID si estamos editando
+    const [editingDeckId, setEditingDeckId] = useState(null); 
 
-    // --- ESTADOS DE UI ---
     const [showFilters, setShowFilters] = useState(false);
     const [showMobileList, setShowMobileList] = useState(false);
     const [modalMazoOpen, setModalMazoOpen] = useState(false);
     const [vistaPorTipo, setVistaPorTipo] = useState(true);
     const [modalGuardarOpen, setModalGuardarOpen] = useState(false);
     const [guardando, setGuardando] = useState(false);
-    const [cardToZoom, setCardToZoom] = useState(null); // La Lupa
+    const [cardToZoom, setCardToZoom] = useState(null); 
     const [showScrollTop, setShowScrollTop] = useState(false);
 
-    // --- HELPER: Obtener imagen segura ---
-    const getImg = (c) => c.imgUrl || c.imageUrl || c.img || "https://via.placeholder.com/250x350?text=No+Image";
+    const edicionesActivas = useMemo(() => {
+        return formato === 'imperio' ? EDICIONES_IMPERIO : EDICIONES_PB;
+    }, [formato]);
 
-    // --- 1. DETECTAR SCROLL ---
+    const cambiarFormato = (nuevoFormato) => {
+        setFormato(nuevoFormato);
+        setEdicionSeleccionada(""); // Resetear edición al cambiar formato es clave
+        setTipoSeleccionado("");
+        setBusqueda("");
+        setCartas([]);
+    };
+
+    // --- DETECTAR SCROLL ---
     useEffect(() => {
         const container = gridContainerRef.current;
         if (!container) return;
@@ -85,39 +137,54 @@ export default function DeckBuilder() {
 
     const scrollToTop = () => gridContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // --- 2. CARGAR MAZO SI ES EDICIÓN ---
+    // --- CARGAR MAZO PARA EDITAR ---
     useEffect(() => {
         if (location.state && location.state.deckToEdit) {
             const deck = location.state.deckToEdit;
             setNombreMazo(deck.name);
             setEditingDeckId(deck._id);
+            
+            if(deck.format) setFormato(deck.format);
 
-            // Normalizar datos de cartas al formato del constructor
             const cartasCargadas = deck.cards.map(c => ({
                 ...c,
-                cantidad: c.quantity || 1, // Asegurar que quantity se mapee a cantidad
+                cantidad: c.quantity || 1, 
                 type: c.type,
                 imgUrl: getImg(c)
             }));
 
             setMazo(cartasCargadas);
-            // Limpiar el estado de la navegación para no re-cargar al refrescar mal
             window.history.replaceState({}, document.title);
         }
     }, [location]);
 
-    // --- 3. BUSCADOR DE CARTAS (CON CACHÉ) ---
+    // --- BUSCADOR DE CARTAS ---
     useEffect(() => {
         const fetchCartas = async () => {
-            if (!busqueda && !edicionSeleccionada && !tipoSeleccionado) { setCartas([]); return; }
+            if (!busqueda && !edicionSeleccionada && !tipoSeleccionado) { 
+                // Si no hay filtros, mostramos cartas vacías o podríamos cargar un default
+                // Para este caso, dejaremos que el usuario seleccione una edición para empezar
+                if(formato === 'imperio' && !edicionSeleccionada) {
+                     setCartas([]); 
+                     return;
+                }
+                // Si es PB y no ha seleccionado nada, podríamos mostrar todo, pero es mucho.
+                // Mejor esperar selección.
+                if(formato === 'primer_bloque' && !edicionSeleccionada && !busqueda) {
+                    setCartas([]);
+                    return;
+                }
+            }
 
-            const cacheKey = `search-v2-${busqueda}-${edicionSeleccionada}-${tipoSeleccionado}`;
+            // ⚠️ CACHÉ FIX: v6-final asegura que lea las nuevas ediciones y URLs
+            const cacheKey = `search-v10-RELOAD-${formato}-${busqueda}-${edicionSeleccionada}-${tipoSeleccionado}`;
             const cachedData = localStorage.getItem(cacheKey);
             if (cachedData) { setCartas(JSON.parse(cachedData)); return; }
 
             setLoading(true);
             try {
                 const params = new URLSearchParams();
+                params.append("format", formato); 
                 if (busqueda) params.append("q", busqueda);
                 if (edicionSeleccionada) params.append("edition", edicionSeleccionada);
                 if (tipoSeleccionado) params.append("type", tipoSeleccionado);
@@ -132,9 +199,9 @@ export default function DeckBuilder() {
 
         const timer = setTimeout(() => { fetchCartas(); }, 300);
         return () => clearTimeout(timer);
-    }, [busqueda, edicionSeleccionada, tipoSeleccionado]);
+    }, [busqueda, edicionSeleccionada, tipoSeleccionado, formato]); 
 
-    // --- LÓGICA AGREGAR/QUITAR ---
+    // --- LÓGICA MAZO ---
     const handleAdd = (carta) => {
         const existe = mazo.find(c => c.slug === carta.slug);
         const totalCartas = mazo.reduce((acc, c) => acc + c.cantidad, 0);
@@ -147,7 +214,7 @@ export default function DeckBuilder() {
                 setMazo([...mazo]);
             }
         } else {
-            const nombreTipo = TIPOS_ID_TO_NAME[carta.type] || carta.type || "Otros";
+            const nombreTipo = (!isNaN(carta.type) ? TIPOS_ID_TO_NAME[carta.type] : carta.type) || "Otros";
             setMazo([...mazo, { ...carta, type: nombreTipo, cantidad: 1 }]);
         }
     };
@@ -158,7 +225,7 @@ export default function DeckBuilder() {
         setMazo(newMazo);
     };
 
-    // --- 4. GUARDAR MAZO (POST O PUT) ---
+    // --- GUARDAR ---
     const handleSaveDeck = async () => {
         if (!nombreMazo.trim()) return alert("Escribe un nombre para tu mazo");
         const token = localStorage.getItem("token");
@@ -166,11 +233,9 @@ export default function DeckBuilder() {
 
         setGuardando(true);
         try {
-            // Determinar si es Crear (POST) o Editar (PUT)
             const url = editingDeckId ? `${BACKEND_URL}/api/decks/${editingDeckId}` : `${BACKEND_URL}/api/decks`;
             const method = editingDeckId ? "PUT" : "POST";
 
-            // Mapear al formato que espera el backend (quantity en lugar de cantidad)
             const cardsPayload = mazo.map(c => ({
                 ...c,
                 quantity: c.cantidad
@@ -179,12 +244,16 @@ export default function DeckBuilder() {
             const res = await fetch(url, {
                 method: method,
                 headers: { "Content-Type": "application/json", "auth-token": token },
-                body: JSON.stringify({ name: nombreMazo, cards: cardsPayload })
+                body: JSON.stringify({ 
+                    name: nombreMazo, 
+                    cards: cardsPayload,
+                    format: formato 
+                })
             });
 
             if (res.ok) {
                 alert(editingDeckId ? "¡Mazo actualizado! 🔄" : "¡Mazo guardado! 🎉");
-                navigate("/my-decks"); // Redirigir a la lista de mazos
+                navigate("/my-decks");
             } else {
                 const data = await res.json();
                 alert(data.error || "Error al guardar");
@@ -197,11 +266,11 @@ export default function DeckBuilder() {
         }
     };
 
-    // --- 5. CAPTURA DE PANTALLA ---
+    // --- SCREENSHOT ---
     const handleTakeScreenshot = useCallback(async () => {
         if (!galleryRef.current) return;
         setGuardando(true);
-        await new Promise(r => setTimeout(r, 200)); // Esperar render
+        await new Promise(r => setTimeout(r, 200)); 
         try {
             const node = galleryRef.current;
             const width = node.scrollWidth + 40;
@@ -221,7 +290,6 @@ export default function DeckBuilder() {
         finally { setGuardando(false); }
     }, [nombreMazo]);
 
-    // --- HELPERS VISUALIZACIÓN ---
     const mazoAgrupado = useMemo(() => {
         const grupos = {};
         mazo.forEach(carta => {
@@ -243,28 +311,27 @@ export default function DeckBuilder() {
         <div className="h-screen flex flex-col md:flex-row font-sans bg-slate-900 text-white overflow-hidden">
             <style>{animationStyles}</style>
 
-            {/* ================= IZQUIERDA: BUSCADOR Y GRID ================= */}
+            {/* ================= IZQUIERDA ================= */}
             <div className="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
+                
+                {/* Switch Formato */}
+                <div className="bg-slate-950 border-b border-slate-800 p-2 flex justify-center gap-4 shadow-inner">
+                    <button onClick={() => cambiarFormato('imperio')} className={`text-xs font-bold px-4 py-1.5 rounded-full transition-all duration-300 border ${formato === 'imperio' ? 'bg-orange-600 border-orange-500 text-white shadow-[0_0_15px_rgba(234,88,12,0.4)]' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}`}>🏛️ IMPERIO</button>
+                    <button onClick={() => cambiarFormato('primer_bloque')} className={`text-xs font-bold px-4 py-1.5 rounded-full transition-all duration-300 border ${formato === 'primer_bloque' ? 'bg-yellow-600 border-yellow-500 text-white shadow-[0_0_15px_rgba(202,138,4,0.4)]' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}`}>📜 PRIMER BLOQUE</button>
+                </div>
+
                 {/* Header Buscador */}
                 <div className="bg-slate-900 border-b border-slate-800 p-2 z-30 flex items-center gap-2 shadow-md">
-
-                    {/* --- BOTÓN NUEVO: SALIR / ATRÁS --- */}
-                    {/* --- BOTÓN NUEVO: VOLVER ATRÁS --- */}
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white hover:border-red-500/50 hover:bg-red-500/10 transition"
-                        title="Volver atrás"
-                    >
+                    <button onClick={() => navigate(-1)} className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white hover:border-red-500/50 hover:bg-red-500/10 transition" title="Volver atrás">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                     </button>
-                    {/* ---------------------------------- */}
 
                     <button onClick={() => setShowFilters(!showFilters)} className={`p-2 rounded-lg border md:hidden ${showFilters ? 'bg-orange-600 border-orange-500' : 'bg-slate-800 border-slate-700'}`}>
                         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
                     </button>
 
                     <div className="flex-1 relative">
-                        <input type="text" placeholder="Buscar..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="w-full p-2.5 pl-9 rounded-lg bg-slate-800 border border-slate-700 text-sm focus:border-orange-500 focus:outline-none transition-all" />
+                        <input type="text" placeholder={`Buscar en ${formato === 'imperio' ? 'Imperio' : 'Primer Bloque'}...`} value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="w-full p-2.5 pl-9 rounded-lg bg-slate-800 border border-slate-700 text-sm focus:border-orange-500 focus:outline-none transition-all" />
                         <span className="absolute left-3 top-2.5 text-slate-500">🔍</span>
                     </div>
 
@@ -275,9 +342,9 @@ export default function DeckBuilder() {
                     </div>
 
                     <div className="hidden md:flex gap-2 ml-2">
-                        <select value={edicionSeleccionada} onChange={(e) => setEdicionSeleccionada(e.target.value)} className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-xs hover:border-orange-500 cursor-pointer">
-                            <option value="">📚 Ediciones</option>
-                            {Object.entries(EDICIONES).map(([slug, label]) => (<option key={slug} value={slug}>{label}</option>))}
+                        <select value={edicionSeleccionada} onChange={(e) => setEdicionSeleccionada(e.target.value)} className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-xs hover:border-orange-500 cursor-pointer max-w-[150px]">
+                            <option value="">📚 {formato === 'imperio' ? 'Ediciones Imperio' : 'Ediciones PB'}</option>
+                            {Object.entries(edicionesActivas).map(([slug, label]) => (<option key={slug} value={slug}>{label}</option>))}
                         </select>
                         <select value={tipoSeleccionado} onChange={(e) => setTipoSeleccionado(e.target.value)} className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-xs hover:border-orange-500 cursor-pointer">
                             <option value="">🃏 Tipos</option>
@@ -290,8 +357,8 @@ export default function DeckBuilder() {
                 <div className={`md:hidden overflow-hidden transition-all duration-300 bg-slate-800 border-b border-slate-700 ${showFilters ? 'max-h-40 p-2' : 'max-h-0'}`}>
                     <div className="flex gap-2">
                         <select value={edicionSeleccionada} onChange={(e) => setEdicionSeleccionada(e.target.value)} className="flex-1 p-2 rounded bg-slate-900 border border-slate-600 text-xs">
-                            <option value="">📚 Todas</option>
-                            {Object.entries(EDICIONES).map(([slug, label]) => (<option key={slug} value={slug}>{label}</option>))}
+                            <option value="">📚 {formato === 'imperio' ? 'Imperio' : 'Primer Bloque'}</option>
+                            {Object.entries(edicionesActivas).map(([slug, label]) => (<option key={slug} value={slug}>{label}</option>))}
                         </select>
                         <select value={tipoSeleccionado} onChange={(e) => setTipoSeleccionado(e.target.value)} className="flex-1 p-2 rounded bg-slate-900 border border-slate-600 text-xs">
                             <option value="">🃏 Todos</option>
@@ -308,31 +375,29 @@ export default function DeckBuilder() {
                         ) : (
                             <div className="grid gap-2 transition-all duration-300 ease-in-out" style={{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }}>
                                 {cartas.map((carta) => (
-                                    <div key={carta._id} className="relative group cursor-pointer animate-fade-in card-transition transform hover:-translate-y-1 hover:z-10" onClick={() => handleAdd(carta)}>
+                                    <div key={carta._id || carta.slug} className="relative group cursor-pointer animate-fade-in card-transition transform hover:-translate-y-1 hover:z-10" onClick={() => handleAdd(carta)}>
                                         <div className="rounded-xl overflow-hidden border-2 border-slate-800 relative bg-slate-800 shadow-lg group-hover:shadow-orange-500/50 group-hover:border-orange-500 transition-all duration-300 transform group-hover:scale-[1.02]">
+                                            
+                                            {/* IMAGEN CON FALLBACK DE ERROR */}
+                                            <img 
+                                                src={getImg(carta)} 
+                                                alt={carta.name} 
+                                                className="w-full h-auto object-cover" 
+                                                loading="lazy" 
+                                                onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/250x350?text=No+Image"; }}
+                                            />
 
-                                            {/* Imagen de la carta */}
-                                            <img src={getImg(carta)} alt={carta.name} className="w-full h-auto object-cover" loading="lazy" />
-
-                                            {/* --- CONTADOR NUEVO Y MEJORADO --- */}
+                                            {/* Contador Burbuja */}
                                             {mazo.filter(c => c.slug === carta.slug).length > 0 && (
                                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                                                    {/* Fondo oscuro suave para que resalte el número */}
                                                     <div className="absolute inset-0 bg-black/20"></div>
-
-                                                    {/* La Burbuja Elástica */}
-                                                    <div
-                                                        key={mazo.find(c => c.slug === carta.slug).cantidad} // <--- ESTO REINICIA LA ANIMACIÓN
-                                                        className="animate-pop w-14 h-14 rounded-full bg-gradient-to-br from-orange-500 to-red-600 border-4 border-slate-900 shadow-2xl flex items-center justify-center transform"
-                                                    >
-                                                        <span className="text-white font-black text-2xl drop-shadow-md">
-                                                            {mazo.find(c => c.slug === carta.slug).cantidad}
-                                                        </span>
+                                                    <div key={mazo.find(c => c.slug === carta.slug).cantidad} className="animate-pop w-14 h-14 rounded-full bg-gradient-to-br from-orange-500 to-red-600 border-4 border-slate-900 shadow-2xl flex items-center justify-center transform">
+                                                        <span className="text-white font-black text-2xl drop-shadow-md">{mazo.find(c => c.slug === carta.slug).cantidad}</span>
                                                     </div>
                                                 </div>
                                             )}
 
-                                            {/* Efecto Hover PC (+ gigante) */}
+                                            {/* Hover */}
                                             <div className="hidden md:flex absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 items-center justify-center transition-opacity z-0 pointer-events-none">
                                                 <span className="text-white font-bold text-4xl drop-shadow-md translate-y-8 group-hover:translate-y-0 transition-transform duration-300">+</span>
                                             </div>
@@ -402,46 +467,31 @@ export default function DeckBuilder() {
                 </div>
             </div>
 
-            {/* ================= MODALES Y LUPA ================= */}
-
-            {/* LUPA (ZOOM CARD) */}
+            {/* ================= MODALES ================= */}
+            {/* LUPA */}
             {cardToZoom && (
                 <div className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4 animate-fade-in" onClick={() => setCardToZoom(null)}>
                     <div className="relative max-w-lg w-full flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
-                        <img src={getImg(cardToZoom)} alt={cardToZoom.name} className="w-full max-h-[70vh] object-contain rounded-lg shadow-[0_0_50px_rgba(255,100,0,0.3)]" />
+                        <img 
+                            src={getImg(cardToZoom)} 
+                            alt={cardToZoom.name} 
+                            className="w-full max-h-[70vh] object-contain rounded-lg shadow-[0_0_50px_rgba(255,100,0,0.3)]"
+                            onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/250x350?text=No+Image"; }}
+                        />
                         <div className="mt-6 flex items-center gap-6">
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRemove(cardToZoom.slug);
-                                }}
-                                className="w-12 h-12 rounded-full bg-slate-800 border border-slate-600 text-red-500 text-2xl font-bold flex items-center justify-center hover:bg-red-900/50 transition"
-                            >
-                                -
-                            </button>
-
+                            <button onClick={(e) => { e.stopPropagation(); handleRemove(cardToZoom.slug); }} className="w-12 h-12 rounded-full bg-slate-800 border border-slate-600 text-red-500 text-2xl font-bold flex items-center justify-center hover:bg-red-900/50 transition">-</button>
                             <div className="text-white font-bold flex flex-col items-center">
                                 <span className="text-orange-500 text-sm tracking-widest uppercase">CANTIDAD</span>
                                 <span className="text-3xl">{mazo.find(c => c.slug === cardToZoom.slug)?.cantidad || 0}</span>
                             </div>
-
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleAdd(cardToZoom);
-                                }}
-                                disabled={(mazo.find(c => c.slug === cardToZoom.slug)?.cantidad || 0) >= 3}
-                                className="w-12 h-12 rounded-full bg-slate-800 border border-slate-600 text-green-500 text-2xl font-bold flex items-center justify-center hover:bg-green-900/50 transition disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                                +
-                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); handleAdd(cardToZoom); }} disabled={(mazo.find(c => c.slug === cardToZoom.slug)?.cantidad || 0) >= 3} className="w-12 h-12 rounded-full bg-slate-800 border border-slate-600 text-green-500 text-2xl font-bold flex items-center justify-center hover:bg-green-900/50 transition disabled:opacity-30 disabled:cursor-not-allowed">+</button>
                         </div>
                         <button onClick={() => setCardToZoom(null)} className="absolute -top-12 right-0 md:-right-12 text-white text-3xl opacity-70 hover:opacity-100 transition">✕</button>
                     </div>
                 </div>
             )}
 
-            {/* LISTA RÁPIDA MÓVIL */}
+            {/* LISTA MÓVIL */}
             {showMobileList && (
                 <div className="md:hidden fixed inset-0 z-[60]">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setShowMobileList(false)}></div>
@@ -459,7 +509,7 @@ export default function DeckBuilder() {
                                             {mazoAgrupado[tipo].map(c => (
                                                 <div key={c.slug} className="flex items-center justify-between bg-slate-900 p-2 rounded-lg border border-slate-800 shadow-sm">
                                                     <div className="flex items-center gap-3 overflow-hidden flex-1">
-                                                        <img src={getImg(c)} className="w-10 h-10 object-cover rounded border border-slate-700" alt="" />
+                                                        <img src={getImg(c)} className="w-10 h-10 object-cover rounded border border-slate-700" alt="" onError={(e) => { e.target.src = "https://via.placeholder.com/250x350?text=No+Image"; }}/>
                                                         <span className="text-xs font-bold text-slate-200 truncate">{c.name}</span>
                                                     </div>
                                                     <div className="flex items-center gap-3 bg-slate-800 rounded-lg px-2 py-1 border border-slate-700">
@@ -478,7 +528,7 @@ export default function DeckBuilder() {
                 </div>
             )}
 
-            {/* MODAL GALERÍA COMPLETA */}
+            {/* GALERÍA MODAL */}
             {modalMazoOpen && (
                 <div className="fixed inset-0 bg-slate-950 z-[100] flex flex-col animate-slide-up">
                     <div className="p-4 bg-slate-900 border-b border-slate-800 flex justify-between items-center shadow-lg">
@@ -532,12 +582,11 @@ export default function DeckBuilder() {
     );
 }
 
-// SUBCOMPONENTE DE CARTA EN GALERÍA
+// SUBCOMPONENTE DE CARTA EN GALERÍA (Ahora usa getImg correctamente)
 function CardItem({ carta, onAdd, onRemove, onZoom }) {
     const copias = Array.from({ length: carta.cantidad });
     const offset = 20;
     const totalHeight = 150 + ((carta.cantidad - 1) * offset);
-    const getImg = (c) => c.imgUrl || c.imageUrl || c.img || "https://via.placeholder.com/250x350?text=No+Image";
 
     return (
         <div className="relative w-full select-none animate-fade-in" style={{ height: `${totalHeight}px` }} onClick={() => onZoom(carta)}>
@@ -545,7 +594,13 @@ function CardItem({ carta, onAdd, onRemove, onZoom }) {
                 const isTop = index === copias.length - 1;
                 return (
                     <div key={index} className="absolute top-0 left-0 w-full rounded border border-slate-800 overflow-hidden bg-slate-800 shadow-sm" style={{ transform: `translateY(${index * offset}px)`, zIndex: index }}>
-                        <img src={getImg(carta)} alt={carta.name} crossOrigin="anonymous" className="w-full h-auto block" />
+                        <img 
+                            src={getImg(carta)} 
+                            alt={carta.name} 
+                            crossOrigin="anonymous" 
+                            className="w-full h-auto block" 
+                            onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/250x350?text=No+Image"; }}
+                        />
                         {isTop && (
                             <div className="hide-on-capture absolute bottom-0 left-0 right-0 bg-black/70 p-1 flex justify-center gap-3 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                                 <button onClick={(e) => { e.stopPropagation(); onRemove(carta.slug); }} className="text-red-400 font-bold text-lg leading-none w-6 h-6 flex items-center justify-center bg-white/10 rounded hover:bg-white/20 transition">-</button>

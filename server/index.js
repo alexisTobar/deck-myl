@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path'); // ◄--- IMPORTANTE: Necesario para rutas de archivos
 require('dotenv').config();
 
 // --- IMPORTAR RUTAS ---
@@ -13,30 +14,31 @@ const app = express();
 // --- CONFIGURACIÓN DE PUERTO ---
 const PORT = process.env.PORT || 4000;
 
-// --- MIDDLEWARES (Aquí está el cambio clave) ---
-// Configuración explícita para evitar errores de Google/Vercel
 // --- MIDDLEWARES ---
-// server/index.js
-
 app.use(cors({
     origin: [
-        "http://localhost:5173",
-        "https://deck-myl.vercel.app" // TU FRONTEND
+        "http://localhost:5173",      // Tu Frontend Local (Vite)
+        "http://localhost:3000",      // Por si usas Create React App
+        "https://deck-myl.vercel.app" // Tu Frontend en Producción
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    // 👇 ESTA LÍNEA ES LA CLAVE QUE TE FALTA 👇
     allowedHeaders: ['Content-Type', 'Authorization', 'auth-token'] 
 }));
 
 app.use(express.json());
 
-// --- RUTAS ---
+// 👇👇👇 AQUÍ ESTÁ LA MAGIA PARA LAS IMÁGENES 👇👇👇
+// Esto le dice al servidor: "Cuando pidan algo que empiece con /uploads, 
+// busca el archivo en la carpeta física 'uploads' de este proyecto".
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// --- RUTAS API ---
 app.use('/api/auth', authRoutes);
 app.use('/api/cards', cardRoutes);
 app.use('/api/decks', decksRoute);
 
-// Ruta de prueba
+// Ruta de prueba base
 app.get('/', (req, res) => {
     res.send('Servidor Deck-MyL funcionando correctamente 🚀');
 });
