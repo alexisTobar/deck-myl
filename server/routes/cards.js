@@ -2,62 +2,66 @@ const router = require('express').Router();
 const Card = require('../models/Card');
 
 // RUTA DE BÚSQUEDA AVANZADA
-// Soporta: ?q=texto & edition=slug & type=1 (o "Aliado") & format=primer_bloque
+// Soporta: ?q=texto & edition=slug & type=Aliado & format=primer_bloque & race=Dragón
 router.get('/search', async (req, res) => {
     try {
-        const { q, edition, type, format } = req.query;
+        const { q, edition, type, format, race } = req.query;
 
         let query = {};
 
-        // --- 0. FILTRO DE FORMATO (NUEVO) ---
-        // Si no especifican formato, buscamos solo en Imperio (para compatibilidad)
-        // Si especifican 'primer_bloque', buscamos ahí.
+        // --- 0. FILTRO DE FORMATO ---
+        // Por defecto imperio si no se especifica
         query.format = format || 'imperio';
 
-        // --- 1. Filtro por Texto (Nombre) ---
+        // --- 1. FILTRO POR RAZA (NUEVO) ---
+        // Vital para Primer Bloque. Se busca de forma exacta (case-insensitive)
+        if (race) {
+            query.race = { $regex: new RegExp(`^${race}$`, "i") };
+        }
+
+        // --- 2. Filtro por Texto (Nombre) ---
         if (q) {
             query.name = { $regex: q, $options: 'i' };
         }
 
-        // --- 2. Filtro por Edición ---
-        // En PB la edición se guarda en 'edition', en Imperio en 'edition_slug'
-        // El script de migración guardó la edición en 'edition', así que hacemos esto:
+        // --- 3. Filtro por Edición ---
         if (edition) {
             if (query.format === 'primer_bloque') {
-                query.edition = edition; // Busca en el campo 'edition'
+                query.edition = edition; 
             } else {
-                query.edition_slug = edition; // Busca en el campo antiguo
+                query.edition_slug = edition; 
             }
         }
 
-        // --- 3. Filtro por Tipo (Híbrido: Número o Texto) ---
+        // --- 4. Filtro por Tipo (Híbrido: Número o Texto) ---
         if (type) {
             const isNumber = !isNaN(type);
-            
             if (isNumber) {
-                // Es Imperio (usa IDs numéricos: 1, 2, 3...)
                 query.type = parseInt(type);
             } else {
-                // Es Primer Bloque (usa Strings: "Aliado", "Oro", etc.)
                 query.type = type;
             }
         }
 
-        // Si no hay filtros (salvo el formato por defecto), devolvemos vacío
-        if (!q && !edition && !type) {
+        // --- 5. VALIDACIÓN DE FILTROS ---
+        // ✅ MEJORA: Ahora permitimos que la búsqueda funcione si existe AL MENOS un criterio,
+        // incluyendo la nueva variable 'race'.
+        if (!q && !edition && !type && !race) {
             return res.json([]);
         }
 
-        // Límite dinámico
-        const limit = (edition || type) ? 1000 : 100;
+        // Límite dinámico para no saturar la conexión
+        // Si hay filtros específicos (edición, tipo o raza) aumentamos el límite
+        const limit = (edition || type || race) ? 1000 : 100;
 
-        const cards = await Card.find(query).limit(limit);
+        // Ejecución de la consulta
+        const cards = await Card.find(query).limit(limit).lean();
 
         res.json(cards);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error buscando cartas' });
+        console.error("Error en search cards:", error);
+        res.status(500).json({ error: 'Error buscando cartas en la base de datos' });
     }
 });
 

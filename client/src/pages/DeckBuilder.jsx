@@ -9,12 +9,12 @@ const EDICIONES_PB = { "colmillos_avalon": "Colmillos de Avalon", "extensiones_p
 
 const RAZAS_PB = ["Caballero", "Héroe", "Defensor", "Eterno", "Dragón", "Olímpico", "Desafiante", "Faraón", "Faerie", "Titán", "Sombra", "Sacerdote"];
 const TIPOS_ID_TO_NAME = { 1: "Aliado", 2: "Talismán", 3: "Arma", 4: "Tótem", 5: "Oro" };
-const TIPOS_FILTRO = [ { id: 1, label: "Aliado", value: 1 }, { id: 2, label: "Talismán", value: 2 }, { id: 3, label: "Arma", value: 3 }, { id: 4, label: "Tótem", value: 4 }, { id: 5, label: "Oro", value: 5 } ];
+const TIPOS_FILTRO = [{ id: 1, label: "Aliado", value: 1 }, { id: 2, label: "Talismán", value: 2 }, { id: 3, label: "Arma", value: 3 }, { id: 4, label: "Tótem", value: 4 }, { id: 5, label: "Oro", value: 5 }];
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 
-const getImg = (c) => { 
-    if (!c) return "https://via.placeholder.com/250x350?text=Error"; 
-    return c.imgUrl || c.imageUrl || c.img || c.imagen || c.image || (c.image && c.image.secure_url) || "https://via.placeholder.com/250x350?text=No+Image"; 
+const getImg = (c) => {
+    if (!c) return "https://via.placeholder.com/250x350?text=Error";
+    return c.imgUrl || c.imageUrl || c.img || c.imagen || c.image || (c.image && c.image.secure_url) || "https://via.placeholder.com/250x350?text=No+Image";
 };
 
 const animationStyles = `
@@ -82,31 +82,56 @@ export default function DeckBuilder() {
             const deck = location.state.deckToEdit;
             setNombreMazo(deck.name);
             setEditingDeckId(deck._id);
-            if(deck.isPublic !== undefined) setIsPublic(deck.isPublic);
+            if (deck.isPublic !== undefined) setIsPublic(deck.isPublic);
             setMazo(deck.cards.map(c => ({ ...c, cantidad: c.quantity || 1, imgUrl: getImg(c) })));
         }
     }, [location]);
 
     // Buscador
     useEffect(() => {
+        // Dentro de useEffect [busqueda, edicionSeleccionada, tipoSeleccionado, razaSeleccionada, formato]
+
         const fetchCartas = async () => {
-            if (!edicionSeleccionada && !busqueda) return;
+            // Si no hay criterios, no buscamos
+            if (!edicionSeleccionada && !busqueda && !razaSeleccionada) return;
+
             setLoading(true);
             try {
-                const params = new URLSearchParams({ format: formato, edition: edicionSeleccionada });
+                const params = new URLSearchParams();
+                params.append("format", formato);
+
+                // Si hay búsqueda por texto, la agregamos
                 if (busqueda) params.append("q", busqueda);
+
+                // Si hay tipo (Aliado, Talismán, etc)
                 if (tipoSeleccionado) params.append("type", tipoSeleccionado);
-                if (formato === "primer_bloque" && razaSeleccionada) params.append("race", razaSeleccionada);
+
+                // ✅ MEJORA: Filtro de Raza (Solo para Primer Bloque)
+                if (formato === "primer_bloque" && razaSeleccionada) {
+                    params.append("race", razaSeleccionada);
+                    // Opcional: Si buscas por raza, quizás quieras ver todas las ediciones de esa raza
+                    // if (!busqueda) params.delete("edition"); 
+                }
+
+                // Si hay edición seleccionada
+                if (edicionSeleccionada) params.append("edition", edicionSeleccionada);
 
                 const res = await fetch(`${BACKEND_URL}/api/cards/search?${params.toString()}`);
                 const data = await res.json();
+
+                // Limpiamos resultados si no hay coincidencias
                 setCartas(Array.isArray(data) ? data : (data.results || []));
-            } catch (e) { console.error(e); } 
-            finally { setLoading(false); }
+
+            } catch (error) {
+                console.error("Error en filtro de razas:", error);
+                setCartas([]);
+            } finally {
+                setLoading(false);
+            }
         };
         const timer = setTimeout(fetchCartas, 300);
         return () => clearTimeout(timer);
-    }, [busqueda, edicionSeleccionada, tipoSeleccionado, razaSeleccionada, formato]); 
+    }, [busqueda, edicionSeleccionada, tipoSeleccionado, razaSeleccionada, formato]);
 
     const handleAdd = (carta) => {
         const existe = mazo.find(c => c.slug === carta.slug);
@@ -131,10 +156,10 @@ export default function DeckBuilder() {
         try {
             const url = editingDeckId ? `${BACKEND_URL}/api/decks/${editingDeckId}` : `${BACKEND_URL}/api/decks`;
             const method = editingDeckId ? "PUT" : "POST";
-            const res = await fetch(url, { 
-                method, 
-                headers: { "Content-Type": "application/json", "auth-token": token }, 
-                body: JSON.stringify({ name: nombreMazo, cards: mazo.map(c => ({...c, quantity: c.cantidad})), format: formato, isPublic: isPublic }) 
+            const res = await fetch(url, {
+                method,
+                headers: { "Content-Type": "application/json", "auth-token": token },
+                body: JSON.stringify({ name: nombreMazo, cards: mazo.map(c => ({ ...c, quantity: c.cantidad })), format: formato, isPublic: isPublic })
             });
             if (res.ok) navigate("/my-decks");
         } catch (e) { console.error(e); } finally { setGuardando(false); }
@@ -245,7 +270,7 @@ export default function DeckBuilder() {
                 </div>
                 <div className="flex gap-2">
                     <button onClick={() => setShowMobileList(true)} className="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-tight shadow-md border border-slate-700">📋 Lista</button>
-                    <button onClick={() => {setModalMazoOpen(true); setVistaPorTipo(false);}} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-tight shadow-md border border-blue-500">👁️ Ver Deck</button>
+                    <button onClick={() => { setModalMazoOpen(true); setVistaPorTipo(false); }} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-tight shadow-md border border-blue-500">👁️ Ver Deck</button>
                     <button onClick={() => setModalGuardarOpen(true)} className="bg-orange-600 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-tight shadow-md border border-orange-500">💾</button>
                 </div>
             </div>
