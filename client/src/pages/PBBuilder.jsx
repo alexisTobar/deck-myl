@@ -95,6 +95,15 @@ export default function PBBuilder() {
         } catch (e) { alert("Error al guardar"); } finally { setGuardando(false); }
     };
 
+    const handleTakeScreenshot = useCallback(async () => {
+        if (!galleryRef.current) return;
+        setGuardando(true);
+        try {
+            const dataUrl = await toPng(galleryRef.current, { quality: 1.0, backgroundColor: '#0c0e14' });
+            const link = document.createElement('a'); link.download = `${nombreMazo || "Mazo_PB"}.png`; link.href = dataUrl; link.click();
+        } catch (err) { alert('Error captura'); } finally { setGuardando(false); }
+    }, [nombreMazo]);
+
     const mazoAgrupado = useMemo(() => {
         const g = {};
         mazo.forEach(c => { const t = c.type || "Otros"; if (!g[t]) g[t] = []; g[t].push(c); });
@@ -164,7 +173,7 @@ export default function PBBuilder() {
                             <h3 className="text-yellow-600 text-[10px] font-black border-b border-slate-700 mb-1">{t}</h3>
                             {mazoAgrupado[t].map(c => (
                                 <div key={c.slug} className="flex justify-between items-center text-xs py-1.5 px-2 bg-slate-800/40 rounded-lg mb-1 group">
-                                    <span className="truncate flex-1 cursor-pointer font-medium" onClick={() => setCardToZoom(c)}>{c.cantidad} x {c.name}</span>
+                                    <span className="truncate flex-1 cursor-pointer" onClick={() => setCardToZoom(c)}>{c.cantidad} x {c.name}</span>
                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button onClick={() => handleAdd(c)} className="text-green-500 font-bold">+</button>
                                         <button onClick={() => handleRemove(c.slug)} className="text-red-500 font-bold">-</button>
@@ -175,12 +184,12 @@ export default function PBBuilder() {
                     ))}
                 </div>
                 <div className="p-4 border-t border-slate-800 flex flex-col gap-2">
-                    <button onClick={() => setModalMazoOpen(true)} className="w-full bg-blue-600 py-2 rounded-xl font-bold text-xs uppercase">Galería</button>
+                    <button onClick={() => setModalMazoOpen(true)} className="w-full bg-blue-600 py-2 rounded-xl font-bold text-xs uppercase text-white">Ver Galería</button>
                     <button onClick={() => setModalGuardarOpen(true)} className="w-full bg-yellow-600 hover:bg-yellow-500 py-2 rounded-xl font-bold text-xs uppercase tracking-widest text-black">💾 GUARDAR</button>
                 </div>
             </div>
 
-            {/* ✅ FOOTER MÓVIL (RESTAURADO) */}
+            {/* FOOTER MÓVIL */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-2 pb-4 z-50 flex items-center justify-between shadow-2xl">
                 <div className="flex flex-col px-3">
                     <span className="text-[10px] text-slate-500 font-bold uppercase">Mazo</span>
@@ -193,12 +202,14 @@ export default function PBBuilder() {
                 </div>
             </div>
 
-            {/* MODALES IGUALES AL DE IMPERIO (Lista, Zoom, Guardar, Galería) */}
+            {/* --- MODALES --- */}
+
+            {/* MODAL LISTA MÓVIL */}
             {showMobileList && (
                 <div className="md:hidden fixed inset-0 z-[60] bg-black/80 flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
                     <div className="bg-slate-900 rounded-t-3xl h-[70vh] p-5 overflow-auto border-t border-slate-700" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-6 border-b border-slate-800 pb-2">
-                            <h3 className="text-xl font-black uppercase text-yellow-500 italic">Lista de Cartas ({totalCartas}/50)</h3>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-black uppercase text-yellow-500 italic">Lista de Cartas ({totalCartas}/50)</h3>
                             <button onClick={() => setShowMobileList(false)} className="text-2xl">✕</button>
                         </div>
                         {ORDER_TYPES.map(t => mazoAgrupado[t] && (
@@ -222,7 +233,62 @@ export default function PBBuilder() {
                     </div>
                 </div>
             )}
-            {/* Los otros modales (Zoom, Guardar, Galería) siguen la misma lógica dorada */}
+
+            {/* MODAL ZOOM */}
+            {cardToZoom && (
+                <div className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4" onClick={() => setCardToZoom(null)}>
+                    <div className="relative max-w-sm w-full flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+                        <img src={getImg(cardToZoom)} className="w-full h-auto rounded-2xl shadow-2xl border-4 border-yellow-500/20" />
+                        <div className="mt-6 flex items-center justify-center gap-8 bg-slate-900 p-4 rounded-full border border-slate-700 shadow-xl">
+                            <button onClick={() => handleRemove(cardToZoom.slug)} className="w-12 h-12 rounded-full bg-red-600 text-white text-2xl font-bold">-</button>
+                            <span className="text-3xl font-black">{mazo.find(x => x.slug === cardToZoom.slug)?.cantidad || 0}</span>
+                            <button onClick={() => handleAdd(cardToZoom)} className="w-12 h-12 rounded-full bg-green-600 text-white text-2xl font-bold">+</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL GALERÍA */}
+            {modalMazoOpen && (
+                <div className="fixed inset-0 bg-[#0c0e14] z-[100] flex flex-col">
+                    <div className="p-4 bg-slate-900 flex justify-between items-center px-6 border-b border-slate-800">
+                        <h2 className="text-lg font-black uppercase text-yellow-500 italic">Galería PB</h2>
+                        <button onClick={() => setModalMazoOpen(false)} className="bg-slate-800 p-2 rounded-full text-white">✕</button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar" ref={galleryRef}>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 pb-20">
+                            {mazo.map(c => (
+                                <div key={c.slug} className="relative" onClick={() => setCardToZoom(c)}>
+                                    <img src={getImg(c)} className="w-full h-auto rounded-lg shadow-lg" />
+                                    <div className="absolute bottom-0 right-0 bg-yellow-600 text-black px-2 font-black text-[10px] rounded-tl-lg shadow-2xl">x{c.cantidad}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="p-4 flex gap-4 justify-center bg-slate-900">
+                        <button onClick={handleTakeScreenshot} className="bg-blue-600 px-6 py-2 rounded-xl font-bold text-white shadow-lg">Descargar Imagen</button>
+                        <button onClick={() => setModalMazoOpen(false)} className="bg-slate-700 px-6 py-2 rounded-xl font-bold text-white shadow-lg">Cerrar</button>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL GUARDAR */}
+            {modalGuardarOpen && (
+                <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setModalGuardarOpen(false)}>
+                    <div className="bg-slate-800 p-6 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl text-white" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-xl font-black mb-6 uppercase text-yellow-500">Guardar Estrategia PB</h3>
+                        <input value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} className="w-full p-3 rounded-xl bg-slate-900 border border-slate-600 outline-none focus:border-yellow-500 mb-4" placeholder="Nombre del mazo..." />
+                        <label className="flex items-center gap-3 bg-slate-900 p-3 rounded-xl cursor-pointer">
+                            <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-5 h-5 accent-yellow-600" />
+                            <span className="text-sm font-bold text-slate-300">Público en comunidad 🌍</span>
+                        </label>
+                        <div className="flex justify-end gap-3 mt-8">
+                            <button onClick={() => setModalGuardarOpen(false)} className="text-slate-400 font-bold px-4 hover:text-white">Cancelar</button>
+                            <button onClick={handleSaveDeck} disabled={guardando || !nombreMazo.trim()} className="bg-yellow-600 text-black px-8 py-2 rounded-xl font-black shadow-lg uppercase tracking-widest">Confirmar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
