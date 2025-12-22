@@ -1,86 +1,17 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 export default function Home() {
-    const navigate = useNavigate();
+    // Solo necesitamos saber si está logueado para mostrar el botón correcto en el Hero (Portada)
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [userName, setUserName] = useState("");
 
-    // --- VERIFICAR SESIÓN AL CARGAR ---
     useEffect(() => {
         const token = localStorage.getItem("token");
-        const user = localStorage.getItem("user");
-        
-        if (token) {
-            setIsLoggedIn(true);
-            if (user) {
-                const parsedUser = JSON.parse(user);
-                setUserName(parsedUser.username || parsedUser.name); // Intenta obtener el nombre
-            }
-        }
+        setIsLoggedIn(!!token);
     }, []);
 
-    // --- FUNCIÓN CERRAR SESIÓN ---
-    const handleLogout = () => {
-        const confirmLogout = window.confirm("¿Seguro que quieres cerrar sesión?");
-        if (confirmLogout) {
-            localStorage.removeItem("token");
-            localStorage.removeItem("user");
-            setIsLoggedIn(false);
-            setUserName("");
-            navigate("/login"); // O recargar la página: window.location.reload();
-        }
-    };
-
     return (
-        <div className="min-h-screen bg-slate-900 text-white font-sans relative">
-
-            {/* --- NAV SUPERIOR (SOLO WEB / DESKTOP) --- */}
-            {/* Esta barra se coloca sobre la imagen del Hero */}
-            <nav className="absolute top-0 left-0 right-0 z-50 px-8 py-6 flex justify-between items-center">
-                {/* Logo o Título Pequeño (Opcional) */}
-                <div className="text-xl font-bold tracking-widest text-white/80 hover:text-white transition cursor-pointer">
-                    DECK-MYL
-                </div>
-
-                {/* BOTONES DE SESIÓN (Lado Derecho) */}
-                <div className="hidden md:flex items-center gap-4">
-                    {isLoggedIn ? (
-                        <>
-                            <span className="text-slate-300 text-sm font-medium mr-2">
-                                Hola, <span className="text-orange-400">{userName}</span>
-                            </span>
-                            <Link 
-                                to="/my-decks" 
-                                className="px-5 py-2 rounded-full bg-slate-800/80 hover:bg-slate-700 text-white text-sm font-bold border border-slate-600 backdrop-blur-sm transition"
-                            >
-                                🎴 Mis Mazos
-                            </Link>
-                            <button 
-                                onClick={handleLogout} 
-                                className="px-5 py-2 rounded-full bg-red-600/80 hover:bg-red-500 text-white text-sm font-bold backdrop-blur-sm transition shadow-lg"
-                            >
-                                Cerrar Sesión
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <Link 
-                                to="/login" 
-                                className="text-white hover:text-orange-400 font-bold text-sm transition px-4"
-                            >
-                                INICIAR SESIÓN
-                            </Link>
-                            <Link 
-                                to="/register" 
-                                className="px-6 py-2.5 rounded-full bg-orange-600 hover:bg-orange-500 text-white text-sm font-bold shadow-lg shadow-orange-900/20 transition transform hover:-translate-y-0.5"
-                            >
-                                REGISTRARSE
-                            </Link>
-                        </>
-                    )}
-                </div>
-            </nav>
+        <div className="min-h-screen bg-slate-900 text-white font-sans">
 
             {/* --- SECCIÓN 1: HERO (Portada) --- */}
             <div className="relative h-[600px] flex items-center justify-center overflow-hidden">
@@ -97,7 +28,7 @@ export default function Home() {
                     </p>
                     
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        {/* Si NO está logueado, le ofrecemos registrarse. Si SÍ está, le ofrecemos ver la comunidad */}
+                        {/* Lógica de botones: Si no está logueado -> Registrarse. Si está -> Ir a Comunidad */}
                         {!isLoggedIn ? (
                             <Link
                                 to="/register"
