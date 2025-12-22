@@ -23,11 +23,11 @@ const DeckSchema = new mongoose.Schema({
     },
     cards: [CardSchema],
     
-    // ✅ CAMBIO CRUCIAL: Agregar el campo format
+    // ✅ ESTO ES LO QUE HACE QUE SE SEPAREN EN LA DB
     format: {
         type: String,
         required: true,
-        enum: ['imperio', 'primer_bloque'], // Solo permite estos dos valores
+        enum: ['imperio', 'primer_bloque'], 
         default: 'imperio'
     },
     
