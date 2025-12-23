@@ -10,6 +10,9 @@ import Register from "./pages/Register";
 import MyDecks from "./pages/MyDecks";
 import Community from "./pages/Community";
 
+// ✅ 1. Importa el nuevo componente de Admin
+import AdminCards from "./pages/AdminCards"; 
+
 function App() {
   return (
     <BrowserRouter>
@@ -31,9 +34,12 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/my-decks" element={<MyDecks />} />
-        {/* ✅ Nueva Ruta Global para Comunidad */}
         <Route path="/community" element={<Community />} />
 
+        {/* ✅ 2. Nueva Ruta para el Panel de Administrador */}
+        <Route path="/admin/cards" element={<AdminCards />} />
+
+        {/* Redirección por defecto */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
