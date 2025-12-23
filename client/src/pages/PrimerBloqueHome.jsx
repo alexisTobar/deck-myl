@@ -36,8 +36,8 @@ export default function PrimerBloqueHome() {
                         <div className="absolute -right-8 -top-8 text-yellow-500/10 text-9xl font-black group-hover:scale-110 transition-transform">?</div>
                         <h3 className="text-2xl font-black mb-4 text-yellow-500 italic uppercase">FAQ Clásico</h3>
                         <p className="text-slate-400 mb-8 leading-relaxed">¿Dudas sobre Furia, Exhumación o el daño de los Oros? Consulta el compendio oficial de reglas clásicas.</p>
-                        <a href="https://drive.google.com/drive/folders/1i1y725whp728kCk92_Y01_ngB1ZS4EYM?usp=drive_link" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-yellow-500 font-black hover:gap-4 transition-all uppercase text-sm tracking-widest">
-                            Leer Sabiduría <span>→</span>
+                        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdsaGsdcxvUXKx5dufVXFJiLdRzaNkjhKBNEKCVzwIHmUm-HA/viewform" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-yellow-500 font-black hover:gap-4 transition-all uppercase text-sm tracking-widest">
+                            Feedback <span>→</span>
                         </a>
                     </div>
 
@@ -46,7 +46,7 @@ export default function PrimerBloqueHome() {
                         <div className="absolute -right-8 -top-8 text-red-500/10 text-9xl font-black group-hover:scale-110 transition-transform">⚔️</div>
                         <h3 className="text-2xl font-black mb-4 text-red-500 italic uppercase">Restricciones</h3>
                         <p className="text-slate-400 mb-8 leading-relaxed">Mantén el juego justo. Revisa la lista de cartas prohibidas y limitadas para el formato PB Extendido.</p>
-                        <a href="#" className="inline-flex items-center gap-2 text-red-500 font-black hover:gap-4 transition-all uppercase text-sm tracking-widest">
+                        <a href="https://blog.myl.cl/banlist-racial-edicion-primer-bloque" className="inline-flex items-center gap-2 text-red-500 font-black hover:gap-4 transition-all uppercase text-sm tracking-widest">
                             Ver Banlist <span>→</span>
                         </a>
                     </div>
@@ -56,7 +56,7 @@ export default function PrimerBloqueHome() {
                         <div className="absolute -right-8 -top-8 text-blue-500/10 text-9xl font-black group-hover:scale-110 transition-transform">⚖️</div>
                         <h3 className="text-2xl font-black mb-4 text-blue-500 italic uppercase">Documento DAR</h3>
                         <p className="text-slate-400 mb-8 leading-relaxed">El reglamento oficial de arbitraje (DAR) adaptado para torneos de Primer Bloque.</p>
-                        <a href="#" className="inline-flex items-center gap-2 text-blue-500 font-black hover:gap-4 transition-all uppercase text-sm tracking-widest">
+                        <a href="https://drive.google.com/drive/folders/10vEUxzriV4C8BE5H7A9F8uTnuTelF3Lc" className="inline-flex items-center gap-2 text-blue-500 font-black hover:gap-4 transition-all uppercase text-sm tracking-widest">
                             Descargar DAR <span>→</span>
                         </a>
                     </div>
