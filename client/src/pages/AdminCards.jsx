@@ -1,8 +1,21 @@
 import { useState, useEffect } from "react";
 import BACKEND_URL from "../config";
 
-// ✅ Importamos tus listas oficiales para los selectores
-const EDICIONES_IMPERIO = { "kvsm_titanes": "KVSM Titanes", "libertadores": "Libertadores", "onyria": "Onyria", "toolkit_cenizas_de_fuego": "Toolkit Cenizas", "toolkit_hielo_inmortal": "Toolkit Hielo", "lootbox_2024": "Lootbox 2024", "secretos_arcanos": "Secretos Arcanos", "bestiarium": "Bestiarium", "escuadronmecha": "Escuadrón Mecha", "amenazakaiju": "Amenaza Kaiju", "zodiaco": "Zodiaco", "espiritu_samurai": "Espíritu Samurai" };
+const EDICIONES_IMPERIO = { 
+    "25_Aniversario_Imp": "25 aniversario", // ✅ Añadido
+    "kvsm_titanes": "KVSM Titanes", 
+    "libertadores": "Libertadores", 
+    "onyria": "Onyria", 
+    "toolkit_cenizas_de_fuego": "Toolkit Cenizas", 
+    "toolkit_hielo_inmortal": "Toolkit Hielo", 
+    "lootbox_2024": "Lootbox 2024", 
+    "secretos_arcanos": "Secretos Arcanos", 
+    "bestiarium": "Bestiarium", 
+    "escuadronmecha": "Escuadrón Mecha", 
+    "amenazakaiju": "Amenaza Kaiju", 
+    "zodiaco": "Zodiaco", 
+    "espiritu_samurai": "Espíritu Samurai" 
+};
 
 const EDICIONES_PB = { "colmillos_avalon": "Colmillos de Avalon", "extensiones_pb_2023": "Extensiones PB 2023", "espada_sagrada_aniversario": "Espada Sagrada (Aniv)", "Relatos": "Relatos", "hijos-de-daana-aniversario": "Hijos de Daana (Aniv)", "25 aniversario": "25 Aniversario", "Festividades": "Festividades", "aniversario-de-ra": "Aniversario de Ra", "colmillos_inframundo": "Colmillos del Inframundo", "encrucijada": "Encrucijada", "festividades": "Festividades (Extra)", "helenica_aniversario": "Helénica (Aniv)", "inferno": "Inferno", "jo lanzamiento ra": "Jo Lanzamiento Ra", "kit-de-batalla-de-ra": "Kit de Batalla de Ra", "kit-raciales-2023": "Kit Raciales 2023", "kit-raciales-2024": "Kit Raciales 2024", "leyendas_pb_2.0": "Leyendas PB 2.0", "lootbox-2023": "Lootbox 2023", "lootbox-pb-2024": "Lootbox PB 2024", "promo_daana": "Promo Daana", "promo_helenica": "Promo Helénica", "relatos-de-espada-sagrada-aniversario": "Relatos Espada Sagrada", "relatos-de-helenica": "Relatos Helénica", "toolkit-pb-2025": "Toolkit PB 2025", "toolkit_pb_fuerza_y_destino": "Toolkit Fuerza y Destino", "toolkit_pb_magia_y_divinidad": "Toolkit Magia y Divinidad", "toolkit_pb_nobleza_y_poder": "Toolkit Nobleza y Poder" };
 
@@ -11,7 +24,7 @@ const RAZAS_PB = ["Caballero", "Héroe", "Defensor", "Eterno", "Dragón", "Olím
 export default function AdminCards() {
     const [step, setStep] = useState("selector"); 
     const [formato, setFormato] = useState(""); 
-    const [edicionSeleccionada, setEdicionSeleccionada] = useState(""); // Selector automático
+    const [edicionSeleccionada, setEdicionSeleccionada] = useState(""); 
     const [cartas, setCartas] = useState([]);
     const [loading, setLoading] = useState(false);
     const [editingCard, setEditingCard] = useState(null);
@@ -19,12 +32,11 @@ export default function AdminCards() {
 
     const initialFormState = {
         name: "", slug: "", edition: "", edition_slug: "",
-        type: "Aliado", race: "", imgUrl: "", format: "", rarity: "1"
+        type: "1", race: "", imgUrl: "", format: "", rarity: "1"
     };
     const [formData, setFormData] = useState(initialFormState);
     const token = localStorage.getItem("token");
 
-    // Carga cartas automáticamente al elegir edición en el selector
     useEffect(() => {
         if (edicionSeleccionada) fetchCartas();
     }, [edicionSeleccionada]);
@@ -45,7 +57,7 @@ export default function AdminCards() {
 
     const handleSelectFormat = (f) => {
         setFormato(f);
-        const defaultEd = f === "imperio" ? "kvsm_titanes" : "colmillos_avalon";
+        const defaultEd = f === "imperio" ? "25_Aniversario_Imp" : "colmillos_avalon";
         setEdicionSeleccionada(defaultEd);
         setFormData({ ...initialFormState, format: f, edition: defaultEd, edition_slug: defaultEd });
         setStep("editor");
@@ -56,9 +68,16 @@ export default function AdminCards() {
         const method = editingCard ? "PUT" : "POST";
         const url = editingCard ? `${BACKEND_URL}/api/cards/${editingCard._id}` : `${BACKEND_URL}/api/cards`;
         
-        const dataToSend = { ...formData };
+        // ✅ MEJORA: Aseguramos que el edition_slug sea el mismo que edition para que el constructor lo encuentre
+        const dataToSend = { 
+            ...formData, 
+            edition_slug: formData.edition,
+            // Agregamos img y imageUrl para que el constructor use cualquiera de las 3
+            img: formData.imgUrl,
+            imageUrl: formData.imgUrl
+        };
+
         if (formato === "imperio") {
-            dataToSend.edition_slug = formData.edition;
             delete dataToSend.race;
         }
 
@@ -80,7 +99,7 @@ export default function AdminCards() {
 
     const resetForm = () => {
         setEditingCard(null);
-        setFormData({ ...initialFormState, format: formato, edition: edicionSeleccionada });
+        setFormData({ ...initialFormState, format: formato, edition: edicionSeleccionada, edition_slug: edicionSeleccionada });
     };
 
     if (step === "selector") {
@@ -105,7 +124,6 @@ export default function AdminCards() {
         <div className="min-h-screen bg-[#0B1120] text-white pb-32">
             <div className="max-w-[1600px] mx-auto p-4 md:p-8 flex flex-col gap-6">
                 
-                {/* BARRA SUPERIOR CON SELECTORES DINÁMICOS */}
                 <div className="flex flex-col md:flex-row justify-between items-center bg-slate-900/80 p-5 rounded-[2rem] border border-white/5 backdrop-blur-xl gap-4 shadow-xl">
                     <div className="flex items-center gap-4 w-full md:w-auto">
                         <button onClick={() => setStep("selector")} className="bg-slate-800 p-2 px-4 rounded-xl hover:bg-red-600 transition-all font-black text-[10px]">✕ SALIR</button>
@@ -132,7 +150,6 @@ export default function AdminCards() {
                     
                     <button onClick={() => setShowFormMobile(!showFormMobile)} className="lg:hidden fixed bottom-24 right-6 z-[110] w-14 h-14 bg-orange-600 rounded-full shadow-2xl flex items-center justify-center text-2xl border-4 border-[#0B1120]">{showFormMobile ? "✕" : "＋"}</button>
 
-                    {/* FORMULARIO ADAPTADO */}
                     <div className={`
                         lg:col-span-1 bg-slate-900/95 p-8 rounded-[2.5rem] border border-white/5 shadow-2xl backdrop-blur-md transition-all
                         ${showFormMobile ? 'fixed inset-4 z-[120] overflow-y-auto pb-20' : 'hidden lg:block h-fit sticky top-24'}
@@ -143,7 +160,6 @@ export default function AdminCards() {
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <InputField label="Nombre de Carta" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                             
-                            {/* Input para edición (permite crear nuevas) */}
                             <div>
                                 <label className="text-[9px] font-black text-blue-400 uppercase ml-2 mb-1 block">Edición (Slug)</label>
                                 <input 
@@ -191,14 +207,14 @@ export default function AdminCards() {
                                     </div>
                                 ) : cartas.map(c => (
                                     <div key={c._id} className="bg-slate-900 p-2 rounded-[1.5rem] border border-white/5 group relative overflow-hidden shadow-xl transition-all hover:border-orange-500/50">
-                                        <img src={c.imgUrl || c.img} className="w-full h-auto rounded-xl transition-transform group-hover:scale-105 duration-500" alt={c.name} />
+                                        <img src={c.imgUrl || c.img || c.imageUrl} className="w-full h-auto rounded-xl transition-transform group-hover:scale-105 duration-500" alt={c.name} />
                                         <div className="mt-3 px-2 text-center pb-1">
                                             <p className="text-[10px] font-black truncate uppercase text-white tracking-tighter">{c.name}</p>
                                         </div>
                                         <div className="absolute inset-0 bg-slate-950/90 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-all duration-300 backdrop-blur-sm">
                                             <button onClick={() => {
                                                 setEditingCard(c);
-                                                setFormData({ ...c, edition: c.edition || c.edition_slug, edition_slug: c.edition || c.edition_slug, imgUrl: c.imgUrl || c.img });
+                                                setFormData({ ...c, edition: c.edition || c.edition_slug, edition_slug: c.edition || c.edition_slug, imgUrl: c.imgUrl || c.img || c.imageUrl });
                                                 if (window.innerWidth < 1024) setShowFormMobile(true);
                                                 else window.scrollTo({top: 0, behavior: 'smooth'});
                                             }} className="w-24 bg-blue-600 py-2 rounded-full text-[9px] font-black uppercase shadow-lg">Editar</button>
