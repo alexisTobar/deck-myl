@@ -11,7 +11,7 @@ export default function ImperioHome() {
                 <div className="relative z-10 text-center px-4 animate-fade-in-up">
                     <span className="text-orange-500 font-black tracking-[0.3em] uppercase text-sm mb-4 block drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]">Metajuego Actual</span>
                     <h1 className="text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-orange-300 to-orange-600 mb-6 uppercase tracking-tighter italic">
-                        Era Imperio
+                        Imperio
                     </h1>
                     <p className="text-lg md:text-xl text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed">
                         Domina el poder del presente. Las mecánicas más complejas, las ediciones más recientes y el espíritu competitivo oficial.
