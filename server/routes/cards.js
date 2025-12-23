@@ -44,14 +44,11 @@ router.get('/search', async (req, res) => {
         }
 
         // --- 5. VALIDACIÓN DE FILTROS ---
-        // ✅ MEJORA: Ahora permitimos que la búsqueda funcione si existe AL MENOS un criterio,
-        // incluyendo la nueva variable 'race'.
         if (!q && !edition && !type && !race) {
             return res.json([]);
         }
 
         // Límite dinámico para no saturar la conexión
-        // Si hay filtros específicos (edición, tipo o raza) aumentamos el límite
         const limit = (edition || type || race) ? 1000 : 100;
 
         // Ejecución de la consulta
@@ -62,6 +59,35 @@ router.get('/search', async (req, res) => {
     } catch (error) {
         console.error("Error en search cards:", error);
         res.status(500).json({ error: 'Error buscando cartas en la base de datos' });
+    }
+});
+
+// ✅ RUTAS ADMINISTRATIVAS AÑADIDAS (POST, PUT, DELETE)
+router.post('/', async (req, res) => {
+    try {
+        const newCard = new Card(req.body);
+        const savedCard = await newCard.save();
+        res.status(201).json(savedCard);
+    } catch (err) {
+        res.status(500).json({ error: "Error al crear carta" });
+    }
+});
+
+router.put('/:id', async (req, res) => {
+    try {
+        const updatedCard = await Card.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.json(updatedCard);
+    } catch (err) {
+        res.status(500).json({ error: "Error al actualizar" });
+    }
+});
+
+router.delete('/:id', async (req, res) => {
+    try {
+        await Card.findByIdAndDelete(req.params.id);
+        res.json({ msg: "Carta eliminada" });
+    } catch (err) {
+        res.status(500).json({ error: "Error al eliminar" });
     }
 });
 

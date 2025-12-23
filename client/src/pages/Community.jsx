@@ -159,23 +159,23 @@ export default function Community() {
                 </div>
             </div>
 
-            {/* --- MODAL DETALLE --- */}
+            {/* --- MODAL DETALLE (CON NICKNAMES DINÁMICOS) --- */}
             {selectedDeck && (
-                <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedDeck(null)}>
+                <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedDeck(null)}>
                     <div className="bg-slate-800 w-full max-w-4xl max-h-[90vh] rounded-3xl border border-slate-700 flex flex-col overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
                         <div className="p-6 border-b border-slate-700 bg-slate-900 flex justify-between">
                             <div>
                                 <h2 className="text-2xl font-black text-white uppercase">{selectedDeck.name}</h2>
-                                <p className="text-orange-400 font-bold text-sm">
+                                <p className="text-orange-400 font-bold text-sm uppercase italic tracking-widest">
                                     Por: @{selectedDeck.user?.username || selectedDeck.author?.username || selectedDeck.creator?.username || "Usuario de Mitos"}
                                 </p>
                             </div>
-                            <button onClick={() => setSelectedDeck(null)} className="text-white text-2xl">✕</button>
+                            <button onClick={() => setSelectedDeck(null)} className="text-white text-2xl hover:text-red-500 transition-colors">✕</button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-6 bg-[#0B1120] grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 custom-scrollbar">
                             {selectedDeck.cards.map((c, i) => (
-                                <div key={i} className="relative">
-                                    <img src={getImg(c)} className="w-full rounded shadow-lg border border-slate-800" alt={c.name} />
+                                <div key={i} className="relative group">
+                                    <img src={getImg(c)} className="w-full rounded shadow-lg border border-slate-800 group-hover:scale-105 transition-transform" alt={c.name} />
                                     <div className="absolute bottom-0 right-0 bg-black/80 text-orange-400 px-2 text-[10px] font-bold rounded-tl-lg">x{c.quantity}</div>
                                 </div>
                             ))}
@@ -195,8 +195,8 @@ function PodiumCard({ deck, rank, userId, onLike, onClick, getImg }) {
     const bgImage = getImg(deck.cards?.[0]);
     const badgeColor = isGold ? "bg-yellow-400 text-black" : isSilver ? "bg-slate-300 text-black" : "bg-orange-700 text-white";
     
-    // Lógica en cascada para el autor
-    const authorName = deck.user?.username || deck.author?.username || deck.creator?.username || "Usuario de Mitos";
+    // ✅ Lógica de nickname dinámico
+    const authorName = deck.user?.username || deck.author?.username || deck.creator?.username || "Invocador";
 
     return (
         <div onClick={onClick} className={`${isGold ? 'md:w-80 h-[28rem] border-yellow-500 z-10' : 'md:w-64 h-80 border-slate-700'} w-full relative rounded-3xl overflow-hidden border-4 shadow-2xl cursor-pointer group transition-all duration-500 hover:-translate-y-2 flex-shrink-0`}>
@@ -207,8 +207,8 @@ function PodiumCard({ deck, rank, userId, onLike, onClick, getImg }) {
             <div className={`absolute top-4 left-4 ${badgeColor} font-black text-xl w-12 h-12 flex items-center justify-center rounded-full shadow-lg z-20`}>{rank}</div>
             <div className="absolute bottom-0 p-6 z-20 w-full">
                 <h3 className="font-bold text-xl drop-shadow-md text-white truncate">{deck.name}</h3>
-                <p className="text-slate-300 text-xs mb-4 font-medium italic">@{authorName}</p>
-                <button onClick={(e) => onLike(deck._id, e)} className="bg-white/10 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 backdrop-blur-md border border-white/10">
+                <p className="text-slate-300 text-xs mb-4 font-medium italic uppercase tracking-widest">@{authorName}</p>
+                <button onClick={(e) => onLike(deck._id, e)} className="bg-white/10 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 backdrop-blur-md border border-white/10 active:scale-95 transition-all">
                     {deck.likes?.includes(userId) ? '❤️' : '🤍'} {deck.likes?.length || 0}
                 </button>
             </div>
@@ -218,22 +218,23 @@ function PodiumCard({ deck, rank, userId, onLike, onClick, getImg }) {
 
 function StandardCard({ deck, userId, onLike, onClick, getImg }) {
     const bgImage = getImg(deck.cards?.[0]);
-    const authorName = deck.user?.username || deck.author?.username || deck.creator?.username || "Usuario de Mitos";
+    // ✅ Lógica de nickname dinámico
+    const authorName = deck.user?.username || deck.author?.username || deck.creator?.username || "Invocador";
 
     return (
-        <div onClick={onClick} className="group relative bg-slate-800 rounded-2xl overflow-hidden border border-slate-700/50 hover:border-orange-500/50 transition-all hover:shadow-xl cursor-pointer h-64 flex flex-col">
+        <div onClick={onClick} className="group relative bg-slate-800 rounded-2xl overflow-hidden border border-slate-700/50 hover:border-orange-500/50 transition-all hover:shadow-xl cursor-pointer h-64 flex flex-col shadow-lg">
             <div className="h-32 bg-slate-900 relative overflow-hidden">
                 {bgImage && <img src={bgImage} className="w-full h-full object-cover opacity-50 group-hover:scale-105 transition-transform" />}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent"></div>
-                <div className="absolute bottom-2 left-3 font-bold truncate w-11/12 text-white drop-shadow-md">{deck.name}</div>
+                <div className="absolute bottom-2 left-3 font-bold truncate w-11/12 text-white drop-shadow-md uppercase italic">{deck.name}</div>
             </div>
             <div className="p-4 flex-1 flex flex-col justify-between bg-slate-800">
-                <div className="text-[10px] text-slate-400 font-bold truncate">@{authorName}</div>
+                <div className="text-[10px] text-orange-500 font-black uppercase tracking-widest">@{authorName}</div>
                 <div className="flex justify-between items-center mt-2">
-                    <button onClick={(e) => onLike(deck._id, e)} className="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition">
+                    <button onClick={(e) => onLike(deck._id, e)} className="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition active:scale-95">
                         {deck.likes?.includes(userId) ? '❤️' : '🤍'} {deck.likes?.length || 0}
                     </button>
-                    <span className="text-[10px] font-bold text-orange-500 opacity-0 group-hover:opacity-100 transition-opacity">VER →</span>
+                    <span className="text-[10px] font-bold text-orange-500 opacity-0 group-hover:opacity-100 transition-all uppercase italic">Ver Deck →</span>
                 </div>
             </div>
         </div>

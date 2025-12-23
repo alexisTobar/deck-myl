@@ -64,6 +64,11 @@ export default function Navbar() {
             <NavLink to="/community" label="Comunidad" icon="🌍" />
             <NavLink to="/my-decks" label="Mis Mazos" icon="🃏" />
             
+            {/* ACCESO ADMIN PARA TI */}
+            {isLoggedIn && username === "Juegos Vikingos" && (
+                <NavLink to="/admin/cards" label="Admin" icon="⚙️" />
+            )}
+            
             {/* ✅ BOTÓN DINÁMICO: Solo aparece si está en una Era */}
             {(isImperio || isPB) && (
               <Link 
@@ -102,14 +107,13 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* --- DOCK MÓVIL (VISIBLE SOLO EN MÓVIL Y FUERA DEL BUILDER) --- */}
+      {/* --- DOCK MÓVIL (CORREGIDO Y PRO) --- */}
       {!isBuilder && (
         <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-[400px]">
           <div className="bg-slate-900/90 backdrop-blur-2xl border border-white/10 p-2 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex justify-around items-center">
             <MobileIcon to="/" icon="🏠" label="Inicio" active={location.pathname === "/"} />
             <MobileIcon to="/community" icon="🌍" label="Arena" active={location.pathname.includes("community")} />
             
-            {/* Botón Central de Construcción (Si aplica) */}
             {(isImperio || isPB) ? (
               <Link to={`${formatPrefix}/builder`} className={`-translate-y-6 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl border-4 border-slate-950 active:scale-90 transition-all ${themeBtn}`}>
                 <span className="text-2xl">🛠️</span>
@@ -122,9 +126,9 @@ export default function Navbar() {
 
             <MobileIcon to="/my-decks" icon="🃏" label="Mazo" active={location.pathname === "/my-decks"} />
             {isLoggedIn ? (
-               <button onClick={handleLogout} className="flex flex-col items-center gap-1 p-2">
+               <button onClick={handleLogout} className="flex flex-col items-center gap-1 p-2 transition-all active:scale-90">
                   <span className="text-xl">🚪</span>
-                  <span className="text-[9px] font-black uppercase text-slate-500">Salir</span>
+                  <span className="text-[9px] font-black uppercase text-red-500">Salir</span>
                </button>
             ) : (
                <MobileIcon to="/login" icon="👤" label="Login" active={location.pathname === "/login"} />
@@ -136,22 +140,16 @@ export default function Navbar() {
   );
 }
 
-// Sub-componente para links de escritorio
 function NavLink({ to, label, icon }) {
   const location = useLocation();
   const isActive = location.pathname === to || (to !== "/" && location.pathname.includes(to));
-  
   return (
-    <Link 
-      to={to} 
-      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all ${isActive ? 'bg-white/10 text-white shadow-inner' : 'text-slate-500 hover:text-slate-200'}`}
-    >
+    <Link to={to} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all ${isActive ? 'bg-white/10 text-white shadow-inner' : 'text-slate-500 hover:text-slate-200'}`}>
       <span>{icon}</span> {label}
     </Link>
   );
 }
 
-// Sub-componente para iconos móviles
 function MobileIcon({ to, icon, label, active }) {
   return (
     <Link to={to} className="flex flex-col items-center gap-1 p-2">
