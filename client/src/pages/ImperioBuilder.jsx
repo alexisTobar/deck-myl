@@ -4,8 +4,8 @@ import { toPng } from 'html-to-image';
 import BACKEND_URL from "../config";
 
 const EDICIONES_IMPERIO = { 
-    "25_Aniversario_Imp": "25 aniversario", // ✅ Añadido
     "kvsm_titanes": "KVSM Titanes",
+    "25_Aniversario_Imp": "25 aniversario", // ✅ Añadido
     "libertadores": "Libertadores", 
     "onyria": "Onyria", 
     "toolkit_cenizas_de_fuego": "Toolkit Cenizas", 
