@@ -38,7 +38,7 @@ export default function ImperioBuilder() {
     const galleryRef = useRef(null);
 
     const [formato] = useState("imperio");
-    const [edicionSeleccionada, setEdicionSeleccionada] = useState("25_Aniversario_Imp"); // ✅ Cambiado por defecto
+    const [edicionSeleccionada, setEdicionSeleccionada] = useState("kvsm_titanes"); // ✅ Cambiado por defecto
     const [tipoSeleccionado, setTipoSeleccionado] = useState(""); 
     const [busqueda, setBusqueda] = useState("");
     const [cartas, setCartas] = useState([]);
