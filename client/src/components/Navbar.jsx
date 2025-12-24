@@ -112,7 +112,7 @@ export default function Navbar() {
         <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-[400px]">
           <div className="bg-slate-900/90 backdrop-blur-2xl border border-white/10 p-2 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex justify-around items-center">
             <MobileIcon to="/" icon={<Home size={22} />} label="Inicio" active={location.pathname === "/"} />
-            <MobileIcon to="/community" icon={<Users size={22} />} label="Arena" active={location.pathname.includes("community")} />
+            <MobileIcon to="/community" icon={<Users size={22} />} label="Comunidad" active={location.pathname.includes("community")} />
             
             {(isImperio || isPB) ? (
               <Link to={`${formatPrefix}/builder`} className={`-translate-y-6 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl border-4 border-slate-950 active:scale-90 transition-all ${themeBtn}`}>
