@@ -13,7 +13,8 @@ import {
   Camera, 
   Globe, 
   Layout, 
-  ShieldCheck 
+  ShieldCheck,
+  Users 
 } from "lucide-react";
 
 const EDICIONES_IMPERIO = { 
@@ -203,7 +204,7 @@ export default function ImperioBuilder() {
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar bg-transparent">
                     {ORDER_TYPES.map(t => mazoAgrupado[t] && (
-                        <div key={t} className="animate-fade-in-up">
+                        <div key={t}>
                             <div className="flex items-center gap-2 mb-3">
                                 <div className="h-[2px] flex-1 bg-gradient-to-r from-orange-600/50 to-transparent"></div>
                                 <h3 className="text-orange-400 text-[11px] font-black uppercase tracking-tighter italic px-2">{t}</h3>
@@ -267,7 +268,7 @@ export default function ImperioBuilder() {
                         onClick={() => setModalGuardarOpen(true)} 
                         className="w-full bg-orange-600 hover:bg-orange-500 text-white py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2"
                     >
-                        <Save size={16} /> {editingDeckId ? 'Actualizar Deck' : 'Sellar Deck'}
+                        <Save size={16} /> {editingDeckId ? 'Actualizar Mazo' : 'Guardar Mazo'}
                     </button>
                 </div>
             </div>
@@ -285,7 +286,7 @@ export default function ImperioBuilder() {
                 </div>
             </div>
 
-            {/* RESTO DE MODALES (MANTENIDO) */}
+            {/* RESTO DE MODALES REPARADOS */}
             {showMobileList && (
                 <div className="md:hidden fixed inset-0 z-[60] bg-black/80 flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
                     <div className="bg-slate-900 rounded-t-3xl h-[70vh] p-5 overflow-auto border-t border-slate-700 shadow-2xl" onClick={e => e.stopPropagation()}>
