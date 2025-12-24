@@ -1,15 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import BACKEND_URL from "../config";
-
-// --- ICONOS SVG ---
-const IconSearch = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
-const IconTrash = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
-const IconEdit = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>;
-const IconDownload = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>;
-const IconSort = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" /></svg>;
-const IconWorld = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
-const IconLock = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>;
+// ✅ Importación de iconos
+import { Search, Trash2, Edit3, Download, Globe, Lock, X, ChevronRight, FileText } from "lucide-react";
 
 const getFormatStyles = (format) => {
     if (format === 'primer_bloque') {
@@ -59,7 +52,7 @@ export default function MyDecks() {
                 const updatedDeck = await res.json();
                 setDecks(prev => prev.map(d => d._id === deck._id ? { ...d, isPublic: updatedDeck.isPublic } : d));
                 if (selectedDeck?._id === deck._id) setSelectedDeck(prev => ({ ...prev, isPublic: updatedDeck.isPublic }));
-                showToast(updatedDeck.isPublic ? "¡Mazo Público! 🌍" : "Mazo Privado 🔒");
+                showToast(updatedDeck.isPublic ? "¡Mazo Público!" : "Mazo Privado");
             }
         } catch (error) { showToast("Error", "error"); }
     };
@@ -104,13 +97,12 @@ export default function MyDecks() {
 
     return (
         <div className="min-h-screen bg-slate-900 font-sans text-slate-200 pb-32 md:pb-20">
-            {/* TOP BAR */}
             <div className="bg-slate-800 border-b border-slate-700 sticky top-0 z-30 shadow-lg p-4">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
                     <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-red-600">Mis Mazos</h1>
                     <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto bg-slate-900 p-1.5 rounded-xl border border-slate-700">
                         <div className="relative flex-1 w-full sm:w-auto">
-                            <span className="absolute left-3 top-2.5 text-slate-500"><IconSearch /></span>
+                            <span className="absolute left-3 top-2.5 text-slate-500"><Search size={18} /></span>
                             <input type="text" placeholder="Buscar..." className="bg-slate-800 text-sm text-white rounded-lg pl-10 pr-3 py-2 w-full outline-none" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                         </div>
                         <select className="bg-slate-800 text-sm text-slate-300 rounded-lg px-3 py-2 outline-none w-full sm:w-auto" value={filterFormat} onChange={(e) => setFilterFormat(e.target.value)}>
@@ -126,7 +118,6 @@ export default function MyDecks() {
                 </div>
             </div>
 
-            {/* LISTA */}
             <div className="max-w-7xl mx-auto p-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {processedDecks.map((deck) => (
@@ -147,7 +138,6 @@ export default function MyDecks() {
                 </div>
             </div>
 
-            {/* ✅ MODAL REPARADO: Se añadió pb-32 para que el dock no tape los botones */}
             {selectedDeck && (
                 <div className="fixed inset-0 bg-black/80 z-[110] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setSelectedDeck(null)}>
                     <div className="bg-slate-800 w-full max-w-4xl rounded-2xl shadow-2xl border border-slate-600 flex flex-col max-h-[90vh] overflow-hidden" onClick={e => e.stopPropagation()}>
@@ -158,12 +148,11 @@ export default function MyDecks() {
                                     {getFormatStyles(selectedDeck.format).label}
                                 </span>
                             </div>
-                            <button onClick={() => setSelectedDeck(null)} className="text-slate-400 hover:text-white text-2xl">✕</button>
+                            <button onClick={() => setSelectedDeck(null)} className="text-slate-400 hover:text-white"><X size={28} /></button>
                         </div>
                         
-                        {/* CONTENIDO SCROLLABLE */}
                         <div className="flex-1 overflow-y-auto p-6 bg-slate-900/30">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-32 md:pb-6"> {/* Espacio inferior para móviles */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-32 md:pb-6">
                                 {selectedDeck.cards.map((c, i) => (
                                     <div key={i} className="flex justify-between items-center bg-slate-800 p-2.5 rounded-lg border border-slate-700">
                                         <span className="text-sm font-semibold">{c.name}</span>
@@ -173,33 +162,31 @@ export default function MyDecks() {
                             </div>
                         </div>
 
-                        {/* BOTONES DE ACCIÓN: Se subió el z-index para que queden sobre el dock si es necesario */}
                         <div className="p-4 border-t border-slate-700 bg-slate-800 grid grid-cols-2 md:grid-cols-4 gap-3 z-[120]">
                             <button onClick={() => togglePrivacy(selectedDeck)} className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white py-2.5 rounded-lg font-bold transition">
-                                {selectedDeck.isPublic ? <><IconLock /> Privado</> : <><IconWorld /> Público</>}
+                                {selectedDeck.isPublic ? <><Lock size={18} /> Privado</> : <><Globe size={18} /> Público</>}
                             </button>
-                            <button onClick={() => handleExport(selectedDeck)} className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-lg font-bold transition">
-                                <IconDownload /> Lista
+                            <button className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-lg font-bold transition">
+                                <FileText size={18} /> Lista
                             </button>
                             <button onClick={() => handleEdit(selectedDeck)} className="flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-500 text-white py-2.5 rounded-lg font-bold transition">
-                                <IconEdit /> Editar
+                                <Edit3 size={18} /> Editar
                             </button>
                             <button onClick={() => setDeckToDelete(selectedDeck)} className="flex items-center justify-center gap-2 bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-600/30 py-2.5 rounded-lg font-bold transition">
-                                <IconTrash /> Borrar
+                                <Trash2 size={18} /> Borrar
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* MODAL ELIMINAR */}
             {deckToDelete && (
                 <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/90 p-4">
-                    <div className="bg-slate-800 p-8 rounded-2xl max-w-sm w-full text-center">
+                    <div className="bg-slate-800 p-8 rounded-2xl max-w-sm w-full text-center border border-slate-700 shadow-2xl">
                         <h3 className="text-white text-xl font-bold mb-4">¿Eliminar "{deckToDelete.name}"?</h3>
                         <div className="flex gap-4">
-                            <button onClick={() => setDeckToDelete(null)} className="flex-1 bg-slate-700 py-3 rounded-xl text-white font-bold">No</button>
-                            <button onClick={confirmDelete} className="flex-1 bg-red-600 py-3 rounded-xl text-white font-bold">Eliminar</button>
+                            <button onClick={() => setDeckToDelete(null)} className="flex-1 bg-slate-700 py-3 rounded-xl text-white font-bold transition-colors hover:bg-slate-600">No</button>
+                            <button onClick={confirmDelete} className="flex-1 bg-red-600 py-3 rounded-xl text-white font-bold transition-colors hover:bg-red-500">Eliminar</button>
                         </div>
                     </div>
                 </div>
