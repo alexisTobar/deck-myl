@@ -45,17 +45,13 @@ export default function Navbar() {
       <nav className={`sticky top-0 z-[100] w-full border-b border-white/5 bg-slate-950/80 backdrop-blur-xl transition-all duration-300 ${isBuilder ? 'py-2' : 'py-3'}`}>
         <div className="max-w-[1400px] mx-auto px-4 md:px-10 flex justify-between items-center">
           
-          {/* LOGO CON GLOW */}
-          <Link to="/" className="group flex items-center gap-2">
-            <div className={`p-1.5 rounded-xl bg-slate-900 border border-white/10 group-hover:border-orange-500/50 transition-all shadow-2xl ${themeGlow}`}>
-               <span className="text-xl">⚔️</span>
-            </div>
-            <div className="flex flex-col leading-none">
-              <span className="text-lg font-black tracking-tighter text-white group-hover:text-orange-500 transition-colors">
-                MITOS<span className="text-orange-600">APP</span>
-              </span>
-              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Digital Edition</span>
-            </div>
+          {/* ✅ LOGO ADAPTADO (Manteniendo tu estructura de Link) */}
+          <Link to="/" className="group flex items-center transition-transform hover:scale-105 active:scale-95">
+            <img 
+              src="https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png" 
+              alt="MitosApp Logo" 
+              className="h-10 md:h-14 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.1)]"
+            />
           </Link>
 
           {/* MENÚ CENTRAL (ESCRITORIO) */}
@@ -107,13 +103,14 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* --- DOCK MÓVIL (CORREGIDO Y PRO) --- */}
+      {/* --- DOCK MÓVIL (VISIBLE SOLO EN MÓVIL Y FUERA DEL BUILDER) --- */}
       {!isBuilder && (
         <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-[400px]">
           <div className="bg-slate-900/90 backdrop-blur-2xl border border-white/10 p-2 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex justify-around items-center">
             <MobileIcon to="/" icon="🏠" label="Inicio" active={location.pathname === "/"} />
             <MobileIcon to="/community" icon="🌍" label="Arena" active={location.pathname.includes("community")} />
             
+            {/* Botón Central de Construcción (Si aplica) */}
             {(isImperio || isPB) ? (
               <Link to={`${formatPrefix}/builder`} className={`-translate-y-6 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl border-4 border-slate-950 active:scale-90 transition-all ${themeBtn}`}>
                 <span className="text-2xl">🛠️</span>
