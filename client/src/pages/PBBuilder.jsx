@@ -122,10 +122,10 @@ export default function PBBuilder() {
                 <div className="p-4 bg-slate-900/40 border-b border-slate-800 space-y-3">
                     <div className="flex flex-wrap gap-2">
                         <input type="text" placeholder="Búsqueda Global PB..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="flex-1 p-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm outline-none focus:border-yellow-500" />
-                        <select value={edicionSeleccionada} onChange={(e) => setEdicionSeleccionada(e.target.value)} className="bg-slate-950 border border-slate-700 p-2 rounded-xl text-[10px] font-bold text-yellow-500">
+                        <select value={edicionSeleccionada} onChange={(e) => setEdicionSeleccionada(e.target.value)} className="bg-slate-950 border border-slate-700 p-2 rounded-xl text-[13px] font-bold text-yellow-500">
                             {Object.entries(EDICIONES_PB).map(([s, l]) => <option key={s} value={s}>{l}</option>)}
                         </select>
-                        <select value={razaSeleccionada} onChange={(e) => setRazaSeleccionada(e.target.value)} className="bg-slate-950 border border-yellow-500/30 p-2 rounded-xl text-[10px] font-bold text-yellow-400">
+                        <select value={razaSeleccionada} onChange={(e) => setRazaSeleccionada(e.target.value)} className="bg-slate-950 border border-yellow-500/30 p-2 rounded-xl text-[13px] font-bold text-yellow-400">
                             <option value="">Todas las Razas</option>
                             {RAZAS_PB.map(r => <option key={r} value={r}>{r}</option>)}
                         </select>
