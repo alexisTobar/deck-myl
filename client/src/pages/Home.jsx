@@ -31,7 +31,7 @@ export default function HomePortal() {
                 >
                     <div className="h-64 overflow-hidden relative">
                         <img 
-                            src="https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/es43.webp" 
+                            src="https://los40.cl/resizer/v2/RGW3O7B6EBMJTOG3663Q63HYUM.jpg?auth=c2cc267add0246b4d52e7e6ba39dac28c0c11ebe4c806e386358c4a65968d094&quality=70&width=1200&height=544&smart=true" 
                             className="w-full h-full object-cover opacity-40 group-hover:scale-110 group-hover:opacity-60 transition-all duration-700" 
                             alt="Primer Bloque"
                         />
@@ -51,7 +51,7 @@ export default function HomePortal() {
                 >
                     <div className="h-64 overflow-hidden relative">
                         <img 
-                            src="https://api.myl.cl/static/cards/162/001.png" 
+                            src="https://cdn.shopify.com/s/files/1/0103/3601/0303/files/bannerpreventakvm_177c3b4b-7d62-4fd8-8f0a-fa243f85e590.jpg?v=1761336400" 
                             className="w-full h-full object-cover opacity-40 group-hover:scale-110 group-hover:opacity-60 transition-all duration-700" 
                             alt="Imperio"
                         />
