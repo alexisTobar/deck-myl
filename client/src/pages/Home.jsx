@@ -22,26 +22,7 @@ export default function HomePortal() {
 
             <div className="flex flex-col md:flex-row gap-8 w-full max-w-6xl px-6 relative z-10">
                 {/* OPCIÓN IMPERIO */}
-                <div 
-                    onClick={() => navigate("/imperio")}
-                    className="flex-1 group cursor-pointer relative overflow-hidden rounded-3xl border-2 border-slate-800 hover:border-orange-500 transition-all duration-500 bg-slate-900/50 backdrop-blur-sm shadow-2xl"
-                >
-                    <div className="h-64 overflow-hidden relative">
-                        <img 
-                            src="https://api.myl.cl/static/cards/162/001.png" 
-                            className="w-full h-full object-cover opacity-40 group-hover:scale-110 group-hover:opacity-60 transition-all duration-700" 
-                            alt="Imperio"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] to-transparent"></div>
-                    </div>
-                    <div className="p-8 text-center">
-                        <h2 className="text-4xl font-black text-white mb-2 group-hover:text-orange-500 transition-colors uppercase">🏛️ Imperio</h2>
-                        <p className="text-slate-400 text-sm mb-6">Metajuego actual, nuevas mecánicas y el circuito competitivo oficial.</p>
-                        <span className="inline-block bg-orange-600 text-white px-8 py-3 rounded-full font-bold group-hover:bg-orange-500 transition-all shadow-lg">
-                            INGRESAR
-                        </span>
-                    </div>
-                </div>
+                
 
                 {/* OPCIÓN PRIMER BLOQUE */}
                 <div 
@@ -60,6 +41,26 @@ export default function HomePortal() {
                         <h2 className="text-4xl font-black text-white mb-2 group-hover:text-yellow-500 transition-colors uppercase">📜 Primer Bloque</h2>
                         <p className="text-slate-400 text-sm mb-6">El origen de la leyenda. Formato clásico con Caballeros, Dragones y Sombras.</p>
                         <span className="inline-block bg-yellow-600 text-white px-8 py-3 rounded-full font-bold group-hover:bg-yellow-500 transition-all shadow-lg">
+                            INGRESAR
+                        </span>
+                    </div>
+                </div>
+                <div 
+                    onClick={() => navigate("/imperio")}
+                    className="flex-1 group cursor-pointer relative overflow-hidden rounded-3xl border-2 border-slate-800 hover:border-orange-500 transition-all duration-500 bg-slate-900/50 backdrop-blur-sm shadow-2xl"
+                >
+                    <div className="h-64 overflow-hidden relative">
+                        <img 
+                            src="https://api.myl.cl/static/cards/162/001.png" 
+                            className="w-full h-full object-cover opacity-40 group-hover:scale-110 group-hover:opacity-60 transition-all duration-700" 
+                            alt="Imperio"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] to-transparent"></div>
+                    </div>
+                    <div className="p-8 text-center">
+                        <h2 className="text-4xl font-black text-white mb-2 group-hover:text-orange-500 transition-colors uppercase">🏛️ Imperio</h2>
+                        <p className="text-slate-400 text-sm mb-6">Metajuego actual, nuevas mecánicas y el circuito competitivo oficial.</p>
+                        <span className="inline-block bg-orange-600 text-white px-8 py-3 rounded-full font-bold group-hover:bg-orange-500 transition-all shadow-lg">
                             INGRESAR
                         </span>
                     </div>
