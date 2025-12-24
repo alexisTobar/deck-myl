@@ -12,7 +12,7 @@ import {
   Camera, 
   Globe, 
   Layout, 
-  ShieldCheck 
+  Users 
 } from "lucide-react";
 
 const EDICIONES_PB = { "shogun_4": "Shogun 4","colmillos_avalon": "Colmillos de Avalon", "extensiones_pb_2023": "Extensiones PB 2023", "espada_sagrada_aniversario": "Espada Sagrada (Aniv)", "Relatos": "Relatos", "hijos-de-daana-aniversario": "Hijos de Daana (Aniv)", "25 aniversario": "25 Aniversario", "Festividades": "Festividades", "aniversario-de-ra": "Aniversario de Ra", "colmillos_inframundo": "Colmillos del Inframundo", "encrucijada": "Encrucijada", "festividades": "Festividades (Extra)", "helenica_aniversario": "Helénica (Aniv)", "inferno": "Inferno", "jo lanzamiento ra": "Jo Lanzamiento Ra", "kit-de-batalla-de-ra": "Kit de Batalla de Ra", "kit-raciales-2023": "Kit Raciales 2023", "kit-raciales-2024": "Kit Raciales 2024", "leyendas_pb_2.0": "Leyendas PB 2.0", "lootbox-2023": "Lootbox 2023", "lootbox-pb-2024": "Lootbox PB 2024", "promo_daana": "Promo Daana", "promo_helenica": "Promo Helénica", "relatos-de-espada-sagrada-aniversario": "Relatos Espada Sagrada", "relatos-de-helenica": "Relatos Helénica", "toolkit-pb-2025": "Toolkit PB 2025", "toolkit_pb_fuerza_y_destino": "Toolkit Fuerza y Destino", "toolkit_pb_magia_y_divinidad": "Toolkit Magia y Divinidad", "toolkit_pb_nobleza_y_poder": "Toolkit Nobleza y Poder" };
@@ -77,7 +77,7 @@ export default function PBBuilder() {
         };
         const timer = setTimeout(fetchCartas, 300);
         return () => clearTimeout(timer);
-    }, [busqueda, edicionSeleccionada, tipoSeleccionado, razaSeleccionada]);
+    }, [busqueda, edicionSeleccionada, tipoSeleccionado, razaSeleccionada, formato]);
 
     const handleAdd = (c) => {
         const ex = mazo.find(x => x.slug === c.slug);
@@ -127,7 +127,7 @@ export default function PBBuilder() {
             <div className="flex-1 flex flex-col h-full relative overflow-hidden">
                 <div className="bg-slate-900/80 border-b border-yellow-500/20 p-3 flex justify-between items-center px-4">
                     <button onClick={() => navigate("/primer-bloque")} className="p-1.5 rounded-lg border border-yellow-500/30 text-yellow-500 text-xs font-bold hover:bg-yellow-500/10 transition-all">Volver</button>
-                    <h2 className="text-xs font-black uppercase text-yellow-500 tracking-widest">Forja Primer Bloque</h2>
+                    <h2 className="text-xs font-black uppercase text-yellow-500 tracking-widest leading-none">Forja Primer Bloque</h2>
                     <div className="w-10"></div>
                 </div>
 
@@ -176,7 +176,7 @@ export default function PBBuilder() {
                 </div>
             </div>
 
-            {/* ✅ SECCIÓN MAGNÍFICA: GRIMORIO PB */}
+            {/* SECCIÓN MI DECK (LADO DERECHO) */}
             <div className="hidden md:flex w-85 border-l border-white/10 flex-col h-screen bg-gradient-to-b from-slate-900 via-[#0c0e14] to-black shadow-2xl">
                 <div className="p-5 border-b border-yellow-500/30 bg-slate-900/50 backdrop-blur-md font-black text-yellow-500 uppercase tracking-widest flex justify-between items-center shadow-lg">
                     <div className="flex items-center gap-2">
@@ -188,77 +188,132 @@ export default function PBBuilder() {
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar bg-transparent">
                     {ORDER_TYPES.map(t => mazoAgrupado[t] && (
                         <div key={t} className="animate-fade-in-up">
                             <div className="flex items-center gap-2 mb-3">
                                 <div className="h-[2px] flex-1 bg-gradient-to-r from-yellow-600/50 to-transparent"></div>
                                 <h3 className="text-yellow-500 text-[11px] font-black uppercase tracking-tighter italic px-2">{t}</h3>
                             </div>
-                            
                             <div className="space-y-2">
                                 {mazoAgrupado[t].map(c => (
-                                    <div 
-                                        key={c.slug} 
-                                        className="flex justify-between items-center text-sm py-2.5 px-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/5 group hover:bg-yellow-600/10 hover:border-yellow-500/30 transition-all duration-300 shadow-sm relative overflow-hidden"
-                                    >
+                                    <div key={c.slug} className="flex justify-between items-center text-sm py-2.5 px-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/5 group hover:bg-yellow-600/10 hover:border-yellow-500/30 transition-all duration-300 shadow-sm relative overflow-hidden">
                                         <div className="absolute left-0 top-0 w-1 h-full bg-yellow-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                        
                                         <div className="flex items-center gap-3 flex-1 min-w-0" onClick={() => setCardToZoom(c)}>
-                                            <div className="bg-slate-800 text-yellow-500 w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs shadow-inner">
-                                                {c.cantidad}
-                                            </div>
-                                            <span className="truncate font-bold text-slate-200 group-hover:text-white transition-colors cursor-pointer uppercase text-[12px] tracking-tight">
-                                                {c.name}
-                                            </span>
+                                            <div className="bg-slate-800 text-yellow-500 w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs shadow-inner">{c.cantidad}</div>
+                                            <span className="truncate font-bold text-slate-200 group-hover:text-white transition-colors cursor-pointer uppercase text-[12px] tracking-tight">{c.name}</span>
                                         </div>
-
                                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                                            <button 
-                                                onClick={() => handleAdd(c)} 
-                                                className="w-8 h-8 flex items-center justify-center bg-yellow-500/20 hover:bg-yellow-500 text-yellow-500 hover:text-black rounded-xl transition-all border border-yellow-500/20 shadow-lg active:scale-90"
-                                            >
-                                                <Plus size={16} strokeWidth={3} />
-                                            </button>
-                                            <button 
-                                                onClick={() => handleRemove(c.slug)} 
-                                                className="w-8 h-8 flex items-center justify-center bg-red-500/20 hover:bg-red-600 text-red-400 hover:text-white rounded-xl transition-all border border-red-500/20 shadow-lg active:scale-90"
-                                            >
-                                                <Minus size={16} strokeWidth={3} />
-                                            </button>
+                                            <button onClick={() => handleAdd(c)} className="w-8 h-8 flex items-center justify-center bg-yellow-500/20 hover:bg-yellow-500 text-yellow-500 hover:text-black rounded-xl transition-all border border-yellow-500/20 shadow-lg active:scale-90"><Plus size={16} strokeWidth={3} /></button>
+                                            <button onClick={() => handleRemove(c.slug)} className="w-8 h-8 flex items-center justify-center bg-red-500/20 hover:bg-red-600 text-red-400 hover:text-white rounded-xl transition-all border border-red-500/20 shadow-lg active:scale-90"><Minus size={16} strokeWidth={3} /></button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
                     ))}
+                    {mazo.length === 0 && (
+                        <div className="h-full flex flex-col items-center justify-center text-slate-600 space-y-4 pt-20">
+                            <div className="w-20 h-20 rounded-full border-2 border-dashed border-slate-800 flex items-center justify-center"><Plus size={30} className="opacity-20" /></div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-center px-10">Selecciona cartas del catálogo para armar tu estrategia</p>
+                        </div>
+                    )}
                 </div>
 
                 <div className="p-5 bg-slate-900/80 backdrop-blur-xl border-t border-white/5 flex flex-col gap-3 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
-                    <button onClick={() => setModalMazoOpen(true)} className="w-full bg-slate-800 hover:bg-blue-600 text-white py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 border border-white/5">
-                        <Eye size={16} /> Ver Galería Visual
-                    </button>
+                    <button onClick={() => setModalMazoOpen(true)} className="w-full bg-slate-800 hover:bg-blue-600 text-white py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 border border-white/5"><Eye size={16} /> Ver Galería Visual</button>
                     <button onClick={() => setModalGuardarOpen(true)} className="w-full bg-yellow-600 hover:bg-yellow-500 text-black py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2">
                         <Save size={16} /> Guardar Mazo
                     </button>
                 </div>
             </div>
 
-            {/* DOCK MÓVIL (MANTENIDO) */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-2 pb-4 z-50 flex items-center justify-between shadow-2xl">
-                <div className="flex flex-col px-3">
-                    <span className="text-[10px] text-slate-500 font-bold uppercase">Mazo</span>
-                    <span className={`text-lg font-black ${totalCartas === 50 ? "text-green-500" : "text-white"}`}>{totalCartas}/50</span>
+            {/* MODAL GUARDAR PB CORREGIDO */}
+            {modalGuardarOpen && (
+                <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setModalGuardarOpen(false)}>
+                    <div className="bg-slate-800 p-6 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl text-white" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-xl font-black mb-6 uppercase text-yellow-500 tracking-tighter italic">Guardar Estrategia PB</h3>
+                        <input value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} className="w-full p-3 rounded-xl bg-slate-900 border border-slate-600 outline-none focus:border-yellow-500 mb-4 transition-all text-white font-bold" placeholder="Nombre del mazo..." />
+                        <label className="flex items-center gap-3 bg-slate-900 p-3 rounded-xl cursor-pointer hover:bg-slate-950 transition-colors">
+                            <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-5 h-5 accent-yellow-600" />
+                            <span className="text-sm font-bold text-slate-300">Publicar en la Arena Global <Globe size={14} className="inline ml-1" /></span>
+                        </label>
+                        <div className="flex justify-end gap-3 mt-8">
+                            <button onClick={() => setModalGuardarOpen(false)} className="text-slate-400 font-bold px-4 hover:text-white transition-colors">Cancelar</button>
+                            <button onClick={handleSaveDeck} disabled={guardando || !nombreMazo.trim()} className="bg-yellow-600 text-black px-8 py-2 rounded-xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-transform flex items-center gap-2"><Save size={16} /> Confirmar</button>
+                        </div>
+                    </div>
                 </div>
-                <div className="flex gap-2 pr-2">
-                    <button onClick={() => setShowMobileList(true)} className="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-xs border border-slate-700">LISTA</button>
-                    <button onClick={() => setModalMazoOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xs">VER</button>
-                    <button onClick={() => setModalGuardarOpen(true)} className="bg-yellow-600 text-black px-4 py-2 rounded-lg font-bold text-xs shadow-lg"><Save size={16} /></button>
-                </div>
-            </div>
+            )}
 
-            {/* MODALES PB (MANTENIDOS) */}
-            {/* [Aquí irían tus modales de PB tal cual estaban, con los mismos efectos aplicados arriba] */}
+            {/* RESTO DE MODALES REPARADOS */}
+            {showMobileList && (
+                <div className="md:hidden fixed inset-0 z-[60] bg-black/80 flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
+                    <div className="bg-slate-900 rounded-t-3xl h-[70vh] p-5 overflow-auto border-t border-slate-700 shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-black uppercase text-yellow-500 italic">Mi Lista ({totalCartas}/50)</h3>
+                            <button onClick={() => setShowMobileList(false)} className="text-slate-400"><X size={24} /></button>
+                        </div>
+                        {ORDER_TYPES.map(t => mazoAgrupado[t] && (
+                            <div key={t} className="mb-4">
+                                <h4 className="text-yellow-600 text-[10px] font-black uppercase mb-2 border-b border-slate-800">{t}</h4>
+                                {mazoAgrupado[t].map(c => (
+                                    <div key={c.slug} className="flex justify-between items-center py-2 border-b border-slate-800/50">
+                                        <span className="text-sm font-medium">{c.name}</span>
+                                        <div className="flex items-center gap-4">
+                                            <button onClick={() => handleRemove(c.slug)} className="text-red-500"><Minus size={20} /></button>
+                                            <span className="font-bold">{c.cantidad}</span>
+                                            <button onClick={() => handleAdd(c)} className="text-green-500"><Plus size={20} /></button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {cardToZoom && (
+                <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4 transition-all duration-300" onClick={() => setCardToZoom(null)}>
+                    <button onClick={() => setCardToZoom(null)} className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-2xl z-[210] transition-all"><X size={24} strokeWidth={3} /></button>
+                    <div className="relative max-w-sm w-full flex flex-col items-center animate-scale-up" onClick={(e) => e.stopPropagation()}>
+                        <img src={getImg(cardToZoom)} className="w-full h-auto rounded-2xl shadow-[0_0_50px_rgba(234,179,8,0.2)] border-4 border-yellow-500/20" alt="zoom" />
+                        <div className="mt-8 flex items-center justify-center gap-10 bg-slate-900/90 p-4 px-10 rounded-full border border-slate-700 shadow-2xl backdrop-blur-lg">
+                            <button onClick={() => handleRemove(cardToZoom.slug)} className="w-14 h-14 rounded-full bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white flex items-center justify-center transition-all"><Minus size={24} strokeWidth={3} /></button>
+                            <div className="flex flex-col items-center">
+                                <span className="text-4xl font-black text-white leading-none">{mazo.find(x => x.slug === cardToZoom.slug)?.cantidad || 0}</span>
+                                <span className="text-[10px] font-bold text-slate-500 uppercase mt-1">En Mazo</span>
+                            </div>
+                            <button onClick={() => handleAdd(cardToZoom)} className="w-14 h-14 rounded-full bg-green-600/20 hover:bg-green-600 text-green-500 hover:text-white flex items-center justify-center transition-all"><Plus size={24} strokeWidth={3} /></button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {modalMazoOpen && (
+                <div className="fixed inset-0 bg-[#0c0e14] z-[100] flex flex-col transition-all">
+                    <div className="p-4 bg-slate-900 flex justify-between items-center px-6 border-b border-slate-800 shadow-xl">
+                        <h2 className="text-lg font-black uppercase text-yellow-500 italic tracking-widest">Galería PB</h2>
+                        <button onClick={() => setModalMazoOpen(false)} className="bg-slate-800 p-2 rounded-full text-white hover:bg-red-600 transition-colors"><X size={20} /></button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar" ref={galleryRef}>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 pb-20 p-4 bg-[#0c0e14]">
+                            {mazo.map(c => (
+                                <div key={c.slug} className="relative cursor-pointer hover:scale-105 transition-transform" onClick={() => setCardToZoom(c)}>
+                                    <img src={getImg(c)} className="w-full h-auto rounded-lg shadow-lg border border-white/5" alt={c.name} />
+                                    <div className="absolute bottom-0 right-0 bg-yellow-600 text-black px-2.5 py-0.5 font-black text-[10px] rounded-tl-lg shadow-2xl border-t border-l border-slate-900">x{c.cantidad}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="p-6 bg-slate-900 flex flex-col sm:flex-row gap-4 justify-center border-t border-slate-800">
+                        <button onClick={handleTakeScreenshot} disabled={guardando} className="bg-blue-600 px-8 py-3 rounded-2xl font-black text-white shadow-xl hover:bg-blue-500 transition-all active:scale-95 flex items-center justify-center gap-2">
+                             <Camera size={18} /> {guardando ? 'Forjando...' : 'Descargar Imagen'}
+                        </button>
+                        <button onClick={() => setModalMazoOpen(false)} className="bg-slate-700 px-8 py-3 rounded-2xl font-black text-white hover:bg-slate-600 transition-all">Cerrar</button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
