@@ -13,7 +13,7 @@ export default function HomePortal() {
 
             <div className="relative z-10 text-center mb-16 animate-fade-in">
                 <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter mb-4 uppercase">
-                    Mitos<span className="text-orange-500">App</span>
+                    Warning<span className="text-orange-500">Deck</span>
                 </h1>
                 <p className="text-slate-400 text-xl md:text-2xl font-light tracking-widest uppercase">
                     Selecciona tu Era de Batalla
