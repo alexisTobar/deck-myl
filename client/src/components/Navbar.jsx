@@ -124,7 +124,7 @@ export default function Navbar() {
               </div>
             )}
 
-            <MobileIcon to="/my-decks" icon={<Layers size={22} />} label="Mazo" active={location.pathname === "/my-decks"} />
+            <MobileIcon to="/my-decks" icon={<Layers size={22} />} label="Mis Mazos" active={location.pathname === "/my-decks"} />
             {isLoggedIn ? (
                <button onClick={handleLogout} className="flex flex-col items-center gap-1 p-2 transition-all active:scale-90">
                   <LogOut size={22} className="text-slate-400" />
