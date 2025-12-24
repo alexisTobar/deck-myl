@@ -15,7 +15,6 @@ export default function Navbar() {
 
   // Colores dinámicos según la Era
   const themeColor = isPB ? "text-yellow-400" : isImperio ? "text-orange-500" : "text-blue-400";
-  const themeGlow = isPB ? "shadow-yellow-500/20" : isImperio ? "shadow-orange-500/20" : "shadow-blue-500/20";
   const themeBtn = isPB ? "bg-gradient-to-r from-yellow-600 to-yellow-500" : "bg-gradient-to-r from-orange-600 to-orange-500";
 
   useEffect(() => {
@@ -41,16 +40,16 @@ export default function Navbar() {
 
   return (
     <>
-      {/* --- NAVBAR PRINCIPAL (WEB & MOBILE BASE) --- */}
-      <nav className={`sticky top-0 z-[100] w-full border-b border-white/5 bg-slate-950/80 backdrop-blur-xl transition-all duration-300 ${isBuilder ? 'py-2' : 'py-3'}`}>
+      {/* --- NAVBAR PRINCIPAL --- */}
+      <nav className={`sticky top-0 z-[100] w-full border-b border-white/5 bg-slate-950/80 backdrop-blur-xl transition-all duration-300 ${isBuilder ? 'py-1' : 'py-2'}`}>
         <div className="max-w-[1400px] mx-auto px-4 md:px-10 flex justify-between items-center">
           
-          {/* ✅ LOGO ADAPTADO (Manteniendo tu estructura de Link) */}
-          <Link to="/" className="group flex items-center transition-transform hover:scale-105 active:scale-95">
+          {/* ✅ LOGO OPTIMIZADO: Aumentado en Web (h-16 a h-20) y Móvil (h-12) */}
+          <Link to="/" className="group flex items-center transition-transform hover:scale-105 active:scale-95 py-1">
             <img 
               src="https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png" 
               alt="MitosApp Logo" 
-              className="h-10 md:h-14 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.1)]"
+              className="h-12 md:h-16 lg:h-20 w-auto object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.15)]"
             />
           </Link>
 
@@ -60,12 +59,10 @@ export default function Navbar() {
             <NavLink to="/community" label="Comunidad" icon="🌍" />
             <NavLink to="/my-decks" label="Mis Mazos" icon="🃏" />
             
-            {/* ACCESO ADMIN PARA TI */}
             {isLoggedIn && username === "Juegos Vikingos" && (
                 <NavLink to="/admin/cards" label="Admin" icon="⚙️" />
             )}
             
-            {/* ✅ BOTÓN DINÁMICO: Solo aparece si está en una Era */}
             {(isImperio || isPB) && (
               <Link 
                 to={`${formatPrefix}/builder`}
@@ -80,7 +77,7 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             {isLoggedIn ? (
               <div className="flex items-center gap-4">
-                <div className="hidden md:flex flex-col items-end">
+                <div className="hidden md:flex flex-col items-end leading-tight">
                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Bienvenido</span>
                   <span className={`text-sm font-bold ${themeColor}`}>{username}</span>
                 </div>
@@ -103,14 +100,13 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* --- DOCK MÓVIL (VISIBLE SOLO EN MÓVIL Y FUERA DEL BUILDER) --- */}
+      {/* --- DOCK MÓVIL --- */}
       {!isBuilder && (
         <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-[400px]">
           <div className="bg-slate-900/90 backdrop-blur-2xl border border-white/10 p-2 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex justify-around items-center">
             <MobileIcon to="/" icon="🏠" label="Inicio" active={location.pathname === "/"} />
             <MobileIcon to="/community" icon="🌍" label="Arena" active={location.pathname.includes("community")} />
             
-            {/* Botón Central de Construcción (Si aplica) */}
             {(isImperio || isPB) ? (
               <Link to={`${formatPrefix}/builder`} className={`-translate-y-6 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl border-4 border-slate-950 active:scale-90 transition-all ${themeBtn}`}>
                 <span className="text-2xl">🛠️</span>
