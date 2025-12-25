@@ -2,9 +2,23 @@ import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toPng } from 'html-to-image';
 import BACKEND_URL from "../config";
-import { Plus, Minus, Eye, Save, Search, X, Camera, Globe, Layout, Users, Star, Layers, Shield } from "lucide-react";
+// ✅ Importación de iconos Lucide para un look profesional
+import { 
+  Plus, 
+  Minus, 
+  Eye, 
+  Save, 
+  Search, 
+  X, 
+  Camera, 
+  Globe, 
+  Layout, 
+  ShieldCheck,
+  Users,
+  Star
+} from "lucide-react";
 
-// ✅ Configuración de botones de acceso rápido
+// ✅ Configuración de las 4 grandes ediciones
 const MAIN_EDITIONS = [
     { id: "espada_sagrada", label: "Espada Sagrada", color: "from-blue-600 to-blue-800" },
     { id: "helenica", label: "Helénica", color: "from-red-600 to-red-800" },
@@ -12,14 +26,13 @@ const MAIN_EDITIONS = [
     { id: "dominios_de_ra", label: "Dominios de Ra", color: "from-yellow-600 to-yellow-800" }
 ];
 
-const EDICIONES_PB_ALL = { "shogun_4": "Shogun 4","colmillos_avalon": "Colmillos de Avalon", "extensiones_pb_2023": "Extensiones PB 2023", "espada_sagrada_aniversario": "Espada Sagrada (Aniv)", "Relatos": "Relatos", "hijos-de-daana-aniversario": "Hijos de Daana (Aniv)", "25 aniversario": "25 Aniversario", "Festividades": "Festividades", "aniversario-de-ra": "Aniversario de Ra", "colmillos_inframundo": "Colmillos del Inframundo", "encrucijada": "Encrucijada", "festividades": "Festividades (Extra)", "helenica_aniversario": "Helénica (Aniv)", "inferno": "Inferno", "jo lanzamiento ra": "Jo Lanzamiento Ra", "kit-de-batalla-de-ra": "Kit de Batalla de Ra", "kit-raciales-2023": "Kit Raciales 2023", "kit-raciales-2024": "Kit Raciales 2024", "leyendas_pb_2.0": "Leyendas PB 2.0", "lootbox-2023": "Lootbox 2023", "lootbox-pb-2024": "Lootbox PB 2024", "promo_daana": "Promo Daana", "promo_helenica": "Promo Helénica", "relatos-de-espada-sagrada-aniversario": "Relatos Espada Sagrada", "relatos-de-helenica": "Relatos Helénica", "toolkit-pb-2025": "Toolkit PB 2025", "toolkit_pb_fuerza_y_destino": "Toolkit Fuerza y Destino", "toolkit_pb_magia_y_divinidad": "Toolkit Magia y Divinidad", "toolkit_pb_nobleza_y_poder": "Toolkit Nobleza y Poder" };
 const RAZAS_PB = ["Caballero", "Héroe", "Defensor", "Eterno", "Dragón", "Olímpico", "Desafiante", "Faraón", "Faerie", "Titán", "Sombra", "Sacerdote"];
 const TIPOS_PB = [
-    { id: "Aliado", label: "Aliado", icon: <Users size={14} /> },
-    { id: "Talismán", label: "Talismán", icon: <Shield size={14} /> },
-    { id: "Arma", label: "Arma", icon: <Layout size={14} /> },
-    { id: "Tótem", label: "Tótem", icon: <Layout size={14} /> },
-    { id: "Oro", label: "Oro", icon: <Globe size={14} /> }
+    { id: "Aliado", label: "Aliado", icon: <Users size={14} />, color: "border-yellow-600 text-yellow-500" },
+    { id: "Talismán", label: "Talismán", icon: <Shield size={14} />, color: "border-blue-400 text-blue-300" },
+    { id: "Arma", icon: <Layout size={14} />, label: "Arma", color: "border-red-600 text-red-500" },
+    { id: "Tótem", icon: <Layout size={14} />, label: "Tótem", color: "border-emerald-600 text-emerald-500" },
+    { id: "Oro", icon: <Globe size={14} />, label: "Oro", color: "border-amber-400 text-amber-300" }
 ];
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 const getImg = (c) => c?.imgUrl || c?.imageUrl || c?.img || "https://via.placeholder.com/250x350?text=No+Image";
@@ -31,8 +44,8 @@ export default function PBBuilder() {
     const galleryRef = useRef(null);
 
     const formato = "primer_bloque";
-    const [mainEditionSelected, setMainEditionSelected] = useState("espada_sagrada"); // ✅ Filtro Principal
-    const [edicionSeleccionada, setEdicionSeleccionada] = useState(""); 
+    // ✅ Estado para controlar el botón de edición principal seleccionado
+    const [mainEditionSelected, setMainEditionSelected] = useState("espada_sagrada"); 
     const [tipoSeleccionado, setTipoSeleccionado] = useState("");
     const [razaSeleccionada, setRazaSeleccionada] = useState("");
     const [busqueda, setBusqueda] = useState("");
@@ -63,9 +76,13 @@ export default function PBBuilder() {
             setLoading(true);
             try {
                 const params = new URLSearchParams({ format: formato });
-                if (busqueda) params.append("q", busqueda);
-                else if (edicionSeleccionada) params.append("edition", edicionSeleccionada);
-                else params.append("main_edition", mainEditionSelected); // ✅ Busca por la Principal
+                
+                // ✅ Prioridad: 1. Búsqueda por texto, 2. Filtro por Edición Principal
+                if (busqueda) {
+                    params.append("q", busqueda);
+                } else {
+                    params.append("main_edition", mainEditionSelected);
+                }
 
                 if (tipoSeleccionado) params.append("type", tipoSeleccionado);
                 if (razaSeleccionada) params.append("race", razaSeleccionada);
@@ -77,7 +94,7 @@ export default function PBBuilder() {
         };
         const timer = setTimeout(fetchCartas, 300);
         return () => clearTimeout(timer);
-    }, [busqueda, edicionSeleccionada, tipoSeleccionado, razaSeleccionada, mainEditionSelected]);
+    }, [busqueda, mainEditionSelected, tipoSeleccionado, razaSeleccionada]);
 
     const handleAdd = (c) => {
         const ex = mazo.find(x => x.slug === c.slug);
@@ -110,7 +127,7 @@ export default function PBBuilder() {
         try {
             const dataUrl = await toPng(galleryRef.current, { quality: 1.0, backgroundColor: '#0c0e14' });
             const link = document.createElement('a'); link.download = `${nombreMazo || "Mazo_PB"}.png`; link.href = dataUrl; link.click();
-        } catch (err) { alert('Error captura'); } finally { setGuardando(false); }
+        } catch (err) { alert('Error'); } finally { setGuardando(false); }
     }, [nombreMazo]);
 
     const mazoAgrupado = useMemo(() => {
@@ -126,18 +143,18 @@ export default function PBBuilder() {
             <div className="flex-1 flex flex-col h-full relative overflow-hidden">
                 <div className="bg-slate-900/80 border-b border-yellow-500/20 p-3 flex justify-between items-center px-4 shadow-xl">
                     <button onClick={() => navigate("/primer-bloque")} className="p-1.5 rounded-lg border border-yellow-500/30 text-yellow-500 text-xs font-bold hover:bg-yellow-500/10 transition-all">Volver</button>
-                    <h2 className="text-xs font-black uppercase text-yellow-500 tracking-widest leading-none italic flex items-center gap-2"><Star size={14}/> Forja de Ediciones</h2>
+                    <h2 className="text-xs font-black uppercase text-yellow-500 tracking-widest leading-none italic flex items-center gap-2"><Star size={14}/> Forja Primer Bloque</h2>
                     <div className="w-10"></div>
                 </div>
 
                 <div className="p-4 bg-slate-900/40 border-b border-slate-800 space-y-4">
-                    {/* ✅ BOTONES DE EDICIONES PRINCIPALES */}
+                    {/* ✅ BOTONES DE EDICIONES PRINCIPALES (Sustituyen al selector largo) */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         {MAIN_EDITIONS.map(ed => (
                             <button 
                                 key={ed.id} 
-                                onClick={() => { setMainEditionSelected(ed.id); setEdicionSeleccionada(""); }}
-                                className={`py-2 px-1 rounded-xl text-[10px] font-black uppercase transition-all border-2 shadow-lg ${mainEditionSelected === ed.id ? `bg-gradient-to-r ${ed.color} border-white text-white scale-105` : 'bg-slate-900 border-slate-700 text-slate-500 hover:text-slate-200'}`}
+                                onClick={() => { setMainEditionSelected(ed.id); setBusqueda(""); }}
+                                className={`py-3 px-1 rounded-2xl text-[10px] font-black uppercase transition-all border-2 shadow-lg ${mainEditionSelected === ed.id ? `bg-gradient-to-r ${ed.color} border-white text-white scale-105` : 'bg-slate-900 border-slate-700 text-slate-500 hover:text-slate-200'}`}
                             >
                                 {ed.label}
                             </button>
@@ -145,13 +162,9 @@ export default function PBBuilder() {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                        <input type="text" placeholder="Búsqueda Global..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="flex-1 p-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm outline-none focus:border-yellow-500 font-bold" />
-                        <select value={edicionSeleccionada} onChange={(e) => {setEdicionSeleccionada(e.target.value); setMainEditionSelected("");}} className="bg-slate-950 border border-slate-700 p-2 rounded-xl text-[11px] font-black text-yellow-500">
-                            <option value="">Otras Ediciones...</option>
-                            {Object.entries(EDICIONES_PB_ALL).map(([s, l]) => <option key={s} value={s}>{l}</option>)}
-                        </select>
+                        <input type="text" placeholder="Búsqueda Global PB..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="flex-1 p-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm outline-none focus:border-yellow-500 font-bold" />
                         <select value={razaSeleccionada} onChange={(e) => setRazaSeleccionada(e.target.value)} className="bg-slate-950 border border-yellow-500/30 p-2 rounded-xl text-[11px] font-black text-yellow-400">
-                            <option value="">Raza...</option>
+                            <option value="">Todas las Razas</option>
                             {RAZAS_PB.map(r => <option key={r} value={r}>{r}</option>)}
                         </select>
                     </div>
@@ -166,7 +179,7 @@ export default function PBBuilder() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar pb-24 md:pb-4" ref={gridContainerRef}>
-                    {loading ? <div className="flex flex-col items-center justify-center py-20 gap-4"><div className="w-10 h-10 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div><span className="text-yellow-500 font-black uppercase tracking-tighter">Invocando...</span></div> : (
+                    {loading ? <div className="text-center mt-20 text-yellow-500 font-bold animate-pulse text-xl uppercase tracking-tighter">Invocando leyendas...</div> : (
                         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-4">
                             {cartas.map(c => {
                                 const cant = mazo.find(x => x.slug === c.slug)?.cantidad || 0;
@@ -185,7 +198,7 @@ export default function PBBuilder() {
                 </div>
             </div>
 
-            {/* SECCIÓN MI DECK (DERECHA MAGNÍFICA) */}
+            {/* SECCIÓN MI DECK (LADO DERECHO MAGNÍFICO) */}
             <div className="hidden md:flex w-85 border-l border-white/10 flex-col h-screen bg-gradient-to-b from-slate-900 via-[#0c0e14] to-black shadow-2xl">
                 <div className="p-5 border-b border-yellow-500/30 bg-slate-900/50 backdrop-blur-md font-black text-yellow-500 uppercase tracking-widest flex justify-between items-center shadow-lg">
                     <div className="flex items-center gap-2"><Layout size={18} className="text-yellow-500" /><span className="italic">Grimorio PB</span></div>
@@ -213,11 +226,19 @@ export default function PBBuilder() {
                             </div>
                         </div>
                     ))}
+                    {mazo.length === 0 && (
+                        <div className="h-full flex flex-col items-center justify-center text-slate-600 space-y-4 pt-20">
+                            <div className="w-20 h-20 rounded-full border-2 border-dashed border-slate-800 flex items-center justify-center"><Plus size={30} className="opacity-20" /></div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-center px-10">Selecciona cartas del catálogo para forjar tu mazo</p>
+                        </div>
+                    )}
                 </div>
 
                 <div className="p-5 bg-slate-900/80 backdrop-blur-xl border-t border-white/5 flex flex-col gap-3 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
-                    <button onClick={() => setModalMazoOpen(true)} className="w-full bg-slate-800 hover:bg-blue-600 text-white py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl active:scale-95 flex items-center justify-center gap-2 border border-white/5"><Eye size={16} /> Ver Galería Visual</button>
-                    <button onClick={() => setModalGuardarOpen(true)} className="w-full bg-yellow-600 hover:bg-yellow-500 text-black py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl active:scale-95 flex items-center justify-center gap-2"><Save size={16} /> Guardar Mazo</button>
+                    <button onClick={() => setModalMazoOpen(true)} className="w-full bg-slate-800 hover:bg-blue-600 text-white py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 border border-white/5"><Eye size={16} /> Ver Galería Visual</button>
+                    <button onClick={() => setModalGuardarOpen(true)} className="w-full bg-yellow-600 hover:bg-yellow-500 text-black py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <Save size={16} /> Guardar Mazo
+                    </button>
                 </div>
             </div>
 
@@ -229,7 +250,7 @@ export default function PBBuilder() {
                 </div>
                 <div className="flex gap-2 pr-2">
                     <button onClick={() => setShowMobileList(true)} className="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-xs border border-slate-700">LISTA</button>
-                    <button onClick={() => setModalMazoOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase">VER</button>
+                    <button onClick={() => setModalMazoOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-tighter">VER</button>
                     <button onClick={() => setModalGuardarOpen(true)} className="bg-yellow-600 text-black px-4 py-2 rounded-lg font-bold text-xs shadow-lg flex items-center justify-center"><Save size={16} /></button>
                 </div>
             </div>
@@ -252,7 +273,6 @@ export default function PBBuilder() {
                 </div>
             )}
 
-            {/* MODALES DE ZOOM, LISTA Y GALERIA (COMPLETOS) */}
             {showMobileList && (
                 <div className="md:hidden fixed inset-0 z-[60] bg-black/80 flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
                     <div className="bg-slate-900 rounded-t-3xl h-[70vh] p-5 overflow-auto border-t border-slate-700 shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -264,7 +284,7 @@ export default function PBBuilder() {
                             <div key={t} className="mb-4">
                                 <h4 className="text-yellow-600 text-[10px] font-black uppercase mb-2 border-b border-slate-800 pb-1">{t}</h4>
                                 {mazoAgrupado[t].map(c => (
-                                    <div key={c.slug} className="flex justify-between items-center py-2.5 border-b border-slate-800 last:border-0">
+                                    <div key={c.slug} className="flex justify-between items-center py-2 border-b border-slate-800 last:border-0">
                                         <div className="flex items-center gap-3">
                                             <img src={getImg(c)} className="w-10 h-12 rounded shadow-md object-cover" alt={c.name} />
                                             <span className="text-sm font-medium">{c.name}</span>
