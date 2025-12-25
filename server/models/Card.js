@@ -8,6 +8,9 @@ const GlobalCardSchema = new mongoose.Schema({
     imgUrl: { type: String }, // URL final de la imagen (Cloudinary o local)
     edition: { type: String }, // Nombre humano de la edición (Ej: "Espada Sagrada")
 
+    // --- CAMPO NUEVO PARA AGRUPACIÓN DE EDICIONES ---
+    main_edition: { type: String, default: "" }, // ✅ AGREGADO: Para Espada Sagrada, Helénica, etc.
+
     // --- CAMPOS NUEVOS (PRIMER BLOQUE / GENERAL) ---
     format: { 
         type: String, 
@@ -21,7 +24,6 @@ const GlobalCardSchema = new mongoose.Schema({
     ability: { type: String },  // Habilidad (Texto)
 
     // --- CAMPOS ESPECÍFICOS DE IMPERIO (LEGACY) ---
-    // Mantenemos esto para que no falle tu base de datos actual
     edition_slug: String, 
     ed_edid: String,      
     edid: String,       
@@ -32,5 +34,7 @@ const GlobalCardSchema = new mongoose.Schema({
 // Índices para búsqueda ultra rápida
 GlobalCardSchema.index({ name: 'text' });
 GlobalCardSchema.index({ format: 1 }); 
+// Indexar main_edition para que el constructor de PB cargue rápido
+GlobalCardSchema.index({ main_edition: 1 }); 
 
 module.exports = mongoose.model('Card', GlobalCardSchema);
