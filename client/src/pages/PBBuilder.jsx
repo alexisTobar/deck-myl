@@ -15,10 +15,11 @@ import {
   Layout, 
   ShieldCheck,
   Users,
-  Star
+  Star,
+  Layers
 } from "lucide-react";
 
-// ✅ Configuración de las 4 grandes ediciones
+// ✅ Configuración de botones de acceso rápido para las 4 grandes ediciones
 const MAIN_EDITIONS = [
     { id: "espada_sagrada", label: "Espada Sagrada", color: "from-blue-600 to-blue-800" },
     { id: "helenica", label: "Helénica", color: "from-red-600 to-red-800" },
@@ -28,11 +29,11 @@ const MAIN_EDITIONS = [
 
 const RAZAS_PB = ["Caballero", "Héroe", "Defensor", "Eterno", "Dragón", "Olímpico", "Desafiante", "Faraón", "Faerie", "Titán", "Sombra", "Sacerdote"];
 const TIPOS_PB = [
-    { id: "Aliado", label: "Aliado", icon: <Users size={14} />, color: "border-yellow-600 text-yellow-500" },
-    { id: "Talismán", label: "Talismán", icon: <Shield size={14} />, color: "border-blue-400 text-blue-300" },
-    { id: "Arma", icon: <Layout size={14} />, label: "Arma", color: "border-red-600 text-red-500" },
-    { id: "Tótem", icon: <Layout size={14} />, label: "Tótem", color: "border-emerald-600 text-emerald-500" },
-    { id: "Oro", icon: <Globe size={14} />, label: "Oro", color: "border-amber-400 text-amber-300" }
+    { id: "Aliado", label: "Aliado", icon: <Users size={14} /> },
+    { id: "Talismán", label: "Talismán", icon: <ShieldCheck size={14} /> },
+    { id: "Arma", label: "Arma", icon: <Layout size={14} /> },
+    { id: "Tótem", label: "Tótem", icon: <Layout size={14} /> },
+    { id: "Oro", label: "Oro", icon: <Globe size={14} /> }
 ];
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 const getImg = (c) => c?.imgUrl || c?.imageUrl || c?.img || "https://via.placeholder.com/250x350?text=No+Image";
@@ -44,7 +45,7 @@ export default function PBBuilder() {
     const galleryRef = useRef(null);
 
     const formato = "primer_bloque";
-    // ✅ Estado para controlar el botón de edición principal seleccionado
+    // ✅ Estado para controlar la edición principal seleccionada (Espada Sagrada por defecto)
     const [mainEditionSelected, setMainEditionSelected] = useState("espada_sagrada"); 
     const [tipoSeleccionado, setTipoSeleccionado] = useState("");
     const [razaSeleccionada, setRazaSeleccionada] = useState("");
@@ -77,11 +78,11 @@ export default function PBBuilder() {
             try {
                 const params = new URLSearchParams({ format: formato });
                 
-                // ✅ Prioridad: 1. Búsqueda por texto, 2. Filtro por Edición Principal
+                // ✅ Prioridad: 1. Búsqueda por texto, 2. Filtro por Edición Principal (edition)
                 if (busqueda) {
                     params.append("q", busqueda);
                 } else {
-                    params.append("main_edition", mainEditionSelected);
+                    params.append("edition", mainEditionSelected);
                 }
 
                 if (tipoSeleccionado) params.append("type", tipoSeleccionado);
@@ -164,7 +165,7 @@ export default function PBBuilder() {
                     <div className="flex flex-wrap gap-2">
                         <input type="text" placeholder="Búsqueda Global PB..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="flex-1 p-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm outline-none focus:border-yellow-500 font-bold" />
                         <select value={razaSeleccionada} onChange={(e) => setRazaSeleccionada(e.target.value)} className="bg-slate-950 border border-yellow-500/30 p-2 rounded-xl text-[11px] font-black text-yellow-400">
-                            <option value="">Todas las Razas</option>
+                            <option value="">Raza...</option>
                             {RAZAS_PB.map(r => <option key={r} value={r}>{r}</option>)}
                         </select>
                     </div>
@@ -198,7 +199,7 @@ export default function PBBuilder() {
                 </div>
             </div>
 
-            {/* SECCIÓN MI DECK (LADO DERECHO MAGNÍFICO) */}
+            {/* SECCIÓN MI DECK (DERECHA MAGNÍFICA) */}
             <div className="hidden md:flex w-85 border-l border-white/10 flex-col h-screen bg-gradient-to-b from-slate-900 via-[#0c0e14] to-black shadow-2xl">
                 <div className="p-5 border-b border-yellow-500/30 bg-slate-900/50 backdrop-blur-md font-black text-yellow-500 uppercase tracking-widest flex justify-between items-center shadow-lg">
                     <div className="flex items-center gap-2"><Layout size={18} className="text-yellow-500" /><span className="italic">Grimorio PB</span></div>
@@ -218,20 +219,14 @@ export default function PBBuilder() {
                                             <span className="truncate font-bold text-slate-200 group-hover:text-white transition-colors cursor-pointer uppercase text-[12px] tracking-tight">{c.name}</span>
                                         </div>
                                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                                            <button onClick={() => handleAdd(c)} className="w-8 h-8 flex items-center justify-center bg-yellow-500/20 hover:bg-yellow-500 text-yellow-500 hover:text-black rounded-xl transition-all border border-yellow-500/20 shadow-lg active:scale-90"><Plus size={16} strokeWidth={3} /></button>
-                                            <button onClick={() => handleRemove(c.slug)} className="w-8 h-8 flex items-center justify-center bg-red-500/20 hover:bg-red-600 text-red-400 hover:text-white rounded-xl transition-all border border-red-500/20 shadow-lg active:scale-90"><Minus size={16} strokeWidth={3} /></button>
+                                            <button onClick={() => handleAdd(c)} className="w-8 h-8 flex items-center justify-center bg-yellow-500/20 hover:bg-yellow-500 text-yellow-500 hover:text-black rounded-xl transition-all active:scale-90"><Plus size={16} strokeWidth={3} /></button>
+                                            <button onClick={() => handleRemove(c.slug)} className="w-8 h-8 flex items-center justify-center bg-red-500/20 hover:bg-red-600 text-red-400 hover:text-white rounded-xl transition-all active:scale-90"><Minus size={16} strokeWidth={3} /></button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
                     ))}
-                    {mazo.length === 0 && (
-                        <div className="h-full flex flex-col items-center justify-center text-slate-600 space-y-4 pt-20">
-                            <div className="w-20 h-20 rounded-full border-2 border-dashed border-slate-800 flex items-center justify-center"><Plus size={30} className="opacity-20" /></div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-center px-10">Selecciona cartas del catálogo para forjar tu mazo</p>
-                        </div>
-                    )}
                 </div>
 
                 <div className="p-5 bg-slate-900/80 backdrop-blur-xl border-t border-white/5 flex flex-col gap-3 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
@@ -255,34 +250,17 @@ export default function PBBuilder() {
                 </div>
             </div>
 
-            {/* MODAL GUARDAR PB CORREGIDO */}
-            {modalGuardarOpen && (
-                <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setModalGuardarOpen(false)}>
-                    <div className="bg-slate-800 p-6 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl text-white" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-xl font-black mb-6 uppercase text-yellow-500 tracking-tighter italic text-center">Guardar Estrategia PB</h3>
-                        <input value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} className="w-full p-3 rounded-xl bg-slate-900 border border-slate-600 outline-none focus:border-yellow-500 mb-4 transition-all text-white font-bold" placeholder="Nombre del mazo..." />
-                        <label className="flex items-center gap-3 bg-slate-900 p-3 rounded-xl cursor-pointer hover:bg-slate-950 transition-colors">
-                            <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-5 h-5 accent-yellow-600" />
-                            <span className="text-sm font-bold text-slate-300 italic uppercase tracking-tighter">Publicar en la Arena Global <Globe size={14} className="inline ml-1 text-yellow-500" /></span>
-                        </label>
-                        <div className="flex justify-end gap-3 mt-8">
-                            <button onClick={() => setModalGuardarOpen(false)} className="text-slate-400 font-bold px-4 hover:text-white transition-colors">Cancelar</button>
-                            <button onClick={handleSaveDeck} disabled={guardando || !nombreMazo.trim()} className="bg-yellow-600 text-black px-8 py-2 rounded-xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-transform flex items-center gap-2"><Save size={16} /> Confirmar</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
+            {/* MODALES COMPLETOS */}
             {showMobileList && (
                 <div className="md:hidden fixed inset-0 z-[60] bg-black/80 flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
                     <div className="bg-slate-900 rounded-t-3xl h-[70vh] p-5 overflow-auto border-t border-slate-700 shadow-2xl" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-black uppercase text-yellow-500 italic">Mi Lista ({totalCartas}/50)</h3>
+                            <h3 className="text-lg font-black uppercase text-orange-500 italic tracking-tighter">Mi Lista ({totalCartas}/50)</h3>
                             <button onClick={() => setShowMobileList(false)} className="text-slate-400"><X size={24} /></button>
                         </div>
                         {ORDER_TYPES.map(t => mazoAgrupado[t] && (
                             <div key={t} className="mb-4">
-                                <h4 className="text-yellow-600 text-[10px] font-black uppercase mb-2 border-b border-slate-800 pb-1">{t}</h4>
+                                <h4 className="text-yellow-600 text-[10px] font-black uppercase mb-3 border-b border-slate-800 pb-1">{t}</h4>
                                 {mazoAgrupado[t].map(c => (
                                     <div key={c.slug} className="flex justify-between items-center py-2 border-b border-slate-800 last:border-0">
                                         <div className="flex items-center gap-3">
@@ -292,7 +270,7 @@ export default function PBBuilder() {
                                         <div className="flex items-center gap-4 bg-slate-950 p-1.5 px-4 rounded-full border border-slate-800">
                                             <button onClick={() => handleRemove(c.slug)} className="text-red-500 font-black text-xl active:scale-90 transition-transform"><Minus size={18} /></button>
                                             <span className="font-black text-sm w-4 text-center">{c.cantidad}</span>
-                                            <button onClick={() => handleAdd(c)} disabled={c.cantidad >= 3} className="text-green-500 disabled:opacity-30"><Plus size={18} /></button>
+                                            <button onClick={() => handleAdd(c)} disabled={c.cantidad >= 3} className="text-green-500 font-black text-xl active:scale-90 transition-transform disabled:opacity-30"><Plus size={18} /></button>
                                         </div>
                                     </div>
                                 ))}
@@ -336,10 +314,27 @@ export default function PBBuilder() {
                         </div>
                     </div>
                     <div className="p-6 bg-slate-900 flex flex-col sm:flex-row gap-4 justify-center border-t border-slate-800 shadow-inner">
-                        <button onClick={handleTakeScreenshot} disabled={guardando} className="bg-blue-600 px-8 py-3 rounded-2xl font-black text-white shadow-xl hover:bg-blue-500 transition-all active:scale-95 flex items-center justify-center gap-2 uppercase text-xs italic tracking-widest italic">
+                        <button onClick={handleTakeScreenshot} disabled={guardando} className="bg-blue-600 px-8 py-3 rounded-2xl font-black text-white shadow-xl hover:bg-blue-500 transition-all active:scale-95 flex items-center justify-center gap-2 uppercase text-xs italic tracking-widest">
                              <Camera size={18} /> {guardando ? 'Forjando...' : 'Descargar Imagen'}
                         </button>
                         <button onClick={() => setModalMazoOpen(false)} className="bg-slate-700 px-8 py-3 rounded-2xl font-black text-white hover:bg-slate-600 transition-all uppercase text-xs italic tracking-widest">Cerrar</button>
+                    </div>
+                </div>
+            )}
+
+            {modalGuardarOpen && (
+                <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setModalGuardarOpen(false)}>
+                    <div className="bg-slate-800 p-6 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl text-white" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-xl font-black mb-6 uppercase text-yellow-500 tracking-tighter italic text-center">Guardar Estrategia PB</h3>
+                        <input value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} className="w-full p-3 rounded-xl bg-slate-900 border border-slate-600 outline-none focus:border-yellow-500 mb-4 transition-all text-white font-bold" placeholder="Nombre del mazo..." />
+                        <label className="flex items-center gap-3 bg-slate-900 p-3 rounded-xl cursor-pointer hover:bg-slate-950 transition-colors">
+                            <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-5 h-5 accent-yellow-600" />
+                            <span className="text-sm font-bold text-slate-300 italic uppercase tracking-tighter">Publicar en la Arena Global <Globe size={14} className="inline ml-1 text-yellow-500" /></span>
+                        </label>
+                        <div className="flex justify-end gap-3 mt-8">
+                            <button onClick={() => setModalGuardarOpen(false)} className="text-slate-400 font-black px-4 hover:text-white transition-colors uppercase italic text-xs tracking-widest">Cancelar</button>
+                            <button onClick={handleSaveDeck} disabled={guardando || !nombreMazo.trim()} className="bg-yellow-600 text-black px-8 py-2 rounded-xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-transform flex items-center gap-2 italic"><Save size={16} /> Confirmar</button>
+                        </div>
                     </div>
                 </div>
             )}
