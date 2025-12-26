@@ -17,10 +17,30 @@ import {
 
 // ✅ Configuración de ediciones para el modal del Navbar
 const MAIN_EDITIONS = [
-    { id: "espada_sagrada", label: "Espada Sagrada", color: "from-blue-600 to-blue-900", img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/es43.webp" },
-    { id: "helenica", label: "Helénica", color: "from-red-600 to-red-900", img: "https://los40.cl/resizer/v2/RGW3O7B6EBMJTOG3663Q63HYUM.jpg?auth=c2cc267add0246b4d52e7e6ba39dac28c0c11ebe4c806e386358c4a65968d094&quality=70&width=1200&height=544&smart=true" },
-    { id: "hijos_de_daana", label: "Hijos de Daana", color: "from-green-600 to-green-900", img: "https://m.media-amazon.com/images/I/71u9iB3X3UL._AC_UF894,1000_QL80_.jpg" },
-    { id: "dominios_de_ra", label: "Dominios de Ra", color: "from-yellow-600 to-orange-900", img: "https://pbs.twimg.com/media/EML0Vl0WwAA_p7t.jpg" }
+    { 
+        id: "espada_sagrada", 
+        label: "Espada Sagrada", 
+        color: "from-blue-600 to-blue-900", 
+        img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp@main/espada_sagrada.png" 
+    },
+    { 
+        id: "helenica", 
+        label: "Helénica", 
+        color: "from-red-600 to-red-900", 
+        img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp@main/helenica.png" 
+    },
+    { 
+        id: "hijos_de_daana", 
+        label: "Hijos de Daana", 
+        color: "from-green-600 to-green-900", 
+        img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp@main/hijos_de_daana.png" 
+    },
+    { 
+        id: "dominios_de_ra", 
+        label: "Dominios de Ra", 
+        color: "from-yellow-600 to-orange-900", 
+        img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp@main/dominios_de_ra.png" 
+    }
 ];
 
 export default function Navbar() {
