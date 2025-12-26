@@ -78,8 +78,8 @@ export default function PrimerBloqueHome() {
                         
                         <div className="text-center mb-8">
                             <Star className="mx-auto text-yellow-500 mb-2" fill="currentColor" />
-                            <h3 className="text-2xl font-black uppercase italic tracking-tighter">Elige tu Relato</h3>
-                            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Selecciona una edición principal para comenzar</p>
+                            <h3 className="text-2xl font-black uppercase italic tracking-tighter">Elige tu Edicion</h3>
+                            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Selecciona una edición principal para comenzar a construir tu deck</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
