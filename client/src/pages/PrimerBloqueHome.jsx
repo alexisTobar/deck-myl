@@ -2,11 +2,32 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { X, Star } from "lucide-react";
 
+// ✅ Configuración con imágenes decorativas para las ediciones
 const MAIN_EDITIONS = [
-    { id: "espada_sagrada", label: "Espada Sagrada", color: "bg-blue-600 hover:bg-blue-500" },
-    { id: "helenica", label: "Helénica", color: "bg-red-600 hover:bg-red-500" },
-    { id: "hijos_de_daana", label: "Hijos de Daana", color: "bg-green-600 hover:bg-green-500" },
-    { id: "dominios_de_ra", label: "Dominios de Ra", color: "bg-yellow-600 hover:bg-yellow-500 text-black" }
+    { 
+        id: "espada_sagrada", 
+        label: "Espada Sagrada", 
+        color: "from-blue-600 to-blue-900", 
+        img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/es43.webp" 
+    },
+    { 
+        id: "helenica", 
+        label: "Helénica", 
+        color: "from-red-600 to-red-900", 
+        img: "https://los40.cl/resizer/v2/RGW3O7B6EBMJTOG3663Q63HYUM.jpg?auth=c2cc267add0246b4d52e7e6ba39dac28c0c11ebe4c806e386358c4a65968d094&quality=70&width=1200&height=544&smart=true" 
+    },
+    { 
+        id: "hijos_de_daana", 
+        label: "Hijos de Daana", 
+        color: "from-green-600 to-green-900", 
+        img: "https://m.media-amazon.com/images/I/71u9iB3X3UL._AC_UF894,1000_QL80_.jpg" 
+    },
+    { 
+        id: "dominios_de_ra", 
+        label: "Dominios de Ra", 
+        color: "from-yellow-600 to-orange-900", 
+        img: "https://pbs.twimg.com/media/EML0Vl0WwAA_p7t.jpg" 
+    }
 ];
 
 export default function PrimerBloqueHome() {
@@ -25,8 +46,8 @@ export default function PrimerBloqueHome() {
                 <div className="absolute inset-0 bg-[url('https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/es43.webp')] bg-cover bg-fixed bg-center opacity-30 scale-110"></div>
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/40 to-transparent"></div>
                 
-                <div className="relative z-10 text-center px-4">
-                    <span className="text-yellow-500 font-black tracking-[0.3em] uppercase text-sm mb-4 block">Formato Clásico</span>
+                <div className="relative z-10 text-center px-4 animate-fade-in-up">
+                    <span className="text-yellow-500 font-black tracking-[0.3em] uppercase text-sm mb-4 block drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]">Formato Clásico</span>
                     <h1 className="text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 to-yellow-600 mb-6 uppercase tracking-tighter italic">
                         Primer Bloque
                     </h1>
@@ -47,11 +68,11 @@ export default function PrimerBloqueHome() {
                 </div>
             </div>
 
-            {/* MODAL DE SELECCIÓN DE EDICIÓN */}
+            {/* MODAL DE SELECCIÓN DE EDICIÓN CON IMÁGENES */}
             {showModal && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
-                    <div className="bg-slate-900 border border-yellow-500/30 w-full max-w-lg rounded-[2.5rem] p-8 relative shadow-2xl">
-                        <button onClick={() => setShowModal(false)} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+                    <div className="bg-slate-900 border border-yellow-500/30 w-full max-w-2xl rounded-[2.5rem] p-8 relative shadow-2xl overflow-hidden">
+                        <button onClick={() => setShowModal(false)} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors z-50">
                             <X size={24} />
                         </button>
                         
@@ -61,14 +82,29 @@ export default function PrimerBloqueHome() {
                             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Selecciona una edición principal para comenzar</p>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {MAIN_EDITIONS.map((ed) => (
                                 <button
                                     key={ed.id}
                                     onClick={() => selectEdition(ed.id)}
-                                    className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg border-2 border-transparent hover:border-white ${ed.color}`}
+                                    className={`relative group h-32 rounded-2xl overflow-hidden border-2 border-white/5 hover:border-yellow-500 transition-all active:scale-95 shadow-xl`}
                                 >
-                                    {ed.label}
+                                    {/* Imagen de fondo */}
+                                    <img 
+                                        src={ed.img} 
+                                        alt={ed.label} 
+                                        className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-110 group-hover:opacity-70 transition-all duration-700" 
+                                    />
+                                    {/* Overlay gradiente */}
+                                    <div className={`absolute inset-0 bg-gradient-to-t ${ed.color} mix-blend-multiply opacity-50`}></div>
+                                    <div className="absolute inset-0 bg-black/20"></div>
+                                    
+                                    {/* Texto centrado */}
+                                    <div className="relative h-full flex items-center justify-center">
+                                        <span className="text-xl font-black uppercase italic tracking-widest text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                                            {ed.label}
+                                        </span>
+                                    </div>
                                 </button>
                             ))}
                         </div>
@@ -76,26 +112,40 @@ export default function PrimerBloqueHome() {
                 </div>
             )}
 
-            {/* RECURSOS PRO */}
+            {/* SECCIÓN DE RECURSOS PRO */}
             <section className="max-w-7xl mx-auto px-6 py-24">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <CardInfo title="FAQ Clásico" icon="?" color="text-yellow-500" link="https://docs.google.com/forms/..." />
-                    <CardInfo title="Restricciones" icon="⚔️" color="text-red-500" link="https://blog.myl.cl/..." />
-                    <CardInfo title="Documento DAR" icon="⚖️" color="text-blue-500" link="https://drive.google.com/..." />
+                    {/* FAQ */}
+                    <div className="group bg-slate-900/40 p-8 rounded-[2rem] border border-slate-800 hover:border-yellow-500/50 transition-all duration-500 relative overflow-hidden">
+                        <div className="absolute -right-8 -top-8 text-yellow-500/10 text-9xl font-black group-hover:scale-110 transition-transform">?</div>
+                        <h3 className="text-2xl font-black mb-4 text-yellow-500 italic uppercase">FAQ Clásico</h3>
+                        <p className="text-slate-400 mb-8 leading-relaxed">¿Dudas sobre Furia, Exhumación o el daño de los Oros? Consulta el compendio oficial de reglas clásicas.</p>
+                        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdsaGsdcxvUXKx5dufVXFJiLdRzaNkjhKBNEKCVzwIHmUm-HA/viewform" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-yellow-500 font-black hover:gap-4 transition-all uppercase text-sm tracking-widest">
+                            Feedback <span>→</span>
+                        </a>
+                    </div>
+
+                    {/* Banlist */}
+                    <div className="group bg-slate-900/40 p-8 rounded-[2rem] border border-slate-800 hover:border-red-500/50 transition-all duration-500 relative overflow-hidden">
+                        <div className="absolute -right-8 -top-8 text-red-500/10 text-9xl font-black group-hover:scale-110 transition-transform">⚔️</div>
+                        <h3 className="text-2xl font-black mb-4 text-red-500 italic uppercase">Restricciones</h3>
+                        <p className="text-slate-400 mb-8 leading-relaxed">Mantén el juego justo. Revisa la lista de cartas prohibidas y limitadas para el formato PB Extendido.</p>
+                        <a href="https://blog.myl.cl/banlist-racial-edicion-primer-bloque" className="inline-flex items-center gap-2 text-red-500 font-black hover:gap-4 transition-all uppercase text-sm tracking-widest">
+                            Ver Banlist <span>→</span>
+                        </a>
+                    </div>
+
+                    {/* DAR */}
+                    <div className="group bg-slate-900/40 p-8 rounded-[2rem] border border-slate-800 hover:border-blue-500/50 transition-all duration-500 relative overflow-hidden">
+                        <div className="absolute -right-8 -top-8 text-blue-500/10 text-9xl font-black group-hover:scale-110 transition-transform">⚖️</div>
+                        <h3 className="text-2xl font-black mb-4 text-blue-500 italic uppercase">Documento DAR</h3>
+                        <p className="text-slate-400 mb-8 leading-relaxed">El reglamento oficial de arbitraje (DAR) adaptado para torneos de Primer Bloque.</p>
+                        <a href="https://drive.google.com/drive/folders/10vEUxzriV4C8BE5H7A9F8uTnuTelF3Lc" className="inline-flex items-center gap-2 text-blue-500 font-black hover:gap-4 transition-all uppercase text-sm tracking-widest">
+                            Descargar DAR <span>→</span>
+                        </a>
+                    </div>
                 </div>
             </section>
-        </div>
-    );
-}
-
-function CardInfo({ title, icon, color, link }) {
-    return (
-        <div className="group bg-slate-900/40 p-8 rounded-[2rem] border border-slate-800 hover:border-yellow-500/50 transition-all relative overflow-hidden">
-            <div className={`absolute -right-8 -top-8 ${color} opacity-10 text-9xl font-black`}>{icon}</div>
-            <h3 className={`text-2xl font-black mb-4 ${color} italic uppercase`}>{title}</h3>
-            <a href={link} target="_blank" rel="noreferrer" className={`${color} font-black hover:gap-4 transition-all uppercase text-sm tracking-widest flex items-center gap-2`}>
-                Ver Más <span>→</span>
-            </a>
         </div>
     );
 }
