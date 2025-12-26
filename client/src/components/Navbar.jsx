@@ -10,14 +10,25 @@ import {
   Lock, 
   LogOut, 
   User, 
-  LogIn 
+  LogIn,
+  X,
+  Star
 } from "lucide-react";
+
+// ✅ Configuración de ediciones para el modal del Navbar
+const MAIN_EDITIONS = [
+    { id: "espada_sagrada", label: "Espada Sagrada", color: "from-blue-600 to-blue-900", img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/es43.webp" },
+    { id: "helenica", label: "Helénica", color: "from-red-600 to-red-900", img: "https://los40.cl/resizer/v2/RGW3O7B6EBMJTOG3663Q63HYUM.jpg?auth=c2cc267add0246b4d52e7e6ba39dac28c0c11ebe4c806e386358c4a65968d094&quality=70&width=1200&height=544&smart=true" },
+    { id: "hijos_de_daana", label: "Hijos de Daana", color: "from-green-600 to-green-900", img: "https://m.media-amazon.com/images/I/71u9iB3X3UL._AC_UF894,1000_QL80_.jpg" },
+    { id: "dominios_de_ra", label: "Dominios de Ra", color: "from-yellow-600 to-orange-900", img: "https://pbs.twimg.com/media/EML0Vl0WwAA_p7t.jpg" }
+];
 
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState("");
+  const [showPBModal, setShowPBModal] = useState(false); // ✅ Control del modal interno
 
   const isImperio = location.pathname.includes("/imperio");
   const isPB = location.pathname.includes("/primer-bloque");
@@ -48,6 +59,20 @@ export default function Navbar() {
     navigate("/");
   };
 
+  // ✅ Función para manejar el click en Construir Mazo
+  const handleBuildClick = () => {
+    if (isPB) {
+      setShowPBModal(true); // Si es PB, abrimos el modal interno
+    } else {
+      navigate("/imperio/builder"); // Si es Imperio, va directo
+    }
+  };
+
+  const selectEdition = (id) => {
+    setShowPBModal(false);
+    navigate("/primer-bloque/builder", { state: { initialEdition: id } });
+  };
+
   return (
     <>
       {/* --- NAVBAR PRINCIPAL --- */}
@@ -74,11 +99,10 @@ export default function Navbar() {
             
             {(isImperio || isPB) && (
               <button 
-                // ✅ MODIFICACIÓN: Si es PB, lo mandamos a elegir edición. Si es imperio, va directo.
-                onClick={() => navigate(isPB ? "/primer-bloque" : "/imperio/builder")}
+                onClick={handleBuildClick}
                 className={`ml-2 px-5 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider text-white shadow-xl hover:scale-105 active:scale-95 transition-all ${themeBtn} flex items-center gap-2`}
               >
-                <Hammer size={14} strokeWidth={3} /> {isPB ? "Cambiar Edición" : "Construir Mazo"}
+                <Hammer size={14} strokeWidth={3} /> Construir Mazo
               </button>
             )}
           </div>
@@ -108,6 +132,40 @@ export default function Navbar() {
         </div>
       </nav>
 
+      {/* --- MODAL INTERNO PARA PB (SE ACTIVA DESDE NAVBAR) --- */}
+      {showPBModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+            <div className="bg-slate-900 border border-yellow-500/30 w-full max-w-2xl rounded-[2.5rem] p-8 relative shadow-2xl overflow-hidden">
+                <button onClick={() => setShowPBModal(false)} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors z-50">
+                    <X size={24} />
+                </button>
+                
+                <div className="text-center mb-8">
+                    <Star className="mx-auto text-yellow-500 mb-2" fill="currentColor" />
+                    <h3 className="text-2xl font-black uppercase italic tracking-tighter text-white">Construir Mazo PB</h3>
+                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Selecciona una edición principal para comenzar</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {MAIN_EDITIONS.map((ed) => (
+                        <button
+                            key={ed.id}
+                            onClick={() => selectEdition(ed.id)}
+                            className={`relative group h-32 rounded-2xl overflow-hidden border-2 border-white/5 hover:border-yellow-500 transition-all active:scale-95 shadow-xl`}
+                        >
+                            <img src={ed.img} alt={ed.label} className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-110 group-hover:opacity-70 transition-all duration-700" />
+                            <div className={`absolute inset-0 bg-gradient-to-t ${ed.color} mix-blend-multiply opacity-50`}></div>
+                            <div className="absolute inset-0 bg-black/20"></div>
+                            <div className="relative h-full flex items-center justify-center">
+                                <span className="text-xl font-black uppercase italic tracking-widest text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{ed.label}</span>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </div>
+      )}
+
       {/* --- DOCK MÓVIL --- */}
       {!isBuilder && (
         <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-[400px]">
@@ -117,8 +175,7 @@ export default function Navbar() {
             
             {(isImperio || isPB) ? (
               <button 
-                // ✅ MODIFICACIÓN MÓVIL: Misma lógica de redirección
-                onClick={() => navigate(isPB ? "/primer-bloque" : "/imperio/builder")}
+                onClick={handleBuildClick}
                 className={`-translate-y-6 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl border-4 border-slate-950 active:scale-90 transition-all ${themeBtn}`}
               >
                 <Hammer size={24} strokeWidth={2.5} />
