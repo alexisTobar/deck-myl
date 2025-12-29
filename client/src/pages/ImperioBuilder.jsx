@@ -48,19 +48,23 @@ export default function ImperioBuilder() {
         return { counts, curve };
     }, [mazo]);
 
+    // ✅ RESTAURADO: Lógica de carga para edición de mazos
     useEffect(() => {
         if (location.state?.deckToEdit) {
             const d = location.state.deckToEdit;
             setNombreMazo(d.name);
             setEditingDeckId(d._id);
             setIsPublic(d.isPublic || false);
-            setMazo(d.cards.map(c => ({ ...c, cantidad: c.quantity || 1, imgUrl: getImg(c) })));
+            setMazo(d.cards.map(c => ({ 
+                ...c, 
+                cantidad: c.quantity || 1, 
+                imgUrl: getImg(c) 
+            })));
         }
-    }, [location]);
+    }, [location.state]);
 
     useEffect(() => {
         const fetchCartas = async () => {
-            if (!edicionSeleccionada && !busqueda && !tipoSeleccionado) return;
             setLoading(true);
             try {
                 const params = new URLSearchParams({ format: formato });
@@ -91,7 +95,7 @@ export default function ImperioBuilder() {
         try {
             const dataUrl = await toPng(galleryRef.current, { quality: 1.0, pixelRatio: 2, skipFonts: true });
             const link = document.createElement('a');
-            link.download = `WarningDeck_Imperio_${nombreMazo || "Deck"}.png`;
+            link.download = `WarningDeck_Imperio_${nombreMazo || "Mazo"}.png`;
             link.href = dataUrl;
             link.click();
         } catch (err) { alert('Error exportación'); } finally { setGuardando(false); }
@@ -123,9 +127,8 @@ export default function ImperioBuilder() {
 
     return (
         <div className="h-screen flex flex-col md:flex-row font-sans bg-[#0f0a07] text-white overflow-hidden">
-            {/* ... Seccion Buscador y Lista de Mazo Lateral ... */}
             <div className="flex-1 flex flex-col h-full relative overflow-hidden">
-                <div className="bg-slate-900/80 border-b border-orange-500/20 p-3 flex justify-between items-center px-4">
+                <div className="bg-slate-900/80 border-b border-orange-500/20 p-3 flex justify-between items-center px-4 shadow-xl">
                     <button onClick={() => navigate("/imperio")} className="p-1.5 rounded-lg border border-orange-500/30 text-orange-500 text-xs font-bold hover:bg-orange-500/10 transition-all">Volver</button>
                     <h2 className="text-xs font-black uppercase text-orange-500 tracking-widest italic">Imperio Workshop</h2>
                     <div className="w-10"></div>
@@ -133,7 +136,7 @@ export default function ImperioBuilder() {
 
                 <div className="p-4 bg-slate-900/40 border-b border-slate-800 space-y-4">
                     <div className="flex gap-2">
-                        <input type="text" placeholder="Búsqueda..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="flex-1 p-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm outline-none focus:border-orange-500" />
+                        <input type="text" placeholder="Búsqueda Global..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="flex-1 p-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm outline-none focus:border-orange-500" />
                         <select value={edicionSeleccionada} onChange={(e) => setEdicionSeleccionada(e.target.value)} className="bg-slate-950 border border-slate-700 p-2 rounded-xl text-[13px] font-bold text-orange-400">{Object.entries(EDICIONES_IMPERIO).map(([s, l]) => <option key={s} value={s}>{l}</option>)}</select>
                     </div>
                     <div className="flex flex-wrap gap-2 justify-center">
@@ -156,7 +159,7 @@ export default function ImperioBuilder() {
                                             <img src={getImg(c)} className="w-full h-auto transition-transform group-hover:scale-105" alt={c.name} />
                                             {cant > 0 && <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><div className="w-10 h-10 rounded-full bg-orange-600 text-white flex items-center justify-center font-bold border-2 border-white shadow-xl">{cant}</div></div>}
                                         </div>
-                                        <button onClick={(e) => { e.stopPropagation(); setCardToZoom(c); }} className="absolute top-1.5 right-1.5 bg-black/60 backdrop-blur-md text-white w-7 h-7 rounded-lg flex items-center justify-center border border-white/20 hover:bg-orange-600 transition-colors"><Search size={14}/></button>
+                                        <button onClick={(e) => { e.stopPropagation(); setCardToZoom(c); }} className="absolute top-1.5 right-1.5 bg-black/60 backdrop-blur-md text-white w-7 h-7 rounded-lg flex items-center justify-center border border-white/20 hover:bg-orange-600 transition-colors"><Search size={14} strokeWidth={3} /></button>
                                     </div>
                                 );
                             })}
@@ -166,9 +169,9 @@ export default function ImperioBuilder() {
             </div>
 
             <div className="hidden md:flex w-85 border-l border-white/10 flex-col h-screen bg-gradient-to-b from-slate-900 via-slate-950 to-black shadow-2xl">
-                <div className="p-5 border-b border-orange-500/30 bg-slate-900/50 font-black text-orange-500 uppercase tracking-widest flex justify-between items-center shadow-lg">
+                <div className="p-5 border-b border-orange-500/30 bg-slate-900/50 backdrop-blur-md font-black text-orange-500 uppercase flex justify-between items-center shadow-lg">
                     <div className="flex items-center gap-2"><Layout size={18} className="text-orange-400" /><span className="italic">Mi Deck</span></div>
-                    <div className="px-3 py-1 rounded-full text-xs border border-slate-700">{totalCartas} / 50</div>
+                    <div className={`px-3 py-1 rounded-full text-xs border border-slate-700 ${totalCartas === 50 ? 'text-green-400 border-green-500' : 'text-slate-300'}`}>{totalCartas} / 50</div>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar bg-transparent">
                     {ORDER_TYPES.map(t => mazoAgrupado[t] && (
@@ -191,13 +194,23 @@ export default function ImperioBuilder() {
                         </div>
                     ))}
                 </div>
-                <div className="p-5 bg-slate-900/80 backdrop-blur-xl border-t border-white/5 flex flex-col gap-3">
-                    <button onClick={() => setModalMazoOpen(true)} className="w-full bg-slate-800 text-white py-3 rounded-2xl font-black text-[11px] uppercase flex items-center justify-center gap-2 border border-white/5"><Eye size={16} /> Ver Galería Visual</button>
-                    <button onClick={() => setModalGuardarOpen(true)} className="w-full bg-orange-600 text-white py-3 rounded-2xl font-black text-[11px] uppercase flex items-center justify-center gap-2"><Save size={16} /> Guardar Mazo</button>
+                <div className="p-5 bg-slate-900/80 backdrop-blur-xl border-t border-white/5 flex flex-col gap-3 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
+                    <button onClick={() => setModalMazoOpen(true)} className="w-full bg-slate-800 hover:bg-blue-600 text-white py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 border border-white/5"><Eye size={16} /> Ver Galería Visual</button>
+                    <button onClick={() => setModalGuardarOpen(true)} className="w-full bg-orange-600 hover:bg-orange-500 text-white py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2"><Save size={16} /> Guardar Mazo</button>
                 </div>
             </div>
 
-            {/* ✅ MODAL GALERÍA VISUAL (DISEÑO ENFOCADO EN CARTAS - WARNINGDECK IMPERIO) */}
+            {/* DOCK MÓVIL */}
+            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-2 pb-4 z-50 flex items-center justify-between shadow-2xl">
+                <div className="flex flex-col px-3"><span className="text-[10px] text-slate-500 font-bold uppercase">Total</span><span className="text-lg font-black">{totalCartas}/50</span></div>
+                <div className="flex gap-2 pr-2">
+                    <button onClick={() => setShowMobileList(true)} className="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-xs border border-slate-700 uppercase">Lista</button>
+                    <button onClick={() => setModalMazoOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase">Imagen</button>
+                    <button onClick={() => setModalGuardarOpen(true)} className="bg-orange-600 text-white px-4 py-2 rounded-lg font-bold text-xs shadow-lg"><Save size={16} /></button>
+                </div>
+            </div>
+
+            {/* ✅ MODAL EXPORTACIÓN HD (MODERNO IMPERIO) */}
             {modalMazoOpen && (
                 <div className="fixed inset-0 bg-[#0f0a07] z-[120] flex flex-col overflow-hidden animate-fade-in">
                     <div className="p-4 bg-slate-900 flex justify-between items-center px-6 border-b border-orange-500/20 shadow-xl">
@@ -206,34 +219,28 @@ export default function ImperioBuilder() {
                     </div>
 
                     <div className="flex-1 overflow-auto bg-[#0f0a07] p-4 md:p-10 flex justify-center items-start">
-                        {/* ✅ ÁREA DE CAPTURA - 1200px FIJOS - ESTILO MODERNO IMPERIO */}
                         <div ref={galleryRef} className="relative min-w-[1200px] w-[1200px] flex flex-col bg-[#0f0a07] p-10 border border-orange-500/10 shadow-2xl overflow-hidden">
-                            
-                            {/* Header de la Imagen */}
                             <div className="flex justify-between items-end mb-8 border-b-2 border-orange-500/20 pb-4 relative z-10">
                                 <div>
-                                    <span className="text-orange-500 font-black tracking-[0.4em] uppercase text-[10px]">Invocación Imperio Workshop</span>
-                                    <h1 className="text-6xl font-black uppercase italic tracking-tighter text-white leading-none mt-1">{nombreMazo || "Estrategia Letal"}</h1>
+                                    <span className="text-orange-500 font-black tracking-[0.4em] uppercase text-[10px]">Invocación Workshop</span>
+                                    <h1 className="text-6xl font-black uppercase italic tracking-tighter text-white leading-none mt-1">{nombreMazo || "Estrategia Imperio"}</h1>
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-4xl font-black text-white tracking-tighter">50 <span className="text-orange-500 text-xl italic">CARTAS</span></div>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">WarningDeck.cl</span>
+                                    <div className="text-4xl font-black text-white tracking-tighter">{totalCartas} <span className="text-orange-500 text-xl italic">CARTAS</span></div>
+                                    <span className="text-[10px] font-bold text-slate-500 tracking-widest uppercase">WarningDeck.cl</span>
                                 </div>
                             </div>
 
-                            {/* Cuerpo: Malla de Cartas Grandes */}
                             <div className="grid grid-cols-8 gap-4 mb-10 relative z-10">
                                 {mazo.map(c => (
                                     <div key={c.slug} className="relative group shadow-2xl">
-                                        <img src={getImg(c)} className="w-full rounded-md border border-white/5 transition-transform group-hover:scale-105" alt={c.name} />
+                                        <img src={getImg(c)} className="w-full rounded-md border border-white/5" alt={c.name} />
                                         <div className="absolute -bottom-1 -right-1 bg-orange-600 text-white text-[11px] font-black px-2 py-0.5 rounded-full border border-black shadow-xl">x{c.cantidad}</div>
                                     </div>
                                 ))}
                             </div>
 
-                            {/* Footer: Estadísticas Modulares */}
                             <div className="grid grid-cols-4 gap-6 mt-auto relative z-10">
-                                {/* Gráfico de Curva */}
                                 <div className="col-span-1 bg-black/40 p-6 rounded-3xl border border-white/5">
                                     <div className="flex items-end justify-between h-20 gap-1.5">
                                         {statsForExport.curve.map((v, i) => (
@@ -245,29 +252,23 @@ export default function ImperioBuilder() {
                                     </div>
                                     <h4 className="text-center font-black uppercase text-[8px] mt-4 text-orange-500 tracking-[0.2em]">Curva de Batalla</h4>
                                 </div>
-
-                                {/* Contadores por Tipo */}
                                 <div className="col-span-3 grid grid-cols-5 gap-3">
                                     {TIPOS_IMPERIO.map(t => (
-                                        <div key={t.id} className="flex flex-col items-center justify-center bg-black/40 p-4 rounded-3xl border border-white/5 shadow-inner group">
-                                            <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">{t.icon}</span>
+                                        <div key={t.id} className="flex flex-col items-center justify-center bg-black/40 p-4 rounded-3xl border border-white/5 shadow-inner">
+                                            <span className="text-2xl mb-1">{t.icon}</span>
                                             <span className="text-3xl font-black text-white">{statsForExport.counts[t.label] || 0}</span>
                                             <span className="text-[7px] uppercase font-black text-slate-500 mt-1">{t.label}</span>
                                         </div>
                                     ))}
                                 </div>
                             </div>
-                            
-                            {/* Marca de agua WarningDeck */}
-                            <div className="absolute top-[40%] left-[50%] -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none">
-                                <Shield size={650} className="text-orange-500" />
-                            </div>
+                            <div className="absolute top-[40%] left-[50%] -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none text-orange-500"><Shield size={650} /></div>
                         </div>
                     </div>
 
-                    <div className="p-6 bg-slate-900 border-t border-white/5 flex justify-center">
-                        <button onClick={handleTakeScreenshot} disabled={guardando} className="bg-orange-600 hover:bg-orange-500 text-white px-12 py-4 rounded-2xl font-black shadow-xl flex items-center gap-3 uppercase text-sm tracking-widest transition-all active:scale-95">
-                             <Camera size={20} /> {guardando ? 'Invocando Imagen...' : 'Descargar Infografía Workshop'}
+                    <div className="p-6 bg-slate-900 border-t border-white/5 flex justify-center gap-4">
+                        <button onClick={handleTakeScreenshot} disabled={guardando} className="bg-orange-600 hover:bg-orange-500 text-white px-12 py-4 rounded-2xl font-black shadow-xl flex items-center gap-3 uppercase text-sm active:scale-95 transition-all">
+                             <Camera size={20} /> {guardando ? 'Generando...' : 'Descargar Infografía HD'}
                         </button>
                     </div>
                 </div>
