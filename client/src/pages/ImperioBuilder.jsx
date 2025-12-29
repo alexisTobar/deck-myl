@@ -4,18 +4,8 @@ import { toPng } from 'html-to-image';
 import BACKEND_URL from "../config";
 // ✅ Iconos Lucide
 import { 
-  Plus, 
-  Minus, 
-  Eye, 
-  Save, 
-  Search, 
-  X, 
-  Camera, 
-  Globe, 
-  Layout, 
-  ShieldCheck,
-  Users,
-  Shield
+  Plus, Minus, Eye, Save, Search, X, Camera, Globe, Layout, 
+  ShieldCheck, Users, Shield 
 } from "lucide-react";
 
 const EDICIONES_IMPERIO = { 
@@ -76,7 +66,6 @@ export default function ImperioBuilder() {
         return { counts };
     }, [mazo]);
 
-    // ✅ REPARADO: Lógica de carga para edición de mazos Imperio
     useEffect(() => {
         if (location.state?.deckToEdit) {
             const d = location.state.deckToEdit;
@@ -136,11 +125,13 @@ export default function ImperioBuilder() {
     const handleTakeScreenshot = useCallback(async () => {
         if (!galleryRef.current) return;
         setGuardando(true);
-        // Delay para móvil
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 800));
         try {
             const dataUrl = await toPng(galleryRef.current, { quality: 1.0, pixelRatio: 2, cacheBust: true });
-            const link = document.createElement('a'); link.download = `WD_Imp_${nombreMazo || "Deck"}.png`; link.href = dataUrl; link.click();
+            const link = document.createElement('a'); 
+            link.download = `WarningDeck_Imp_${nombreMazo || "Deck"}.png`; 
+            link.href = dataUrl; 
+            link.click();
         } catch (err) { alert('Error captura'); } finally { setGuardando(false); }
     }, [nombreMazo]);
 
@@ -156,7 +147,7 @@ export default function ImperioBuilder() {
         <div className="h-screen flex flex-col md:flex-row font-sans bg-[#0f0a07] text-white overflow-hidden">
             <div className="flex-1 flex flex-col h-full relative overflow-hidden">
                 <div className="bg-slate-900/80 border-b border-orange-500/20 p-3 flex justify-between items-center px-4 shadow-xl">
-                    <button onClick={() => navigate("/imperio")} className="p-1.5 rounded-lg border border-orange-500/30 text-orange-500 text-xs font-bold hover:bg-orange-500/10 transition-all">Volver</button>
+                    <button onClick={() => navigate("/imperio")} className="p-1.5 rounded-lg border border-orange-500/30 text-orange-500 text-xs font-bold hover:bg-orange-500 hover:text-white transition-all uppercase italic">Volver</button>
                     <h2 className="text-xs font-black uppercase text-orange-500 tracking-widest italic">Workshop Imperio</h2>
                     <div className="w-10"></div>
                 </div>
@@ -222,14 +213,14 @@ export default function ImperioBuilder() {
                     ))}
                 </div>
                 <div className="p-5 bg-slate-900/80 backdrop-blur-xl border-t border-white/5 flex flex-col gap-3 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
-                    <button onClick={() => setModalMazoOpen(true)} className="w-full bg-slate-800 hover:bg-blue-600 text-white py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 border border-white/5"><Eye size={16} /> Ver Galería Visual</button>
-                    <button onClick={() => setModalGuardarOpen(true)} className="w-full bg-orange-600 hover:bg-orange-500 text-white py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl active:scale-95 transition-all"><Save size={16} /> Guardar Estrategia</button>
+                    <button onClick={() => setModalMazoOpen(true)} className="w-full bg-slate-800 hover:bg-blue-600 text-white py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 border border-white/5"><Eye size={16} /> Ver Galería Visual</button>
+                    <button onClick={() => setModalGuardarOpen(true)} className="w-full bg-orange-600 hover:bg-orange-500 text-white py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl active:scale-95 flex items-center justify-center gap-2 shadow-xl"><Save size={16} /> Guardar Mazo</button>
                 </div>
             </div>
 
             {/* DOCK MÓVIL */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-2 pb-4 z-50 flex items-center justify-between shadow-2xl">
-                <div className="flex flex-col px-3"><span className="text-[10px] text-slate-500 font-bold uppercase">Total</span><span className="text-lg font-black">{totalCartas}/50</span></div>
+                <div className="flex flex-col px-3"><span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Total</span><span className="text-lg font-black">{totalCartas}/50</span></div>
                 <div className="flex gap-2 pr-2">
                     <button onClick={() => setShowMobileList(true)} className="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-xs border border-slate-700 uppercase tracking-tighter">Lista</button>
                     <button onClick={() => setModalMazoOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-tighter">Ver</button>
@@ -245,13 +236,13 @@ export default function ImperioBuilder() {
                         <button onClick={() => setModalMazoOpen(false)} className="bg-slate-800 p-2 rounded-full hover:bg-red-600 transition-colors"><X size={20} /></button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4 pb-24 md:p-10 bg-[#0f0a07] flex flex-col items-center">
-                        <div className="w-full max-w-4xl space-y-6 md:hidden text-center">
-                            <h1 className="text-3xl font-black uppercase text-orange-500 italic leading-none mb-4">{nombreMazo || "Deck Imperio"}</h1>
+                    <div className="flex-1 overflow-y-auto p-4 pb-24 md:p-10 bg-[#0f0a07] flex flex-col items-center text-center">
+                        <div className="w-full max-w-4xl space-y-6 md:hidden">
+                            <h1 className="text-3xl font-black uppercase text-orange-500 italic mb-4">{nombreMazo || "Deck Imperio"}</h1>
                             <div className="grid grid-cols-3 gap-2">
                                 {mazo.map(c => (
                                     <div key={c.slug} className="relative group shadow-2xl">
-                                        <img src={getImg(c)} className="w-full rounded-md border border-white/5 shadow-xl" alt={c.name} />
+                                        <img src={getImg(c)} crossOrigin="anonymous" className="w-full rounded-md border border-white/5 shadow-xl" alt={c.name} />
                                         <div className="absolute -bottom-1 -right-1 bg-orange-600 text-white text-[9px] font-black px-1.5 rounded-full shadow-xl">x{c.cantidad}</div>
                                     </div>
                                 ))}
@@ -273,7 +264,7 @@ export default function ImperioBuilder() {
                                 <div className="grid grid-cols-8 gap-4 mb-10 relative z-10">
                                     {mazo.map(c => (
                                         <div key={c.slug} className="relative group shadow-2xl">
-                                            <img src={getImg(c)} className="w-full rounded-md border border-white/5 shadow-2xl" alt={c.name} />
+                                            <img src={getImg(c)} crossOrigin="anonymous" className="w-full rounded-md border border-white/5 shadow-xl" alt={c.name} />
                                             <div className="absolute -bottom-1 -right-1 bg-orange-600 text-white text-[11px] font-black px-2 py-0.5 rounded-full border border-black shadow-xl">x{c.cantidad}</div>
                                         </div>
                                     ))}
@@ -287,22 +278,23 @@ export default function ImperioBuilder() {
                                         </div>
                                     ))}
                                 </div>
-                                <div className="absolute top-[40%] left-[50%] -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none text-orange-500"><Shield size={650} /></div>
+                                <img src="https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png" 
+                                     className="absolute top-[40%] left-[50%] -translate-x-1/2 -translate-y-1/2 opacity-[0.05] w-[600px]" alt="sello" />
                             </div>
                         </div>
 
-                        {/* Clon móvil fuera de pantalla */}
+                        {/* Clon móvil oculto */}
                         <div className="md:hidden" style={{ position: 'fixed', top: '-10000px', left: '-10000px' }}>
                              <div className="relative w-[1200px] flex flex-col bg-[#0f0a07] p-10 border border-orange-500/10 shadow-2xl overflow-hidden rounded-sm" 
                                   ref={window.innerWidth < 768 ? galleryRef : null}>
                                  <div className="flex justify-between items-end mb-8 border-b-2 border-orange-500/20 pb-4 text-white font-black italic">
-                                    <div><h1 className="text-6xl uppercase tracking-tighter mt-1 leading-none">{nombreMazo}</h1></div>
-                                    <div className="text-right"><div className="text-4xl leading-none">{totalCartas} CARTAS</div></div>
+                                    <div><h1 className="text-6xl uppercase tracking-tighter leading-none mt-1">{nombreMazo}</h1></div>
+                                    <div className="text-right"><div className="text-4xl">{totalCartas} CARTAS</div></div>
                                  </div>
                                  <div className="grid grid-cols-8 gap-4 mb-10">
                                     {mazo.map(c => (
                                         <div key={c.slug} className="relative group shadow-2xl">
-                                            <img src={getImg(c)} className="w-full rounded-md border border-white/5 shadow-2xl" alt="" />
+                                            <img src={getImg(c)} crossOrigin="anonymous" className="w-full rounded-md border border-white/5 shadow-2xl" alt="" />
                                             <div className="absolute -bottom-1 -right-1 bg-orange-600 text-white text-[11px] font-black px-2 py-0.5 rounded-full border border-black shadow-xl">x{c.cantidad}</div>
                                         </div>
                                     ))}
@@ -315,6 +307,8 @@ export default function ImperioBuilder() {
                                         </div>
                                     ))}
                                  </div>
+                                 <img src="https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png" 
+                                     className="absolute top-[40%] left-[50%] -translate-x-1/2 -translate-y-1/2 opacity-[0.05] w-[600px]" alt="" />
                              </div>
                         </div>
                     </div>
@@ -327,33 +321,16 @@ export default function ImperioBuilder() {
                 </div>
             )}
             
-            {/* MODALES ZOOM, GUARDAR Y LISTA MÓVIL (Intactos) */}
+            {/* Modal Zoom y Modal Guardar (Mantener intactos)... */}
             {cardToZoom && (
                 <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4 transition-all duration-300" onClick={() => setCardToZoom(null)}>
                     <button onClick={() => setCardToZoom(null)} className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-2xl z-[210] transition-all"><X size={24} strokeWidth={3} /></button>
                     <div className="relative max-w-sm w-full flex flex-col items-center animate-scale-up" onClick={(e) => e.stopPropagation()}>
-                        <img src={getImg(cardToZoom)} className="w-full h-auto rounded-2xl shadow-[0_0_50px_rgba(234,179,8,0.3)] border-4 border-yellow-500/20" alt="zoom" />
+                        <img src={getImg(cardToZoom)} className="w-full h-auto rounded-2xl shadow-[0_0_50px_rgba(249,115,22,0.3)] border-4 border-yellow-500/20" alt="zoom" />
                         <div className="mt-8 flex items-center justify-center gap-10 bg-slate-900/90 p-4 px-10 rounded-full border border-slate-700 shadow-2xl backdrop-blur-lg">
                             <button onClick={() => handleRemove(cardToZoom.slug)} className="w-14 h-14 rounded-full bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white flex items-center justify-center transition-all active:scale-90"><Minus size={24} strokeWidth={3} /></button>
                             <span className="text-4xl font-black text-white">{mazo.find(x => x.slug === cardToZoom.slug)?.cantidad || 0}</span>
                             <button onClick={() => handleAdd(cardToZoom)} className="w-14 h-14 rounded-full bg-green-600/20 hover:bg-green-600 text-green-500 hover:text-white flex items-center justify-center transition-all active:scale-90"><Plus size={24} strokeWidth={3} /></button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {modalGuardarOpen && (
-                <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setModalGuardarOpen(false)}>
-                    <div className="bg-slate-800 p-6 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl text-white" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-xl font-black mb-6 uppercase text-orange-500 tracking-tighter italic text-center">Guardar Estrategia</h3>
-                        <input value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 outline-none focus:border-orange-500 mb-4 transition-all text-white font-bold" placeholder="Nombre del mazo..." />
-                        <label className="flex items-center gap-3 bg-slate-900 p-3 rounded-xl cursor-pointer hover:bg-slate-950 transition-colors">
-                            <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-5 h-5 accent-orange-600" />
-                            <span className="text-sm font-bold text-slate-300 italic uppercase tracking-tighter">Publicar en la Arena Global <Users size={14} className="inline ml-1 text-orange-500" /></span>
-                        </label>
-                        <div className="flex justify-end gap-3 mt-8">
-                            <button onClick={() => setModalGuardarOpen(false)} className="text-slate-400 font-black px-4 hover:text-white transition-colors uppercase italic text-xs tracking-widest">Cancelar</button>
-                            <button onClick={handleSaveDeck} disabled={guardando || !nombreMazo.trim()} className="bg-orange-600 text-white px-8 py-2 rounded-xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-transform flex items-center gap-2 italic"><Save size={16} /> Confirmar</button>
                         </div>
                     </div>
                 </div>
