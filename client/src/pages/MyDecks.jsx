@@ -1,8 +1,9 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { saveAs } from 'file-saver';
 import BACKEND_URL from "../config";
-// ✅ Importación de iconos
-import { Search, Trash2, Edit3, Download, Globe, Lock, X, Camera, FileText } from "lucide-react";
+// ✅ Iconos Lucide
+import { Search, Trash2, Edit3, Download, Globe, Lock, X, Camera, FileText, LayoutGrid } from "lucide-react";
 
 const getFormatStyles = (format) => {
     if (format === 'primer_bloque') {
@@ -78,7 +79,7 @@ export default function MyDecks() {
         finally { setDeckToDelete(null); }
     };
 
-    // ✅ FUNCIÓN DE DESCARGA NATIVA (CANVAS)
+    // ✅ EXPORTACIÓN NATIVA (CANVAS)
     const handleDownloadInfographic = async (deck) => {
         setIsDownloading(true);
         try {
@@ -89,7 +90,6 @@ export default function MyDecks() {
             canvas.width = 1200;
             canvas.height = 1000;
             
-            // Fondo
             ctx.fillStyle = deck.format === 'primer_bloque' ? "#0c0e14" : "#0f0a07";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -101,7 +101,6 @@ export default function MyDecks() {
                 img.src = url;
             });
 
-            // Sello de Agua
             const logo = await loadImg("https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png");
             if (logo) {
                 ctx.globalAlpha = 0.05;
@@ -109,7 +108,6 @@ export default function MyDecks() {
                 ctx.globalAlpha = 1.0;
             }
 
-            // Textos
             ctx.fillStyle = styles.accentColor;
             ctx.font = "bold 24px Arial";
             ctx.fillText(styles.label.toUpperCase(), 50, 70);
@@ -118,29 +116,26 @@ export default function MyDecks() {
             ctx.font = "italic bold 50px Arial";
             ctx.fillText(deck.name.toUpperCase(), 50, 130);
 
-            // Dibujar Cartas
             let x = 50, y = 200;
             for (const card of deck.cards) {
                 const imgUrl = card.imgUrl || card.imageUrl || card.img;
                 const img = await loadImg(imgUrl);
                 if (img) {
-                    ctx.drawImage(img, x, y, 125, 175);
-                    // Badge Cantidad
+                    ctx.drawImage(img, x, y, 120, 170);
                     ctx.fillStyle = styles.accentColor;
-                    ctx.fillRect(x + 90, y + 150, 35, 25);
+                    ctx.fillRect(x + 85, y + 140, 35, 30);
                     ctx.fillStyle = deck.format === 'primer_bloque' ? "black" : "white";
-                    ctx.font = "bold 16px Arial";
-                    ctx.fillText(`x${card.quantity || 1}`, x + 95, y + 170);
+                    ctx.font = "bold 18px Arial";
+                    ctx.fillText(`x${card.quantity || 1}`, x + 90, y + 162);
                 }
                 x += 140;
                 if (x > 1100) { x = 50; y += 200; }
             }
 
-            const dataUrl = canvas.toDataURL("image/png");
-            const link = document.createElement("a");
-            link.download = `WarningDeck_${deck.name}.png`;
-            link.href = dataUrl;
-            link.click();
+            canvas.toBlob((blob) => {
+                saveAs(blob, `WarningDeck_${deck.name}.png`);
+                setGuardando(false);
+            });
         } catch (err) {
             showToast("Error al generar imagen", "error");
         } finally {
@@ -154,7 +149,7 @@ export default function MyDecks() {
     };
 
     const getDeckTotal = (cards) => cards.reduce((acc, c) => acc + (c.quantity || 1), 0);
-    const getCardImage = (cards) => cards?.length ? (cards[0].imgUrl || cards[0].imageUrl) : null;
+    const getCardImage = (c) => c?.imgUrl || c?.imageUrl || c?.img;
 
     const processedDecks = useMemo(() => {
         let result = [...decks];
@@ -170,60 +165,58 @@ export default function MyDecks() {
 
     return (
         <div className="min-h-screen bg-slate-900 font-sans text-slate-200 pb-32 md:pb-20">
+            {/* ... HEADER Y FILTROS (Igual) ... */}
             <div className="bg-slate-800 border-b border-slate-700 sticky top-0 z-30 shadow-lg p-4">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-                    <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-red-600 uppercase italic tracking-tighter">Mis Mazos Guardados</h1>
+                    <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-red-600 uppercase italic tracking-tighter">Mis Mazos</h1>
                     <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto bg-slate-900 p-1.5 rounded-xl border border-slate-700">
                         <div className="relative flex-1 w-full sm:w-auto">
                             <span className="absolute left-3 top-2.5 text-slate-500"><Search size={18} /></span>
-                            <input type="text" placeholder="Buscar mi estrategia..." className="bg-slate-800 text-sm text-white rounded-lg pl-10 pr-3 py-2 w-full outline-none" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                            <input type="text" placeholder="Buscar..." className="bg-slate-800 text-sm text-white rounded-lg pl-10 pr-3 py-2 w-full outline-none" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                         </div>
                         <select className="bg-slate-800 text-sm text-slate-300 rounded-lg px-3 py-2 outline-none w-full sm:w-auto" value={filterFormat} onChange={(e) => setFilterFormat(e.target.value)}>
-                            <option value="all">Todos los formatos</option>
+                            <option value="all">Todos</option>
                             <option value="imperio">🏛️ Imperio</option>
-                            <option value="primer_bloque">📜 Primer Bloque</option>
+                            <option value="primer_bloque">📜 PB</option>
                         </select>
                     </div>
                 </div>
             </div>
 
             <div className="max-w-7xl mx-auto p-6">
-                {processedDecks.length === 0 ? (
-                    <div className="text-center py-20 bg-slate-800/50 rounded-3xl border border-dashed border-slate-700">
-                        <p className="text-slate-500 font-bold italic uppercase tracking-widest">No hay mazos forjados aún</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {processedDecks.map((deck) => (
-                            <div key={deck._id} onClick={() => setSelectedDeck(deck)} className="group relative bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 hover:border-orange-500 transition-all cursor-pointer h-72 flex flex-col">
-                                <div className="absolute inset-0 bg-slate-900">
-                                    <div className="w-full h-full bg-cover bg-center opacity-40 group-hover:scale-110 transition-transform duration-700" style={{ backgroundImage: `url(${getCardImage(deck.cards)})` }}></div>
-                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent"></div>
-                                </div>
-                                <div className="absolute top-3 left-3 z-20">
-                                    <span className={`text-[10px] font-black px-3 py-1 rounded-full border shadow-xl ${getFormatStyles(deck.format).badgeClass}`}>{getFormatStyles(deck.format).label}</span>
-                                </div>
-                                <div className="relative z-10 mt-auto p-5">
-                                    <h2 className="text-xl font-black text-white uppercase truncate tracking-tighter">{deck.name}</h2>
-                                    <p className="text-[10px] text-orange-400 font-bold mt-1 tracking-widest">{getDeckTotal(deck.cards)} CARTAS TOTALES</p>
-                                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {processedDecks.map((deck) => (
+                        <div key={deck._id} onClick={() => setSelectedDeck(deck)} className="group relative bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 hover:border-orange-500 transition-all cursor-pointer h-72 flex flex-col">
+                            <div className="absolute inset-0 bg-slate-900">
+                                <div className="w-full h-full bg-cover bg-center opacity-40 group-hover:scale-110 transition-transform duration-700" style={{ backgroundImage: `url(${getCardImage(deck.cards[0])})` }}></div>
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent"></div>
                             </div>
-                        ))}
-                    </div>
-                )}
+                            <div className="absolute top-3 left-3 z-20">
+                                <span className={`text-[10px] font-black px-3 py-1 rounded-full border shadow-xl ${getFormatStyles(deck.format).badgeClass}`}>{getFormatStyles(deck.format).label}</span>
+                            </div>
+                            <div className="relative z-10 mt-auto p-5">
+                                <h2 className="text-xl font-black text-white uppercase truncate tracking-tighter">{deck.name}</h2>
+                                <p className="text-[10px] text-orange-400 font-bold mt-1 tracking-widest">{getDeckTotal(deck.cards)} CARTAS</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
+            {/* ✅ MODAL CON GALERÍA VISUAL DE CARTAS */}
             {selectedDeck && (
-                <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4 backdrop-blur-md" onClick={() => setSelectedDeck(null)}>
-                    <div className="bg-slate-800 w-full max-w-4xl rounded-3xl shadow-2xl border border-slate-600 flex flex-col max-h-[90vh] overflow-hidden" onClick={e => e.stopPropagation()}>
-                        <div className="p-6 border-b border-slate-700 flex justify-between bg-slate-900/80 items-center">
+                <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-2 md:p-4 backdrop-blur-sm" onClick={() => setSelectedDeck(null)}>
+                    <div className="bg-slate-800 w-full max-w-6xl rounded-3xl shadow-2xl border border-slate-600 flex flex-col h-[95vh] md:h-[90vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+                        
+                        {/* Cabecera del Modal */}
+                        <div className="p-4 md:p-6 border-b border-slate-700 flex justify-between bg-slate-900/80 items-center">
                             <div>
-                                <h2 className="text-3xl font-black text-white uppercase tracking-tighter italic">{selectedDeck.name}</h2>
+                                <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter italic leading-none">{selectedDeck.name}</h2>
                                 <div className="flex gap-2 mt-2">
-                                    <span className={`text-[10px] font-black px-2 py-1 rounded border ${getFormatStyles(selectedDeck.format).badgeClass}`}>
+                                    <span className={`text-[9px] md:text-[10px] font-black px-2 py-1 rounded border ${getFormatStyles(selectedDeck.format).badgeClass}`}>
                                         {getFormatStyles(selectedDeck.format).label}
                                     </span>
-                                    <span className="text-[10px] bg-slate-700 text-slate-300 font-black px-2 py-1 rounded border border-slate-600 uppercase tracking-widest">
+                                    <span className="text-[9px] md:text-[10px] bg-slate-700 text-slate-300 font-black px-2 py-1 rounded border border-slate-600 uppercase">
                                         {getDeckTotal(selectedDeck.cards)} Cartas
                                     </span>
                                 </div>
@@ -231,40 +224,53 @@ export default function MyDecks() {
                             <button onClick={() => setSelectedDeck(null)} className="bg-slate-700 p-2 rounded-full text-slate-400 hover:text-white transition-colors"><X size={24} /></button>
                         </div>
                         
-                        <div className="flex-1 overflow-y-auto p-6 bg-slate-900/50">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {/* ✅ ÁREA VISUAL: GALERÍA DE IMÁGENES */}
+                        <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-[#0c0e14] custom-scrollbar">
+                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 md:gap-5">
                                 {selectedDeck.cards.map((c, i) => (
-                                    <div key={i} className="flex justify-between items-center bg-slate-800/80 p-3 rounded-xl border border-slate-700 hover:border-slate-500 transition-all">
-                                        <span className="text-sm font-bold uppercase tracking-tight text-slate-200 italic">{c.name}</span>
-                                        <span className="text-orange-500 font-black text-lg">x{c.quantity || 1}</span>
+                                    <div key={i} className="relative group animate-fade-in">
+                                        <div className="rounded-lg md:rounded-xl overflow-hidden border border-white/10 shadow-lg group-hover:border-orange-500/50 transition-all group-hover:scale-105">
+                                            <img 
+                                                src={getCardImage(c)} 
+                                                alt={c.name} 
+                                                className="w-full h-auto block"
+                                                loading="lazy"
+                                            />
+                                            {/* Cantidad sobre la carta */}
+                                            <div className="absolute top-1 right-1 md:top-2 md:right-2 z-10">
+                                                <div className="bg-orange-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-black text-xs md:text-sm shadow-xl border border-white/20">
+                                                    {c.quantity || 1}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {/* Nombre al pie (opcional para móviles) */}
+                                        <p className="mt-1 text-[8px] md:text-[10px] text-slate-400 uppercase font-bold truncate text-center px-1">
+                                            {c.name}
+                                        </p>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        {/* ✅ PANEL DE ACCIONES CON BOTÓN DE DESCARGA */}
-                        <div className="p-5 border-t border-slate-700 bg-slate-900 grid grid-cols-2 md:grid-cols-5 gap-3">
-                            <button onClick={() => togglePrivacy(selectedDeck)} className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-black text-[10px] uppercase transition-all shadow-lg border border-white/5">
+                        {/* Panel de Acciones */}
+                        <div className="p-4 border-t border-slate-700 bg-slate-900 grid grid-cols-2 md:grid-cols-5 gap-3">
+                            <button onClick={() => togglePrivacy(selectedDeck)} className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-black text-[10px] uppercase border border-white/5">
                                 {selectedDeck.isPublic ? <><Lock size={16} className="text-red-500" /> Privado</> : <><Globe size={16} className="text-green-500" /> Público</>}
                             </button>
                             
-                            <button 
-                                onClick={() => handleDownloadInfographic(selectedDeck)} 
-                                disabled={isDownloading}
-                                className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black text-[10px] uppercase transition-all shadow-lg shadow-blue-900/20"
-                            >
-                                <Camera size={16} /> {isDownloading ? 'Generando...' : 'Infografía'}
+                            <button onClick={() => handleDownloadInfographic(selectedDeck)} disabled={isDownloading} className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black text-[10px] uppercase shadow-lg">
+                                <Camera size={16} /> {isDownloading ? '...' : 'Infografía'}
                             </button>
 
-                            <button onClick={() => handleEdit(selectedDeck)} className="flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-500 text-white py-3 rounded-xl font-black text-[10px] uppercase transition-all shadow-lg shadow-orange-900/20">
+                            <button onClick={() => handleEdit(selectedDeck)} className="flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-500 text-white py-3 rounded-xl font-black text-[10px] uppercase shadow-lg">
                                 <Edit3 size={16} /> Editar
                             </button>
 
-                            <button className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-black text-[10px] uppercase transition-all shadow-lg border border-white/5">
+                            <button className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-black text-[10px] uppercase border border-white/5">
                                 <FileText size={16} /> Texto
                             </button>
                             
-                            <button onClick={() => setDeckToDelete(selectedDeck)} className="flex items-center justify-center gap-2 bg-red-600/10 hover:bg-red-600 text-red-500 border border-red-600/30 py-3 rounded-xl font-black text-[10px] uppercase transition-all">
+                            <button onClick={() => setDeckToDelete(selectedDeck)} className="flex items-center justify-center gap-2 bg-red-600/10 hover:bg-red-600 text-red-500 border border-red-600/30 py-3 rounded-xl font-black text-[10px] uppercase">
                                 <Trash2 size={16} /> Borrar
                             </button>
                         </div>
@@ -272,17 +278,16 @@ export default function MyDecks() {
                 </div>
             )}
 
+            {/* Modal de Borrado Confirm... */}
             {deckToDelete && (
                 <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/95 p-4 backdrop-blur-sm">
-                    <div className="bg-slate-800 p-8 rounded-3xl max-w-sm w-full text-center border border-slate-700 shadow-2xl animate-scale-up">
-                        <div className="w-16 h-16 bg-red-600/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Trash2 size={32} />
-                        </div>
-                        <h3 className="text-white text-xl font-black mb-2 uppercase tracking-tighter italic">¿Eliminar Estrategia?</h3>
-                        <p className="text-slate-400 text-sm mb-6">Esta acción es permanente y no podrás recuperar "{deckToDelete.name}".</p>
+                    <div className="bg-slate-800 p-8 rounded-3xl max-w-sm w-full text-center border border-slate-700 shadow-2xl">
+                        <div className="w-16 h-16 bg-red-600/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4"><Trash2 size={32} /></div>
+                        <h3 className="text-white text-xl font-black mb-2 uppercase italic">¿Eliminar?</h3>
+                        <p className="text-slate-400 text-sm mb-6">Esta acción es permanente.</p>
                         <div className="flex gap-4">
-                            <button onClick={() => setDeckToDelete(null)} className="flex-1 bg-slate-700 py-3 rounded-xl text-white font-black text-xs uppercase tracking-widest hover:bg-slate-600 transition-colors">Cancelar</button>
-                            <button onClick={confirmDelete} className="flex-1 bg-red-600 py-3 rounded-xl text-white font-black text-xs uppercase tracking-widest hover:bg-red-500 transition-colors shadow-lg shadow-red-900/20">Confirmar</button>
+                            <button onClick={() => setDeckToDelete(null)} className="flex-1 bg-slate-700 py-3 rounded-xl text-white font-black text-xs uppercase">No</button>
+                            <button onClick={confirmDelete} className="flex-1 bg-red-600 py-3 rounded-xl text-white font-black text-xs uppercase">Sí, Borrar</button>
                         </div>
                     </div>
                 </div>
