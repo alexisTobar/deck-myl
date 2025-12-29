@@ -57,6 +57,7 @@ export default function PBBuilder() {
         if (location.state?.initialEdition) setMainEditionSelected(location.state.initialEdition);
     }, [location.state]);
 
+    // ✅ REPARADO: Normalización de datos al editar sin perder propiedades
     useEffect(() => {
         if (location.state?.deckToEdit) {
             const d = location.state.deckToEdit;
@@ -64,7 +65,12 @@ export default function PBBuilder() {
                 setNombreMazo(d.name);
                 setEditingDeckId(d._id);
                 setIsPublic(d.isPublic || false);
-                setMazo(d.cards.map(c => ({ ...c, cantidad: c.quantity || 1, imgUrl: getImg(c) })));
+                // Convertimos quantity a cantidad para que el builder sea reactivo
+                setMazo(d.cards.map(c => ({ 
+                    ...c, 
+                    cantidad: c.quantity || c.cantidad || 1, 
+                    imgUrl: getImg(c) 
+                })));
             }
         }
     }, [location.state]);
@@ -87,14 +93,29 @@ export default function PBBuilder() {
         return () => clearTimeout(timer);
     }, [busqueda, mainEditionSelected, tipoSeleccionado, razaSeleccionada]);
 
+    // ✅ REPARADO: handleAdd funcional para asegurar actualización de lista
     const handleAdd = (c) => {
-        const ex = mazo.find(x => x.slug === c.slug);
-        if (mazo.reduce((a, b) => a + b.cantidad, 0) >= 50 && !ex) return alert("Mazo lleno");
-        if (ex) { if (ex.cantidad < 3) setMazo(mazo.map(x => x.slug === c.slug ? { ...x, cantidad: x.cantidad + 1 } : x)); }
-        else { setMazo([...mazo, { ...c, cantidad: 1, imgUrl: getImg(c) }]); }
+        setMazo(prevMazo => {
+            const ex = prevMazo.find(x => x.slug === c.slug);
+            const total = prevMazo.reduce((acc, curr) => acc + curr.cantidad, 0);
+            if (total >= 50 && !ex) {
+                alert("Mazo lleno");
+                return prevMazo;
+            }
+            if (ex) {
+                if (ex.cantidad < 3) {
+                    return prevMazo.map(x => x.slug === c.slug ? { ...x, cantidad: x.cantidad + 1 } : x);
+                }
+                return prevMazo;
+            } else {
+                return [...prevMazo, { ...c, cantidad: 1, imgUrl: getImg(c) }];
+            }
+        });
     };
 
-    const handleRemove = (slug) => setMazo(mazo.map(c => c.slug === slug ? { ...c, cantidad: c.cantidad - 1 } : c).filter(c => c.cantidad > 0));
+    const handleRemove = (slug) => {
+        setMazo(prev => prev.map(c => c.slug === slug ? { ...c, cantidad: c.cantidad - 1 } : c).filter(c => c.cantidad > 0));
+    };
 
     const handleSaveDeck = async () => {
         if (!nombreMazo.trim()) return alert("Nombre requerido");
@@ -112,18 +133,14 @@ export default function PBBuilder() {
         } catch (e) { alert("Error"); } finally { setGuardando(false); }
     };
 
-    // ✅ REDISEÑO DE IMAGEN: Estadísticas por tipo integradas
     const handleTakeScreenshot = async () => {
         setGuardando(true);
         try {
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
-            
-            // Calculamos altura dinámica (Añadimos espacio para los recuadros de abajo)
             const rows = Math.ceil(mazo.length / 8);
             canvas.width = 1200;
             canvas.height = 250 + (rows * 200) + 150; 
-            
             ctx.fillStyle = "#0c0e14";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -135,7 +152,6 @@ export default function PBBuilder() {
                 img.src = url;
             });
 
-            // Sello de agua
             const logo = await loadImg("https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png");
             if (logo) {
                 ctx.globalAlpha = 0.05;
@@ -143,23 +159,18 @@ export default function PBBuilder() {
                 ctx.globalAlpha = 1.0;
             }
 
-            // Cabecera
             ctx.fillStyle = "#eab308";
             ctx.font = "bold 24px Arial";
             ctx.fillText("WORKSHOP PRIMER BLOQUE", 50, 60);
-            
             ctx.fillStyle = "white";
             ctx.font = "italic bold 60px Arial";
             ctx.fillText(nombreMazo.toUpperCase() || "ESTRATEGIA", 50, 130);
-
-            // Total cartas a la derecha
             ctx.fillStyle = "#eab308";
             ctx.font = "bold 30px Arial";
             ctx.textAlign = "right";
             ctx.fillText(`${mazo.reduce((a, b) => a + b.cantidad, 0)} CARTAS`, 1150, 130);
             ctx.textAlign = "left";
 
-            // Dibujar Cartas
             let x = 50, y = 180;
             for (const card of mazo) {
                 const img = await loadImg(card.imgUrl);
@@ -175,27 +186,18 @@ export default function PBBuilder() {
                 if (x > 1100) { x = 50; y += 200; }
             }
 
-            // --- RECUADROS DE DISTRIBUCIÓN (ABAJO) ---
             const distY = canvas.height - 110;
             let startX = 50;
-            const boxWidth = 210;
-
             ORDER_TYPES.forEach((type) => {
-                // Fondo del recuadro
                 ctx.fillStyle = "#1e293b";
-                ctx.fillRect(startX, distY, boxWidth, 80);
-                
-                // Texto Tipo
+                ctx.fillRect(startX, distY, 210, 80);
                 ctx.fillStyle = "#94a3b8";
                 ctx.font = "bold 14px Arial";
                 ctx.fillText(type.toUpperCase(), startX + 15, distY + 30);
-                
-                // Cantidad
                 ctx.fillStyle = "white";
                 ctx.font = "bold 35px Arial";
                 ctx.fillText(statsForExport.counts[type] || 0, startX + 15, distY + 68);
-                
-                startX += boxWidth + 20;
+                startX += 230;
             });
 
             canvas.toBlob((blob) => {
@@ -264,25 +266,25 @@ export default function PBBuilder() {
                 </div>
             </div>
 
-            <div className="hidden md:flex w-85 border-l border-white/10 flex-col h-screen bg-gradient-to-b from-slate-900 via-[#0c0e14] to-black shadow-2xl">
-                <div className="p-5 border-b border-yellow-500/30 bg-slate-900/50 backdrop-blur-md font-black text-yellow-500 uppercase tracking-widest flex justify-between items-center shadow-lg">
-                    <div className="flex items-center gap-2"><Layout size={18}/><span className="italic">Grimorio PB</span></div>
-                    <div className={`px-3 py-1 rounded-full text-xs transition-all duration-500 border ${totalCartas === 50 ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 shadow-[0_0_10px_rgba(234,179,8,0.3)]' : 'bg-slate-800 border-slate-700 text-slate-300'}`}>{totalCartas} / 50</div>
+            <div className="hidden md:flex w-85 border-l border-white/10 flex-col h-screen bg-[#0c0e14]">
+                <div className="p-5 border-b border-yellow-500/30 bg-slate-900/50 font-black text-yellow-500 uppercase flex justify-between shadow-lg">
+                    <span>Grimorio PB</span>
+                    <span>{totalCartas} / 50</span>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar bg-transparent">
                     {ORDER_TYPES.map(t => mazoAgrupado[t] && (
-                        <div key={t} className="animate-fade-in-up">
-                            <div className="flex items-center gap-2 mb-3"><div className="h-[2px] flex-1 bg-gradient-to-r from-yellow-600/50 to-transparent"></div><h3 className="text-yellow-500 text-[11px] font-black uppercase tracking-tighter italic px-2">{t}</h3></div>
+                        <div key={t}>
+                            <h3 className="text-yellow-500 text-[11px] font-black uppercase mb-3 border-b border-orange-600/20 italic">{t}</h3>
                             <div className="space-y-2">
                                 {mazoAgrupado[t].map(c => (
-                                    <div key={c.slug} className="flex justify-between items-center text-sm py-2.5 px-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/5 group hover:bg-yellow-600/10 hover:border-yellow-500/30 transition-all duration-300 shadow-sm relative overflow-hidden">
+                                    <div key={c.slug} className="flex justify-between items-center text-sm py-2.5 px-4 bg-white/5 rounded-2xl border border-white/5 group hover:border-yellow-500/30 transition-all">
                                         <div className="flex items-center gap-3 flex-1 min-w-0" onClick={() => setCardToZoom(c)}>
                                             <div className="bg-slate-800 text-yellow-500 w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs shadow-inner">{c.cantidad}</div>
                                             <span className="truncate font-bold text-slate-200 uppercase text-[12px]">{c.name}</span>
                                         </div>
-                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                                            <button onClick={() => handleAdd(c)} className="w-8 h-8 flex items-center justify-center bg-yellow-500/20 hover:bg-yellow-500 text-yellow-500 rounded-xl active:scale-90"><Plus size={16} strokeWidth={3} /></button>
-                                            <button onClick={() => handleRemove(c.slug)} className="w-8 h-8 flex items-center justify-center bg-red-500/20 hover:bg-red-600 text-red-400 rounded-xl active:scale-90"><Minus size={16} strokeWidth={3} /></button>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => handleAdd(c)} className="w-8 h-8 flex items-center justify-center bg-yellow-500/20 hover:bg-yellow-500 text-yellow-500 rounded-xl"><Plus size={16} /></button>
+                                            <button onClick={() => handleRemove(c.slug)} className="w-8 h-8 flex items-center justify-center bg-red-500/20 hover:bg-red-600 text-red-400 rounded-xl"><Minus size={16} /></button>
                                         </div>
                                     </div>
                                 ))}
@@ -290,23 +292,13 @@ export default function PBBuilder() {
                         </div>
                     ))}
                 </div>
-                <div className="p-5 bg-slate-900/80 backdrop-blur-xl border-t border-white/5 flex flex-col gap-3 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
+                <div className="p-5 bg-slate-900/80 border-t border-white/5 flex flex-col gap-3 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
                     <button onClick={handleTakeScreenshot} className="w-full bg-slate-800 hover:bg-blue-600 text-white py-3 rounded-2xl font-black text-[11px] uppercase active:scale-95 flex items-center justify-center gap-2 border border-white/5"><Camera size={16} /> Descargar Imagen</button>
                     <button onClick={() => setModalGuardarOpen(true)} className="w-full bg-yellow-600 hover:bg-yellow-500 text-black py-3 rounded-2xl font-black text-[11px] uppercase active:scale-95 flex items-center justify-center gap-2 shadow-xl"><Save size={16} /> Guardar Mazo</button>
                 </div>
             </div>
 
-            {/* DOCK MÓVIL */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-2 pb-4 z-50 flex items-center justify-between shadow-2xl">
-                <div className="flex flex-col px-3"><span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Total</span><span className={`text-lg font-black ${totalCartas === 50 ? 'text-green-500' : 'text-white'}`}>{totalCartas}/50</span></div>
-                <div className="flex gap-2 pr-2">
-                    <button onClick={() => setShowMobileList(true)} className="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-xs border border-slate-700 uppercase">Lista</button>
-                    <button onClick={handleTakeScreenshot} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest">Descargar</button>
-                    <button onClick={() => setModalGuardarOpen(true)} className="bg-yellow-600 text-black px-4 py-2 rounded-lg font-bold text-xs shadow-lg flex items-center justify-center"><Save size={16} /></button>
-                </div>
-            </div>
-
-            {/* MODAL ZOOM */}
+            {/* MODALES REINTEGRADOS */}
             {cardToZoom && (
                 <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4 transition-all duration-300" onClick={() => setCardToZoom(null)}>
                     <button onClick={() => setCardToZoom(null)} className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-2xl z-[210] transition-all"><X size={24} strokeWidth={3} /></button>
@@ -321,7 +313,6 @@ export default function PBBuilder() {
                 </div>
             )}
 
-            {/* MODAL GUARDAR */}
             {modalGuardarOpen && (
                 <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setModalGuardarOpen(false)}>
                     <div className="bg-slate-800 p-6 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl text-white" onClick={e => e.stopPropagation()}>
@@ -335,36 +326,6 @@ export default function PBBuilder() {
                             <button onClick={() => setModalGuardarOpen(false)} className="text-slate-400 font-black px-4 hover:text-white transition-colors uppercase italic text-xs tracking-widest">Cancelar</button>
                             <button onClick={handleSaveDeck} disabled={guardando || !nombreMazo.trim()} className="bg-yellow-600 text-white px-8 py-2 rounded-xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-transform flex items-center gap-2 italic"><Save size={16} /> Confirmar</button>
                         </div>
-                    </div>
-                </div>
-            )}
-
-            {/* MODAL LISTA MÓVIL */}
-            {showMobileList && (
-                <div className="md:hidden fixed inset-0 z-[60] bg-black/80 flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
-                    <div className="bg-slate-900 rounded-t-3xl h-[70vh] p-5 overflow-auto border-t border-slate-700 shadow-2xl" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-black uppercase text-yellow-500 italic">Mi Lista ({totalCartas}/50)</h3>
-                            <button onClick={() => setShowMobileList(false)} className="text-slate-400"><X size={24} /></button>
-                        </div>
-                        {ORDER_TYPES.map(t => mazoAgrupado[t] && (
-                            <div key={t} className="mb-4">
-                                <h4 className="text-yellow-600 text-[10px] font-black uppercase mb-2 border-b border-orange-800 pb-1">{t}</h4>
-                                {mazoAgrupado[t].map(c => (
-                                    <div key={c.slug} className="flex justify-between items-center py-2 border-b border-slate-800 last:border-0">
-                                        <div className="flex items-center gap-3">
-                                            <img src={getImg(c)} className="w-10 h-12 rounded shadow-md object-cover" alt={c.name} />
-                                            <span className="text-sm font-medium">{c.name}</span>
-                                        </div>
-                                        <div className="flex items-center gap-4 bg-slate-950 p-1.5 px-4 rounded-full border border-slate-800">
-                                            <button onClick={() => handleRemove(c.slug)} className="text-red-500 font-black active:scale-90 transition-transform"><Minus size={18} /></button>
-                                            <span className="font-black text-sm w-4 text-center">{c.cantidad}</span>
-                                            <button onClick={() => handleAdd(c)} disabled={c.cantidad >= 3} className="text-green-500 font-black active:scale-90 transition-transform disabled:opacity-30"><Plus size={18} /></button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ))}
                     </div>
                 </div>
             )}
