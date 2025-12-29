@@ -3,10 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, Star, Hammer, Users, Scale, Trophy, Zap, 
-  Sword, Instagram, Youtube, Twitter, Target, Crown, ChevronRight, PlayCircle
+  Sword, Instagram, Youtube, Twitter, Target, Crown, ChevronRight, PlayCircle, Newspaper
 } from "lucide-react";
 
-// ✅ Animaciones Locales Unificadas
+// ✅ Animaciones Locales Unificadas (Mismas que PB)
 const fadeInUp = {
   initial: { opacity: 0, y: 30 },
   whileInView: { opacity: 1, y: 0 },
@@ -30,17 +30,18 @@ export default function ImperioHome() {
                 <div className="fire-particles"></div>
             </div>
 
-            {/* 🐉 DRAGÓN IMPERIO DE FONDO */}
+            {/* 🐉 DRAGÓN IMPERIO DE FONDO - Ajustado Z-index para no tapar títulos */}
             <div className="fixed inset-0 pointer-events-none z-0 opacity-15">
                 <motion.img 
                     animate={{ scale: [1, 1.05, 1], rotate: [0, 2, 0] }}
                     transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
                     src="https://api.myl.cl/static/cards/162/001.png" 
                     className="w-full h-full object-cover blur-[1px]" 
+                    alt=""
                 />
             </div>
 
-            {/* HERO SECTION */}
+            {/* HERO SECTION - Títulos corregidos con Z-index alto */}
             <section className="relative h-screen flex items-center justify-center border-b border-orange-500/10 z-10 px-4">
                 <div className="text-center max-w-6xl">
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex justify-center mb-6">
@@ -50,12 +51,12 @@ export default function ImperioHome() {
                     <motion.h1 
                         initial={{ opacity: 0, y: 20 }} 
                         animate={{ opacity: 1, y: 0 }} 
-                        className="text-7xl md:text-[11rem] font-black text-white mb-6 uppercase tracking-tighter italic leading-none drop-shadow-[0_0_40px_rgba(249,115,22,0.4)]"
+                        className="text-7xl md:text-[11rem] font-black text-white mb-6 uppercase tracking-tighter italic leading-none drop-shadow-[0_0_40px_rgba(249,115,22,0.6)]"
                     >
                         IMPERIO
                     </motion.h1>
 
-                    <motion.p {...fadeInUp} className="text-lg md:text-3xl text-slate-300 mb-12 max-w-3xl mx-auto italic font-light">
+                    <motion.p {...fadeInUp} className="text-lg md:text-3xl text-slate-300 mb-12 max-w-3xl mx-auto italic font-light leading-relaxed">
                         Domina el poder del presente. Las mecánicas más complejas en el campo de batalla oficial.
                     </motion.p>
 
@@ -89,7 +90,7 @@ export default function ImperioHome() {
                 </motion.div>
             </section>
 
-            {/* 🎥 FEED DE YOUTUBE IMPERIO */}
+            {/* 🎥 FEED DE YOUTUBE IMPERIO - Fix IDs para visibilidad */}
             <section className="max-w-7xl mx-auto px-6 py-32 relative z-10 border-t border-white/5">
                 <motion.div {...fadeInUp} className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
                     <div>
@@ -102,14 +103,16 @@ export default function ImperioHome() {
                 </motion.div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <YTCard title="Sombras y Oscuridad" channelId="Sombras_y_Oscuridad" />
-                    <YTCard title="Mitos y Leyendas" channelId="myloficial" />
+                    {/* Sombras y Oscuridad ID: UC_Uv4-3vI-C3K69X_m9v-pA */}
+                    <YTCard title="Sombras y Oscuridad" channelId="UC_Uv4-3vI-C3K69X_m9v-pA" />
+                    {/* MyL Oficial ID: UC6un_m6_I-0pP7p0vWv4_6A */}
+                    <YTCard title="Mitos y Leyendas" channelId="UC6un_m6_I-0pP7p0vWv4_6A" />
                 </div>
             </section>
 
             {/* ⚖️ RECURSOS COMPETITIVOS */}
             <section className="bg-slate-900/50 py-32 border-y border-white/10 relative z-10">
-                <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 text-center md:text-left">
                     <ResourceBox 
                         title="Banlist Oficial"
                         desc="Consulta la lista actualizada de cartas restringidas y prohibidas para el formato competitivo Imperio."
@@ -127,26 +130,30 @@ export default function ImperioHome() {
                 </div>
             </section>
 
-            {/* 📱 FOOTER RESPONSIVO */}
+            {/* 📱 FOOTER RESPONSIVO RECUPERADO */}
             <footer className="bg-black py-20 border-t border-white/5 relative z-10 text-center md:text-left">
                 <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12">
                     <div>
-                        <h2 className="text-4xl font-black italic uppercase tracking-tighter mb-4 text-white">Warning<span className="text-orange-500">Deck</span></h2>
-                        <p className="text-slate-500 text-sm font-bold uppercase tracking-[0.3em] mb-6">El Poder del Presente</p>
-                        <div className="flex justify-center md:justify-start gap-8">
-                            <a href="#" className="text-slate-400 hover:text-orange-500 transition-all scale-125"><Instagram size={24}/></a>
-                            <a href="#" className="text-slate-400 hover:text-orange-500 transition-all scale-125"><Youtube size={24}/></a>
-                            <a href="#" className="text-slate-400 hover:text-orange-500 transition-all scale-125"><Twitter size={24}/></a>
+                        <h2 className="text-4xl font-black italic uppercase tracking-tighter mb-4 text-white font-serif">Warning<span className="text-orange-500">Deck</span></h2>
+                        <p className="text-slate-500 text-sm font-bold uppercase tracking-[0.3em] mb-6 italic">El Poder del Presente</p>
+                        <div className="flex justify-center md:justify-start gap-8 text-slate-400">
+                            <a href="https://www.instagram.com/myl_oficial/" target="_blank" className="hover:text-orange-500 transition-all scale-125"><Instagram size={24}/></a>
+                            <a href="https://www.youtube.com/@myloficial" target="_blank" className="hover:text-orange-500 transition-all scale-125"><Youtube size={24}/></a>
+                            <a href="#" className="hover:text-orange-500 transition-all scale-125"><Twitter size={24}/></a>
                         </div>
                     </div>
-                    <p className="text-[10px] text-slate-800 font-black uppercase tracking-[0.5em]">WarningDeck © 2025 • Imperio</p>
+                    <div className="flex flex-col items-center md:items-end gap-2">
+                         <span className="text-orange-500 font-black text-xs tracking-widest uppercase">Mitos y Leyendas TCG</span>
+                         <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.5em]">WarningDeck © 2025 • Imperio</p>
+                    </div>
                 </div>
             </footer>
         </div>
     );
 }
 
-// --- SUBCOMPONENTES COMPARTIDOS ---
+// --- SUBCOMPONENTES COMPARTIDOS (Optimizado) ---
+
 function RaceRank({ name, power, trend, color }) {
     return (
         <div className="bg-white/5 p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-orange-500/50 transition-all">
@@ -154,27 +161,25 @@ function RaceRank({ name, power, trend, color }) {
                 <div className={`w-2 h-10 ${color} rounded-full`}></div>
                 <span className="text-xl font-black uppercase italic tracking-tighter text-slate-200">{name}</span>
             </div>
-            <div className="text-right text-orange-500 font-black text-2xl">{power}</div>
+            <div className="text-right text-orange-500 font-black text-2xl group-hover:scale-110 transition-transform">{power}</div>
         </div>
     );
 }
 
 function YTCard({ title, channelId }) {
-    // La URL correcta debe llevar el ID del canal que empieza con UC...
-    const embedUrl = `https://www.youtube.com/embed/videoseries?list=UU${channelId.substring(2)}`;
+    // Truco UU para convertir el ID de Canal en ID de Playlist de Subidas
+    const uploadPlaylistId = channelId.replace(/^UC/, 'UU');
     
     return (
         <div className="space-y-4 group">
             <div className="flex justify-between items-center px-4">
                 <h3 className="text-sm font-black text-orange-500 uppercase tracking-widest italic">{title}</h3>
-                <span className="bg-red-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter animate-pulse">
-                    Último Video
-                </span>
+                <span className="bg-red-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter animate-pulse">Live Feed</span>
             </div>
-            <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white/5 shadow-2xl bg-black group-hover:border-orange-500/30 transition-all transform group-hover:scale-[1.02] duration-500">
+            <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white/5 shadow-2xl bg-black group-hover:border-orange-500/30 transition-all">
                 <iframe 
                     className="w-full h-full"
-                    src={embedUrl} 
+                    src={`https://www.youtube.com/embed/videoseries?list=${uploadPlaylistId}`} 
                     title={title} 
                     frameBorder="0" 
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
@@ -191,7 +196,7 @@ function ResourceBox({ title, desc, icon, link, btnText }) {
             <div className="text-orange-500 group-hover:scale-125 transition-transform duration-500">{icon}</div>
             <h3 className="text-3xl font-black uppercase italic tracking-tighter">{title}</h3>
             <p className="text-slate-400 text-lg leading-relaxed italic">{desc}</p>
-            <a href={link} target="_blank" rel="noreferrer" className="px-10 py-3 bg-slate-800 hover:bg-orange-600 hover:text-white rounded-full font-black transition-all flex items-center gap-2 uppercase text-xs tracking-widest">
+            <a href={link} target="_blank" rel="noreferrer" className="px-10 py-4 bg-orange-600 hover:bg-orange-500 text-white rounded-full font-black transition-all flex items-center gap-2 uppercase text-xs tracking-widest shadow-lg shadow-orange-600/20">
                 {btnText} <ChevronRight size={14} />
             </a>
         </div>
