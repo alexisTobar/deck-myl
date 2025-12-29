@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion"; // ✅ Animaciones
-import { X, Star, Hammer, Users, Scale, Trophy, Sword, PlayCircle } from "lucide-react";
+import { motion } from "framer-motion";
+import { 
+  X, Star, Hammer, Users, Scale, Trophy, Sword, PlayCircle,
+  TrendingUp, Scroll, Eye, Crown, Target, BookOpen
+} from "lucide-react";
 
+// Estructura idéntica, pero con identidad PB
 export default function PrimerBloqueHome() {
     const [showModal, setShowModal] = useState(false);
     const navigate = useNavigate();
@@ -10,138 +14,122 @@ export default function PrimerBloqueHome() {
     return (
         <div className="min-h-screen bg-[#060912] text-white font-sans overflow-x-hidden selection:bg-yellow-500">
             
-            {/* 🐉 DRAGÓN DE PB CON ANIMACIÓN DE RESPIRACIÓN */}
-            <motion.div 
-                animate={{ scale: [1, 1.05, 1], opacity: [0.1, 0.2, 0.1] }}
-                transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-                className="fixed inset-0 z-0 flex items-center justify-center pointer-events-none"
-            >
-                <img src="https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/es43.webp" className="w-full h-full object-cover opacity-20" alt="" />
-            </motion.div>
+            {/* 🐉 FONDO LEYENDA */}
+            <div className="fixed inset-0 pointer-events-none z-0 opacity-10">
+                <motion.img 
+                    animate={{ scale: [1, 1.05, 1], rotate: [-2, 0, -2] }}
+                    transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+                    src="https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/es43.webp" 
+                    className="w-full h-full object-cover" 
+                />
+            </div>
 
-            {/* HERO SECTION */}
-            <section className="relative h-screen flex items-center justify-center overflow-hidden border-b border-yellow-500/10">
-                <div className="relative z-10 text-center px-4 max-w-6xl">
-                    <motion.div 
-                        initial={{ opacity: 0, scale: 0.5 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.8 }}
-                        className="flex justify-center gap-2 mb-6"
-                    >
+            {/* HERO SECTION PB (1er Scroll) */}
+            <section className="relative h-screen flex items-center justify-center border-b border-yellow-500/10">
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative z-10 text-center px-4 max-w-6xl">
+                    <div className="flex justify-center gap-2 mb-6">
                         <Star size={24} fill="#eab308" className="text-yellow-500 animate-pulse" />
-                    </motion.div>
-
-                    <motion.h1 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-7xl md:text-[11rem] font-black text-white mb-6 uppercase tracking-tighter italic leading-none drop-shadow-[0_0_30px_rgba(234,179,8,0.3)]"
-                    >
+                    </div>
+                    <h1 className="text-7xl md:text-[11rem] font-black text-white mb-6 uppercase tracking-tighter italic leading-none drop-shadow-[0_0_40px_rgba(234,179,8,0.4)]">
                         PRIMER BLOQUE
-                    </motion.h1>
-
-                    <motion.p 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.4 }}
-                        className="text-xl md:text-3xl text-slate-400 mb-12 max-w-3xl mx-auto italic font-light leading-relaxed"
-                    >
-                        "Donde la leyenda comenzó." Revive el formato que forjó a los mejores gladiadores.
-                    </motion.p>
-
-                    <motion.div 
-                        initial={{ opacity: 0, y: 40 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.6 }}
-                        className="flex flex-col sm:flex-row gap-6 justify-center"
-                    >
-                        <button onClick={() => setShowModal(true)} className="group relative px-14 py-6 bg-yellow-600 rounded-2xl transition-all hover:scale-110 active:scale-95 shadow-[0_0_40px_rgba(202,138,4,0.2)] overflow-hidden">
-                            <span className="relative z-10 font-black uppercase italic text-2xl flex items-center gap-3 text-black">
-                                <Sword size={26} /> Entrar a la Forja
-                            </span>
+                    </h1>
+                    <p className="text-xl md:text-3xl text-slate-400 mb-12 max-w-3xl mx-auto italic font-light">"Donde la leyenda comenzó." Revive el origen de Mitos y Leyendas.</p>
+                    <div className="flex justify-center">
+                        <button onClick={() => setShowModal(true)} className="px-14 py-7 bg-yellow-600 rounded-2xl font-black text-2xl flex items-center gap-3 hover:scale-110 transition-all text-black shadow-yellow-600/20 shadow-2xl">
+                            <Sword size={28} /> ENTRAR A LA FORJA
                         </button>
-                        <Link to="/community" className="px-14 py-6 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl font-black transition-all hover:bg-yellow-500/10 flex items-center justify-center gap-3 uppercase italic text-2xl text-slate-200">
-                            <Users size={26} /> Explorar Arena
-                        </Link>
-                    </motion.div>
-                </div>
-            </section>
-
-            {/* 📡 CRONISTAS PB CON SCROLL STAGGER */}
-            <section className="max-w-7xl mx-auto px-6 py-32 relative z-10">
-                <motion.h2 
-                    initial={{ opacity: 0, x: -50 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    className="text-5xl font-black uppercase italic tracking-tighter mb-16"
-                >
-                    Cronistas del <span className="text-yellow-500">Primer Bloque</span>
-                </motion.h2>
-
-                <motion.div 
-                    initial="initial"
-                    whileInView="animate"
-                    viewport={{ once: true }}
-                    variants={staggerContainer}
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
-                >
-                    <PBCard name="Coliseo Mitero" link="https://www.youtube.com/@coliseomitero" />
-                    <PBCard name="Elevadoh" link="https://www.youtube.com/@elevadoh" />
-                    <PBCard name="Dragon Dorado" link="https://www.youtube.com/@DragonDoradoMyL" />
-                    <PBCard name="WarningDeck" link="#" isOfficial />
+                    </div>
                 </motion.div>
             </section>
 
-            {/* 📚 RECURSOS */}
-            <section className="bg-slate-950/50 py-32 border-y border-yellow-500/10">
-                <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <ResourceCard title="Banlist PB" icon={<Trophy />} link="https://blog.myl.cl/banlist-racial-edicion-primer-bloque" />
-                    <ResourceCard title="DAR Clásico" icon={<Scale />} link="https://drive.google.com/drive/folders/10vEUxzriV4C8BE5H7A9F8uTnuTelF3Lc" />
-                    <ResourceCard title="Historias" icon={<Users />} link="https://blog.myl.cl/" />
+            {/* 🏛️ HALL OF HEROES: DECKS PB (2do Scroll) */}
+            <section className="max-w-7xl mx-auto px-6 py-32 relative z-10">
+                <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+                    <div>
+                        <h2 className="text-6xl font-black uppercase italic tracking-tighter leading-none">Hall of <span className="text-yellow-500">Heroes</span></h2>
+                        <p className="text-slate-500 mt-4 font-bold uppercase tracking-widest text-xs italic">Decks raciales que han marcado historia</p>
+                    </div>
+                    <Link to="/community" className="text-yellow-500 font-black flex items-center gap-2 uppercase text-sm">Explorar Arena <TrendingUp size={16}/></Link>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <DeckVotadoCardPB title="Caballero Blitz" author="OldSchoolKing" votes="2.5k" color="border-yellow-500" />
+                    <DeckVotadoCardPB title="Dragón Control" author="DragonMaster" votes="1.8k" color="border-red-600" />
+                    <DeckVotadoCardPB title="Sombras Eternas" author="PB_Lover" votes="1.5k" color="border-blue-900" />
                 </div>
             </section>
 
-            {/* MODAL ANIMADO CON ANIMEPRESENCE */}
-            <AnimatePresence>
-                {showModal && (
-                    <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm"
-                    >
-                        {/* Contenido del modal igual pero con motion.div para el contenedor central */}
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {/* 🏺 ANCIENT ARTIFACTS: CARTAS PB (3er Scroll) */}
+            <section className="bg-blue-950/20 py-32 border-y border-yellow-500/5 overflow-hidden">
+                <div className="max-w-7xl mx-auto px-6">
+                    <h2 className="text-5xl font-black uppercase italic tracking-tighter mb-16 text-center">Cartas <span className="text-yellow-500">Icónicas</span> PB</h2>
+                    <div className="flex flex-wrap justify-center gap-12 opacity-80">
+                        <TopCardImgPB url="https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/es43.webp" name="Legendaria 1" />
+                        <TopCardImgPB url="https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/es23.webp" name="Legendaria 2" />
+                        <TopCardImgPB url="https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/es12.webp" name="Legendaria 3" />
+                    </div>
+                </div>
+            </section>
+
+            {/* 📡 CRONISTAS Y REGLAS (4to Scroll) */}
+            <section className="max-w-7xl mx-auto px-6 py-32">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
+                    <div className="space-y-6">
+                        <h2 className="text-5xl font-black uppercase italic tracking-tighter mb-10">Sabios del <span className="text-yellow-500">Relato</span></h2>
+                        <CreatorItemPB name="Coliseo Mitero" channel="@coliseomitero" />
+                        <CreatorItemPB name="Elevadoh" channel="@elevadoh" />
+                        <CreatorItemPB name="Dragon Dorado MyL" channel="@DragonDoradoMyL" />
+                    </div>
+                    <div className="bg-[#0c111d] p-12 rounded-[3rem] border border-yellow-500/20 flex flex-col justify-center">
+                        <Scroll className="text-yellow-500 mb-6" size={48} />
+                        <h3 className="text-4xl font-black uppercase italic mb-6">Leyes Ancestrales</h3>
+                        <p className="text-slate-400 text-lg mb-8 italic leading-relaxed">Consulta la Banlist Racial y el DAR Clásico para mantener la esencia del juego original en cada duelo.</p>
+                        <div className="flex flex-wrap gap-4">
+                            <a href="https://blog.myl.cl/banlist-racial-edicion-primer-bloque" className="px-8 py-4 bg-yellow-600 rounded-xl font-black text-black uppercase text-xs italic">Ver Banlist</a>
+                            <a href="https://drive.google.com/drive/folders/10vEUxzriV4C8BE5H7A9F8uTnuTelF3Lc" className="px-8 py-4 bg-slate-800 rounded-xl font-black text-white uppercase text-xs italic">Descargar DAR</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
     );
 }
 
-function PBCard({ name, link, isOfficial }) {
+// Componentes PB
+function DeckVotadoCardPB({ title, author, votes, color }) {
     return (
-        <motion.a 
-            variants={fadeInUp}
-            whileHover={{ scale: 1.05 }}
-            href={link} target="_blank"
-            className="p-8 bg-white/5 rounded-3xl border border-white/10 hover:border-yellow-500 transition-colors flex flex-col items-center text-center group"
-        >
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-6 ${isOfficial ? 'bg-yellow-500 text-black' : 'bg-red-600 text-white'}`}>
-                <PlayCircle size={28} />
+        <motion.div whileHover={{ y: -10 }} className={`bg-[#0a0d14] p-8 rounded-[2.5rem] border-l-4 ${color} relative overflow-hidden group shadow-2xl`}>
+            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-30 transition-opacity"><Star size={60} /></div>
+            <h4 className="text-2xl font-black uppercase italic mb-2 text-white">{title}</h4>
+            <p className="text-slate-500 font-bold mb-6 text-sm italic">Maestro: {author}</p>
+            <div className="flex items-center gap-4 text-yellow-500">
+                < स्टार size={20} fill="currentColor" />
+                <span className="font-black text-2xl">{votes}</span>
+                <span className="text-slate-600 uppercase text-[10px] font-black tracking-widest">Respeto Ganado</span>
             </div>
-            <h4 className="text-xl font-black uppercase italic">{name}</h4>
-        </motion.a>
+        </motion.div>
     );
 }
 
-function ResourceCard({ title, icon, link }) {
+function TopCardImgPB({ url, name }) {
     return (
-        <motion.a 
-            whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.08)" }}
-            href={link} target="_blank"
-            className="p-10 bg-white/5 rounded-[2.5rem] border border-white/5 hover:border-yellow-500 transition-all text-center group"
-        >
-            <div className="text-yellow-500 mb-6 flex justify-center group-hover:rotate-12 transition-transform">{icon}</div>
-            <h4 className="text-2xl font-black uppercase italic">{title}</h4>
-        </motion.a>
+        <motion.div whileHover={{ scale: 1.1, rotate: -2 }} className="w-56 relative group cursor-pointer shadow-yellow-500/10 shadow-2xl">
+            <img src={url} className="rounded-xl border border-white/5 group-hover:border-yellow-500 transition-all" alt={name} />
+        </motion.div>
+    );
+}
+
+function CreatorItemPB({ name, channel }) {
+    return (
+        <div className="flex items-center justify-between p-6 bg-white/5 rounded-2xl border border-white/5 hover:bg-yellow-600/10 transition-all group">
+            <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center"><PlayCircle size={24} /></div>
+                <div>
+                    <h4 className="font-black uppercase italic">{name}</h4>
+                    <p className="text-yellow-500 text-xs font-bold">{channel}</p>
+                </div>
+            </div>
+            <ChevronRight className="text-slate-700 group-hover:text-yellow-500" />
+        </div>
     );
 }
