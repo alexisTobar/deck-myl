@@ -4,7 +4,7 @@ import { saveAs } from 'file-saver';
 import BACKEND_URL from "../config";
 import { 
   Plus, Minus, Eye, Save, Search, X, Camera, Globe, Layout, 
-  ShieldCheck, Users, Star, Layers, Shield 
+  ShieldCheck, Users, Star, Layers, Shield, TrendingUp
 } from "lucide-react";
 
 const MAIN_EDITIONS = [
@@ -47,10 +47,21 @@ export default function PBBuilder() {
     const [cardToZoom, setCardToZoom] = useState(null);
     const [guardando, setGuardando] = useState(false);
 
-    const statsForExport = useMemo(() => {
+    // ✅ Lógica de estadísticas para la Infografía (Tipos y Curva)
+    const stats = useMemo(() => {
         const counts = { Aliado: 0, Talismán: 0, Arma: 0, Tótem: 0, Oro: 0 };
-        mazo.forEach(c => { if (counts[c.type] !== undefined) counts[c.type] += c.cantidad; });
-        return { counts };
+        const curve = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, "6+": 0 };
+        
+        mazo.forEach(c => {
+            if (counts[c.type] !== undefined) counts[c.type] += c.cantidad;
+            if (c.type !== "Oro") {
+                const cost = parseInt(c.cost) || 0;
+                if (cost >= 6) curve["6+"] += c.cantidad;
+                else curve[cost] += c.cantidad;
+            }
+        });
+        const maxCurve = Math.max(...Object.values(curve), 1);
+        return { counts, curve, maxCurve };
     }, [mazo]);
 
     useEffect(() => {
@@ -112,14 +123,14 @@ export default function PBBuilder() {
         } catch (e) { alert("Error"); } finally { setGuardando(false); }
     };
 
-    // ✅ FIX IMÁGENES MÓVIL: Solución Nativa con Canvas
+    // ✅ SOLUCIÓN MAESTRA: Infografía Pro (Gráfico + Tipos + Logo)
     const handleTakeScreenshot = async () => {
         setGuardando(true);
         try {
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
-            canvas.width = 1200;
-            canvas.height = 1000;
+            canvas.width = 1300;
+            canvas.height = 1050;
             ctx.fillStyle = "#0c0e14";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -131,43 +142,89 @@ export default function PBBuilder() {
                 img.src = url;
             });
 
-            // Sello de agua
+            // 1. Logo Sello de Agua (Visible de fondo)
             const logo = await loadImg("https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png");
             if (logo) {
-                ctx.globalAlpha = 0.05;
-                ctx.drawImage(logo, 300, 200, 600, 600);
+                ctx.globalAlpha = 0.1; // Opacidad profesional
+                ctx.drawImage(logo, canvas.width/2 - 350, canvas.height/2 - 350, 700, 700);
                 ctx.globalAlpha = 1.0;
             }
 
-            // Cabecera
+            // 2. Cabecera Estilo Pro
             ctx.fillStyle = "#eab308";
-            ctx.font = "bold 24px Arial";
-            ctx.fillText("WORKSHOP PRIMER BLOQUE", 50, 60);
+            ctx.font = "bold 22px Arial";
+            ctx.fillText("📜 WORKSHOP PRIMER BLOQUE", 60, 60);
             ctx.fillStyle = "white";
-            ctx.font = "italic bold 50px Arial";
-            ctx.fillText(nombreMazo.toUpperCase() || "MAESTRÍA ANCESTRAL", 50, 120);
+            ctx.font = "italic bold 70px Arial";
+            ctx.fillText(nombreMazo.toUpperCase() || "MAESTRÍA ANCESTRAL", 60, 130);
 
-            // Dibujar Cartas
-            let x = 50, y = 180;
+            // 3. Dibujar Cartas (Grid Optimizado)
+            let x = 60, y = 200;
+            const cardW = 135, cardH = 188;
             for (const card of mazo) {
                 const img = await loadImg(card.imgUrl);
                 if (img) {
-                    ctx.drawImage(img, x, y, 125, 175);
+                    ctx.drawImage(img, x, y, cardW, cardH);
                     ctx.fillStyle = "#eab308";
-                    ctx.fillRect(x + 95, y + 150, 30, 25);
+                    ctx.fillRect(x + cardW - 35, y + cardH - 30, 35, 30);
                     ctx.fillStyle = "black";
-                    ctx.font = "bold 16px Arial";
-                    ctx.fillText(`x${card.cantidad}`, x + 100, y + 170);
+                    ctx.font = "bold 18px Arial";
+                    ctx.fillText(`x${card.cantidad}`, x + cardW - 30, y + cardH - 8);
                 }
-                x += 140;
-                if (x > 1100) { x = 50; y += 200; }
+                x += cardW + 15;
+                if (x > 850) { x = 60; y += cardH + 20; }
             }
+
+            // 4. Panel de Estadísticas Lateral (TIPO ELMETA)
+            const panelX = 950;
+            ctx.fillStyle = "#1e293b";
+            ctx.roundRect ? ctx.roundRect(panelX, 200, 300, 780, 25) : ctx.fillRect(panelX, 200, 300, 780);
+            ctx.fill();
+
+            // Gráfico de Curva
+            ctx.fillStyle = "#eab308";
+            ctx.font = "bold 20px Arial";
+            ctx.fillText("CURVA DE ORO", panelX + 70, 240);
+            let barY = 280;
+            Object.entries(stats.curve).forEach(([cost, count]) => {
+                ctx.fillStyle = "#334155";
+                ctx.fillRect(panelX + 40, barY, 180, 14);
+                ctx.fillStyle = "#eab308";
+                const barWidth = (count / stats.maxCurve) * 180;
+                ctx.fillRect(panelX + 40, barY, barWidth, 14);
+                ctx.fillStyle = "white";
+                ctx.font = "bold 14px Arial";
+                ctx.fillText(`${cost}: ${count}`, panelX + 230, barY + 12);
+                barY += 35;
+            });
+
+            // Conteo por Tipo (Iconos/Texto)
+            ctx.fillStyle = "#eab308";
+            ctx.font = "bold 20px Arial";
+            ctx.fillText("DISTRIBUCIÓN", panelX + 75, 580);
+            let typeY = 620;
+            ORDER_TYPES.forEach(type => {
+                ctx.fillStyle = "#334155";
+                ctx.fillRect(panelX + 40, typeY, 220, 40);
+                ctx.fillStyle = "white";
+                ctx.font = "bold 15px Arial";
+                ctx.fillText(type.toUpperCase(), panelX + 55, typeY + 25);
+                ctx.fillStyle = "#eab308";
+                ctx.font = "bold 22px Arial";
+                ctx.fillText(stats.counts[type] || 0, panelX + 220, typeY + 28);
+                typeY += 50;
+            });
+
+            // 5. Pie de página Branding
+            ctx.fillStyle = "#475569";
+            ctx.font = "bold 16px Arial";
+            ctx.fillText("WWW.WARNINGDECK.CL - TU ARSENAL DE CARTAS", 60, 1020);
 
             canvas.toBlob((blob) => {
                 saveAs(blob, `WD_PB_${nombreMazo || "Deck"}.png`);
                 setGuardando(false);
             });
-        } catch (err) { alert('Error generando imagen'); setGuardando(false); }
+        } catch (err) { alert('Error al generar infografía'); setGuardando(false); }
     };
 
     const mazoAgrupado = useMemo(() => {
@@ -180,7 +237,6 @@ export default function PBBuilder() {
 
     return (
         <div className="h-screen flex flex-col md:flex-row font-sans bg-[#0c0e14] text-white overflow-hidden">
-            {/* LADO IZQUIERDO: BUILDER */}
             <div className="flex-1 flex flex-col h-full relative overflow-hidden">
                 <div className="bg-slate-900/80 border-b border-yellow-500/20 p-3 flex justify-between items-center px-4 shadow-xl">
                     <button onClick={() => navigate("/primer-bloque")} className="p-1.5 rounded-lg border border-yellow-500/30 text-yellow-500 text-xs font-bold hover:bg-yellow-500/10 transition-all italic tracking-tighter">Volver</button>
@@ -234,7 +290,7 @@ export default function PBBuilder() {
             <div className="hidden md:flex w-85 border-l border-white/10 flex-col h-screen bg-gradient-to-b from-slate-900 via-[#0c0e14] to-black shadow-2xl">
                 <div className="p-5 border-b border-yellow-500/30 bg-slate-900/50 backdrop-blur-md font-black text-yellow-500 uppercase tracking-widest flex justify-between items-center shadow-lg">
                     <div className="flex items-center gap-2"><Layout size={18}/><span className="italic">Grimorio PB</span></div>
-                    <div className={`px-3 py-1 rounded-full text-xs transition-all duration-500 border ${totalCartas === 50 ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 shadow-[0_0_10px_rgba(234,179,8,0.3)]' : 'bg-slate-800 border-slate-700 text-slate-300'}`}>{totalCartas} / 50</div>
+                    <div className={`px-3 py-1 rounded-full text-xs border ${totalCartas === 50 ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400' : 'bg-slate-800 border-slate-700 text-slate-300'}`}>{totalCartas} / 50</div>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar bg-transparent">
                     {ORDER_TYPES.map(t => mazoAgrupado[t] && (
@@ -242,7 +298,7 @@ export default function PBBuilder() {
                             <div className="flex items-center gap-2 mb-3"><div className="h-[2px] flex-1 bg-gradient-to-r from-yellow-600/50 to-transparent"></div><h3 className="text-yellow-500 text-[11px] font-black uppercase tracking-tighter italic px-2">{t}</h3></div>
                             <div className="space-y-2">
                                 {mazoAgrupado[t].map(c => (
-                                    <div key={c.slug} className="flex justify-between items-center text-sm py-2.5 px-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/5 group hover:bg-yellow-600/10 hover:border-yellow-500/30 transition-all duration-300 shadow-sm relative overflow-hidden">
+                                    <div key={c.slug} className="flex justify-between items-center text-sm py-2.5 px-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/5 group hover:bg-yellow-600/10 transition-all cursor-pointer relative overflow-hidden">
                                         <div className="flex items-center gap-3 flex-1 min-w-0" onClick={() => setCardToZoom(c)}>
                                             <div className="bg-slate-800 text-yellow-500 w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs shadow-inner">{c.cantidad}</div>
                                             <span className="truncate font-bold text-slate-200 uppercase text-[12px]">{c.name}</span>
@@ -257,8 +313,8 @@ export default function PBBuilder() {
                         </div>
                     ))}
                 </div>
-                <div className="p-5 bg-slate-900/80 backdrop-blur-xl border-t border-white/5 flex flex-col gap-3 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
-                    <button onClick={() => setModalMazoOpen(true)} className="w-full bg-slate-800 hover:bg-blue-600 text-white py-3 rounded-2xl font-black text-[11px] uppercase active:scale-95 flex items-center justify-center gap-2 border border-white/5"><Eye size={16} /> Ver Galería Visual</button>
+                <div className="p-5 bg-slate-900/80 border-t border-white/5 flex flex-col gap-3 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
+                    <button onClick={() => setModalMazoOpen(true)} className="w-full bg-slate-800 hover:bg-blue-600 text-white py-3 rounded-2xl font-black text-[11px] uppercase transition-all flex items-center justify-center gap-2 border border-white/5"><Eye size={16} /> Previsualizar Imagen</button>
                     <button onClick={() => setModalGuardarOpen(true)} className="w-full bg-yellow-600 hover:bg-yellow-500 text-black py-3 rounded-2xl font-black text-[11px] uppercase active:scale-95 flex items-center justify-center gap-2 shadow-xl"><Save size={16} /> Guardar Mazo</button>
                 </div>
             </div>
@@ -273,39 +329,23 @@ export default function PBBuilder() {
                 </div>
             </div>
 
-            {/* MODAL GALERÍA HD */}
+            {/* MODAL PREVISUALIZACIÓN */}
             {modalMazoOpen && (
                 <div className="fixed inset-0 bg-black z-[120] flex flex-col overflow-hidden animate-fade-in text-white">
                     <div className="p-4 bg-slate-900 flex justify-between items-center px-6 border-b border-orange-500/20 shadow-xl">
-                        <h2 className="text-lg font-black uppercase text-yellow-500 italic flex items-center gap-2 tracking-tighter"><Layout size={20} /> Galería PB</h2>
+                        <h2 className="text-lg font-black uppercase text-yellow-500 italic flex items-center gap-2 tracking-tighter"><Layout size={20} /> Generador de Infografía Pro</h2>
                         <button onClick={() => setModalMazoOpen(false)} className="bg-slate-800 p-2 rounded-full hover:bg-red-600 transition-colors"><X size={20} /></button>
                     </div>
                     <div className="flex-1 overflow-y-auto p-4 pb-24 md:p-10 bg-[#0c0e14] flex flex-col items-center">
-                        <div className="w-full max-w-4xl space-y-6 md:hidden">
-                            <h1 className="text-3xl font-black uppercase text-center text-white italic leading-none">{nombreMazo || "Deck PB"}</h1>
-                            <div className="grid grid-cols-3 gap-2">
-                                {mazo.map(c => (
-                                    <div key={c.slug} className="relative group shadow-2xl">
-                                        <img src={getImg(c)} className="w-full rounded-md border border-white/5 shadow-xl" alt={c.name} />
-                                        <div className="absolute -bottom-1 -right-1 bg-yellow-600 text-black text-[9px] font-black px-1.5 rounded-full shadow-xl">x{c.cantidad}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="hidden md:block">
-                           <div className="grid grid-cols-8 gap-4 max-w-[1200px] p-10 bg-slate-900/20 rounded-3xl border border-white/5">
-                               {mazo.map(c => (
-                                    <div key={c.slug} className="relative group shadow-2xl">
-                                        <img src={getImg(c)} className="w-full rounded-md border border-white/5 shadow-xl" alt={c.name} />
-                                        <div className="absolute -bottom-1 -right-1 bg-yellow-600 text-black text-[9px] font-black px-1.5 rounded-full shadow-xl">x{c.cantidad}</div>
-                                    </div>
-                                ))}
-                           </div>
+                        <div className="bg-slate-900/40 border border-white/5 p-8 rounded-3xl text-center max-w-xl">
+                             <TrendingUp size={48} className="mx-auto text-yellow-500 mb-4" />
+                             <h3 className="text-2xl font-black uppercase italic text-white">Infografía PB Lista</h3>
+                             <p className="text-slate-400 mt-2">La imagen descargada incluirá tu mazo, curva de oros y estadísticas por tipo de carta con el sello de WarningDeck.</p>
                         </div>
                     </div>
                     <div className="p-6 bg-slate-900 border-t border-white/5 flex justify-center">
                         <button onClick={handleTakeScreenshot} disabled={guardando} className="w-full md:w-auto bg-yellow-600 hover:bg-yellow-500 text-black px-12 py-4 rounded-2xl font-black shadow-xl flex items-center justify-center gap-3 uppercase text-sm tracking-widest active:scale-95 transition-all">
-                             <Camera size={20} /> {guardando ? 'SINCRONIZANDO...' : 'Descargar Infografía HD'}
+                             <Camera size={20} /> {guardando ? 'GENERANDO...' : 'Descargar Infografía HD'}
                         </button>
                     </div>
                 </div>
@@ -319,7 +359,7 @@ export default function PBBuilder() {
                         <img src={getImg(cardToZoom)} className="w-full h-auto rounded-2xl shadow-[0_0_50px_rgba(234,179,8,0.3)] border-4 border-yellow-500/20" alt="zoom" />
                         <div className="mt-8 flex items-center justify-center gap-10 bg-slate-900/90 p-4 px-10 rounded-full border border-slate-700 shadow-2xl backdrop-blur-lg">
                             <button onClick={() => handleRemove(cardToZoom.slug)} className="w-14 h-14 rounded-full bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white flex items-center justify-center transition-all active:scale-90"><Minus size={24} strokeWidth={3} /></button>
-                            <span className="text-4xl font-black text-white leading-none">{mazo.find(x => x.slug === cardToZoom.slug)?.cantidad || 0}</span>
+                            <span className="text-4xl font-black text-white">{mazo.find(x => x.slug === cardToZoom.slug)?.cantidad || 0}</span>
                             <button onClick={() => handleAdd(cardToZoom)} className="w-14 h-14 rounded-full bg-green-600/20 hover:bg-green-600 text-green-500 hover:text-white flex items-center justify-center transition-all active:scale-90"><Plus size={24} strokeWidth={3} /></button>
                         </div>
                     </div>
