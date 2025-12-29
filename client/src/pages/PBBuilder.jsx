@@ -4,7 +4,7 @@ import { saveAs } from 'file-saver';
 import BACKEND_URL from "../config";
 import { 
   Plus, Minus, Eye, Save, Search, X, Camera, Globe, Layout, 
-  Users, Star, Shield, TrendingUp, Sword, Coins, Box
+  ShieldCheck, Users, Star, Layers, Shield, TrendingUp, Sword, Coins, Box
 } from "lucide-react";
 
 const MAIN_EDITIONS = [
@@ -17,8 +17,8 @@ const MAIN_EDITIONS = [
 const RAZAS_PB = ["Caballero", "Héroe", "Defensor", "Eterno", "Dragón", "Olímpico", "Desafiante", "Faraón", "Faerie", "Titán", "Sombra", "Sacerdote"];
 
 const TIPOS_PB = [
-    { id: "Aliado", label: "Aliado", icon: <Users size={14} />, color: "#3b82f6" },
-    { id: "Talismán", label: "Talismán", icon: <Shield size={14} />, color: "#a855f7" },
+    { id: "Aliado", label: "Aliado", icon: <Users size={14} />, color: "#ef4444" },
+    { id: "Talismán", label: "Talismán", icon: <Shield size={14} />, color: "#3b82f6" },
     { id: "Arma", label: "Arma", icon: <Sword size={14} />, color: "#ef4444" },
     { id: "Tótem", label: "Tótem", icon: <Box size={14} />, color: "#10b981" },
     { id: "Oro", label: "Oro", icon: <Coins size={14} />, color: "#eab308" }
@@ -68,6 +68,10 @@ export default function PBBuilder() {
     }, [mazo]);
 
     useEffect(() => {
+        if (location.state?.initialEdition) setMainEditionSelected(location.state.initialEdition);
+    }, [location.state]);
+
+    useEffect(() => {
         if (location.state?.deckToEdit) {
             const d = location.state.deckToEdit;
             if (d.format === "primer_bloque") {
@@ -106,7 +110,23 @@ export default function PBBuilder() {
 
     const handleRemove = (slug) => setMazo(mazo.map(c => c.slug === slug ? { ...c, cantidad: c.cantidad - 1 } : c).filter(c => c.cantidad > 0));
 
-    // Lógica de Canvas Pro (Similar a ElMeta)
+    const handleSaveDeck = async () => {
+        if (!nombreMazo.trim()) return alert("Nombre requerido");
+        const token = localStorage.getItem("token");
+        if (!token) return navigate("/login");
+        setGuardando(true);
+        try {
+            const url = editingDeckId ? `${BACKEND_URL}/api/decks/${editingDeckId}` : `${BACKEND_URL}/api/decks`;
+            const method = editingDeckId ? "PUT" : "POST";
+            const res = await fetch(url, { 
+                method, headers: { "Content-Type": "application/json", "auth-token": token }, 
+                body: JSON.stringify({ name: nombreMazo, cards: mazo.map(c => ({...c, quantity: c.cantidad})), format: formato, isPublic: isPublic }) 
+            });
+            if (res.ok) navigate("/my-decks");
+        } catch (e) { alert("Error"); } finally { setGuardando(false); }
+    };
+
+    // ✅ NUEVA LÓGICA DE CANVAS HORIZONTAL ESTILO ELMETA
     const generateCanvas = async (isDownload = false) => {
         if (mazo.length === 0) return;
         setGuardando(true);
@@ -115,12 +135,11 @@ export default function PBBuilder() {
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
 
-        // Calcular altura dinámica
-        const rows = Math.ceil(mazo.length / 5);
-        canvas.width = 1200;
-        canvas.height = Math.max(800, 250 + (rows * 210));
+        // Dimensiones Fijas Estilo ElMeta (Horizontal)
+        canvas.width = 1600;
+        canvas.height = 1200;
 
-        // Fondo oscuro
+        // Fondo
         ctx.fillStyle = "#0c0e14";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -132,89 +151,110 @@ export default function PBBuilder() {
             img.src = url;
         });
 
-        // 1. Logo Sello de Agua (Visible)
+        // 1. Sello de Agua (Logo Central Gigante)
         const logo = await loadImg("https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png");
         if (logo) {
-            ctx.globalAlpha = 0.08;
-            ctx.drawImage(logo, canvas.width/2 - 300, canvas.height/2 - 300, 600, 600);
+            ctx.globalAlpha = 0.06;
+            ctx.drawImage(logo, canvas.width/2 - 400, canvas.height/2 - 400, 800, 800);
             ctx.globalAlpha = 1.0;
-            // Logo pequeño en cabecera
-            ctx.drawImage(logo, 50, 40, 60, 60);
         }
 
-        // 2. Cabecera ElMeta Style
+        // 2. Cabecera
         ctx.fillStyle = "#eab308";
-        ctx.font = "bold 20px Arial";
-        ctx.fillText("PRIMER BLOQUE", 130, 60);
+        ctx.font = "bold 25px Arial";
+        ctx.fillText("📜 PRIMER BLOQUE", 60, 70);
         ctx.fillStyle = "white";
-        ctx.font = "italic bold 55px Arial";
-        ctx.fillText(nombreMazo.toUpperCase() || "MAZO SIN NOMBRE", 130, 115);
+        ctx.font = "italic bold 80px Arial";
+        ctx.fillText(nombreMazo.toUpperCase() || "MAZO SIN NOMBRE", 60, 150);
 
-        // 3. Dibujar Cartas
-        let x = 50, y = 180;
-        const cardW = 140, cardH = 195;
+        // 3. Dibujar Cartas (Grid de 7 columnas a la izquierda)
+        let x = 60, y = 220;
+        const cardW = 150, cardH = 210;
+        let countCards = 0;
+
         for (const card of mazo) {
             const img = await loadImg(card.imgUrl);
             if (img) {
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = "rgba(0,0,0,0.5)";
                 ctx.drawImage(img, x, y, cardW, cardH);
-                ctx.shadowBlur = 0;
                 // Badge Cantidad
                 ctx.fillStyle = "#eab308";
-                ctx.fillRect(x + cardW - 35, y + cardH - 30, 35, 30);
+                ctx.fillRect(x + cardW - 40, y + cardH - 35, 40, 35);
                 ctx.fillStyle = "black";
-                ctx.font = "bold 18px Arial";
-                ctx.fillText(`x${card.cantidad}`, x + cardW - 30, y + cardH - 8);
+                ctx.font = "bold 22px Arial";
+                ctx.fillText(`x${card.cantidad}`, x + cardW - 35, y + cardH - 10);
             }
-            x += 155;
-            if (x > 800) { x = 50; y += 215; }
+            x += 165;
+            countCards++;
+            if (x > 1150) { x = 60; y += 230; }
         }
 
-        // 4. Panel Lateral (Gráficos)
-        const panelX = 850;
+        // 4. Panel Derecha: Curva de Oro (Barras Verticales)
+        const curveX = 1250;
+        const curveY = 650;
         ctx.fillStyle = "#1e293b";
         ctx.beginPath();
-        ctx.roundRect ? ctx.roundRect(panelX, 180, 300, 550, 20) : ctx.fillRect(panelX, 180, 300, 550);
+        ctx.roundRect ? ctx.roundRect(curveX - 20, 580, 340, 350, 20) : ctx.fillRect(curveX - 20, 580, 340, 350);
         ctx.fill();
 
-        // Gráfico de Curva
-        ctx.fillStyle = "#eab308";
-        ctx.font = "bold 18px Arial";
-        ctx.fillText("CURVA DE ORO", panelX + 70, 220);
-        let barY = 260;
+        ctx.fillStyle = "white";
+        ctx.font = "bold 24px Arial";
+        ctx.fillText("Curva de Oro", curveX + 80, 620);
+
+        let barX = curveX + 20;
         Object.entries(stats.curve).forEach(([cost, count]) => {
+            const barHeight = (count / stats.maxCurve) * 200;
             ctx.fillStyle = "#334155";
-            ctx.fillRect(panelX + 30, barY, 180, 15);
+            ctx.fillRect(barX, curveY + 20, 30, 200); // Fondo barra
             ctx.fillStyle = "#eab308";
-            const barWidth = (count / stats.maxCurve) * 180;
-            ctx.fillRect(panelX + 30, barY, Math.max(barWidth, 5), 15);
+            ctx.fillRect(barX, curveY + 20 + (200 - barHeight), 30, barHeight); // Valor barra
+            
             ctx.fillStyle = "white";
-            ctx.font = "bold 14px Arial";
-            ctx.fillText(`${cost}: ${count}`, panelX + 225, barY + 13);
-            barY += 35;
-        });
-
-        // Distribución
-        ctx.fillStyle = "#eab308";
-        ctx.font = "bold 18px Arial";
-        ctx.fillText("DISTRIBUCIÓN", panelX + 75, 530);
-        let distY = 565;
-        ORDER_TYPES.forEach(type => {
-            ctx.fillStyle = "#0f172a";
-            ctx.fillRect(panelX + 30, distY, 240, 35);
-            ctx.fillStyle = "white";
-            ctx.font = "13px Arial";
-            ctx.fillText(type.toUpperCase(), panelX + 45, distY + 22);
-            ctx.fillStyle = "#eab308";
             ctx.font = "bold 18px Arial";
-            ctx.fillText(stats.counts[type] || 0, panelX + 230, distY + 25);
-            distY += 42;
+            ctx.fillText(cost, barX + 8, curveY + 245); // Label Coste
+            ctx.font = "14px Arial";
+            ctx.fillText(count, barX + 10, curveY + 15); // Valor numérico
+            barX += 45;
         });
 
-        ctx.fillStyle = "#475569";
-        ctx.font = "12px Arial";
-        ctx.fillText("WARNINGDECK.CL", canvas.width - 160, canvas.height - 20);
+        // 5. Panel Derecha: Distribución (Iconos Cuadrados ElMeta Style)
+        const distY = 960;
+        ctx.fillStyle = "#1e293b";
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(60, 950, 1100, 200, 25) : ctx.fillRect(60, 950, 1100, 200);
+        ctx.fill();
+
+        ctx.fillStyle = "white";
+        ctx.font = "bold 24px Arial";
+        ctx.fillText("Distribución del Mazo", 80, 990);
+
+        let iconX = 100;
+        const types = [
+            { label: "Aliado", val: stats.counts.Aliado },
+            { label: "Arma", val: stats.counts.Arma },
+            { label: "Talisman", val: stats.counts.Talismán },
+            { label: "Totem", val: stats.counts.Tótem },
+            { label: "Oro", val: stats.counts.Oro }
+        ];
+
+        types.forEach(t => {
+            ctx.fillStyle = "#334155";
+            ctx.beginPath();
+            ctx.roundRect ? ctx.roundRect(iconX, 1010, 150, 120, 15) : ctx.fillRect(iconX, 1010, 150, 120);
+            ctx.fill();
+            
+            ctx.fillStyle = "#eab308";
+            ctx.font = "bold 40px Arial";
+            ctx.fillText(t.val, iconX + 40, 1065);
+            ctx.fillStyle = "white";
+            ctx.font = "16px Arial";
+            ctx.fillText(t.label, iconX + 45, 1105);
+            iconX += 180;
+        });
+
+        // Branding final
+        ctx.fillStyle = "#eab308";
+        ctx.font = "bold 28px Arial";
+        ctx.fillText("WarningDeck.cl", 1330, 1150);
 
         if (isDownload) {
             canvas.toBlob((blob) => {
@@ -226,10 +266,9 @@ export default function PBBuilder() {
         }
     };
 
-    // Efecto para actualizar previsualización cuando abre el modal
     useEffect(() => {
         if (modalMazoOpen) {
-            setTimeout(() => generateCanvas(false), 100);
+            setTimeout(() => generateCanvas(false), 200);
         }
     }, [modalMazoOpen, mazo, nombreMazo]);
 
@@ -243,10 +282,9 @@ export default function PBBuilder() {
 
     return (
         <div className="h-screen flex flex-col md:flex-row font-sans bg-[#0c0e14] text-white overflow-hidden">
-            {/* LADO IZQUIERDO: BUILDER (Igual al anterior) */}
             <div className="flex-1 flex flex-col h-full relative overflow-hidden">
                 <div className="bg-slate-900/80 border-b border-yellow-500/20 p-3 flex justify-between items-center px-4 shadow-xl">
-                    <button onClick={() => navigate("/primer-bloque")} className="p-1.5 rounded-lg border border-yellow-500/30 text-yellow-500 text-xs font-bold hover:bg-yellow-500/10 transition-all italic">Volver</button>
+                    <button onClick={() => navigate("/primer-bloque")} className="p-1.5 rounded-lg border border-yellow-500/30 text-yellow-500 text-xs font-bold hover:bg-yellow-500/10 transition-all italic tracking-tighter">Volver</button>
                     <h2 className="text-xs font-black uppercase text-yellow-500 tracking-widest leading-none italic flex items-center gap-2"><Star size={14}/> WarningDeck Builder</h2>
                     <div className="w-10"></div>
                 </div>
@@ -277,7 +315,7 @@ export default function PBBuilder() {
                                             <img src={getImg(c)} className="w-full h-auto" alt={c.name} />
                                             {cant > 0 && <div className="absolute inset-0 bg-black/40 flex items-center justify-center font-black text-xl border-2 border-white shadow-xl">{cant}</div>}
                                         </div>
-                                        <button onClick={(e) => { e.stopPropagation(); setCardToZoom(c); }} className="absolute top-1.5 right-1.5 bg-black/60 text-white w-7 h-7 rounded-lg flex items-center justify-center border border-white/20 hover:bg-yellow-600"><Search size={14} /></button>
+                                        <button onClick={(e) => { e.stopPropagation(); setCardToZoom(c); }} className="absolute top-1.5 right-1.5 bg-black/60 text-white w-7 h-7 rounded-lg flex items-center justify-center border border-white/20 hover:bg-yellow-600 transition-colors shadow-xl"><Search size={14} /></button>
                                     </div>
                                 );
                             })}
@@ -300,12 +338,12 @@ export default function PBBuilder() {
                                 {mazoAgrupado[t].map(c => (
                                     <div key={c.slug} className="flex justify-between items-center text-sm py-2 px-3 bg-white/5 rounded-xl border border-white/5 group hover:bg-yellow-600/10 transition-all cursor-pointer">
                                         <div className="flex items-center gap-3 flex-1 min-w-0" onClick={() => setCardToZoom(c)}>
-                                            <div className="bg-slate-800 text-yellow-500 w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs">{c.cantidad}</div>
+                                            <div className="bg-slate-800 text-yellow-500 w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs shadow-inner">{c.cantidad}</div>
                                             <span className="truncate font-bold text-slate-200 uppercase text-[11px]">{c.name}</span>
                                         </div>
                                         <div className="flex gap-1">
-                                            <button onClick={() => handleAdd(c)} className="w-7 h-7 flex items-center justify-center bg-yellow-500/20 hover:bg-yellow-500 text-yellow-500 hover:text-black rounded-lg"><Plus size={14}/></button>
-                                            <button onClick={() => handleRemove(c.slug)} className="w-7 h-7 flex items-center justify-center bg-red-500/20 hover:bg-red-600 text-red-400 rounded-lg"><Minus size={14}/></button>
+                                            <button onClick={() => handleAdd(c)} className="w-7 h-7 flex items-center justify-center bg-yellow-500/20 hover:bg-yellow-500 text-yellow-500 hover:text-black rounded-lg transition-colors"><Plus size={14}/></button>
+                                            <button onClick={() => handleRemove(c.slug)} className="w-7 h-7 flex items-center justify-center bg-red-500/20 hover:bg-red-600 text-red-400 rounded-lg transition-colors"><Minus size={14}/></button>
                                         </div>
                                     </div>
                                 ))}
@@ -315,25 +353,34 @@ export default function PBBuilder() {
                 </div>
                 <div className="p-5 bg-slate-900/80 border-t border-white/5 flex flex-col gap-3">
                     <button onClick={() => setModalMazoOpen(true)} className="w-full bg-slate-800 hover:bg-blue-600 text-white py-3 rounded-2xl font-black text-[11px] uppercase transition-all flex items-center justify-center gap-2 border border-white/5"><Eye size={16} /> Ver Infografía HD</button>
-                    <button onClick={() => setModalGuardarOpen(true)} className="w-full bg-yellow-600 hover:bg-yellow-500 text-black py-3 rounded-2xl font-black text-[11px] uppercase shadow-xl"><Save size={16} /> Guardar Mazo</button>
+                    <button onClick={() => setModalGuardarOpen(true)} className="w-full bg-yellow-600 hover:bg-yellow-500 text-black py-3 rounded-2xl font-black text-[11px] uppercase shadow-xl transition-all active:scale-95"><Save size={16} /> Guardar Mazo</button>
                 </div>
             </div>
 
-            {/* MODAL GALERÍA HD (NUEVO DISEÑO ELMETA) */}
+            {/* DOCK MÓVIL */}
+            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-2 pb-4 z-50 flex items-center justify-between shadow-2xl">
+                <div className="flex flex-col px-3"><span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Total</span><span className={`text-lg font-black ${totalCartas === 50 ? 'text-green-500' : 'text-white'}`}>{totalCartas}/50</span></div>
+                <div className="flex gap-2 pr-2">
+                    <button onClick={() => setShowMobileList(true)} className="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-xs border border-slate-700 uppercase tracking-tighter shadow-md">Lista</button>
+                    <button onClick={() => setModalMazoOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-tighter shadow-md">Ver</button>
+                    <button onClick={() => setModalGuardarOpen(true)} className="bg-yellow-600 text-black px-4 py-2 rounded-lg font-bold text-xs shadow-lg flex items-center justify-center active:scale-90"><Save size={16} /></button>
+                </div>
+            </div>
+
+            {/* MODAL INFOGRAFÍA PREVIEW */}
             {modalMazoOpen && (
                 <div className="fixed inset-0 bg-black z-[120] flex flex-col overflow-hidden animate-fade-in text-white">
                     <div className="p-4 bg-slate-900 flex justify-between items-center px-6 border-b border-orange-500/20 shadow-xl">
-                        <h2 className="text-lg font-black uppercase text-yellow-500 italic flex items-center gap-2 tracking-tighter"><Layout size={20} /> Generador de Infografía Pro</h2>
+                        <h2 className="text-lg font-black uppercase text-yellow-500 italic flex items-center gap-2 tracking-tighter"><Layout size={20} /> Generador de Estrategia Pro</h2>
                         <button onClick={() => setModalMazoOpen(false)} className="bg-slate-800 p-2 rounded-full hover:bg-red-600 transition-colors"><X size={20} /></button>
                     </div>
                     
                     <div className="flex-1 overflow-y-auto p-4 flex flex-col items-center bg-[#0c0e14]">
                         <div className="bg-slate-900/60 p-4 rounded-2xl border border-white/5 mb-4 text-center">
-                            <p className="text-slate-400 text-sm italic font-bold">Generando previsualización real...</p>
+                            <p className="text-slate-400 text-xs italic font-bold">Generando previsualización HD... Por favor espera un momento.</p>
                         </div>
-                        {/* Canvas de Previsualización */}
-                        <div className="w-full max-w-5xl shadow-2xl rounded-lg overflow-hidden border border-white/10">
-                            <canvas ref={canvasPreviewRef} className="w-full h-auto block bg-slate-900" />
+                        <div className="w-full max-w-6xl shadow-2xl rounded-lg overflow-hidden border border-white/10 bg-slate-950">
+                            <canvas ref={canvasPreviewRef} className="w-full h-auto block" />
                         </div>
                     </div>
 
