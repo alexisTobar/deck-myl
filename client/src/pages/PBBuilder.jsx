@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toPng } from 'html-to-image';
 import BACKEND_URL from "../config";
+// ✅ Iconos Lucide
 import { 
   Plus, Minus, Eye, Save, Search, X, Camera, Globe, Layout, 
   ShieldCheck, Users, Star, Layers, Shield 
@@ -95,49 +96,6 @@ export default function PBBuilder() {
 
     const handleRemove = (slug) => setMazo(mazo.map(c => c.slug === slug ? { ...c, cantidad: c.cantidad - 1 } : c).filter(c => c.cantidad > 0));
 
-    // ✅ SOLUCIÓN ROBUSTA: Descarga de imagen convirtiendo a Blobs locales
-    const handleTakeScreenshot = useCallback(async () => {
-        if (!galleryRef.current) return;
-        setGuardando(true);
-        
-        try {
-            const images = galleryRef.current.getElementsByTagName('img');
-            
-            // Convertimos imágenes a Blobs locales para evitar el bloqueo del móvil
-            const blobPromises = Array.from(images).map(async (img) => {
-                if (img.src.startsWith('blob:')) return; // Ya es local
-                try {
-                    const res = await fetch(img.src, { mode: 'cors' });
-                    const blob = await res.blob();
-                    const localUrl = URL.createObjectURL(blob);
-                    img.src = localUrl; // Sustitución inmediata
-                } catch (e) { console.warn("Error convirtiendo a blob:", img.src); }
-            });
-
-            await Promise.all(blobPromises);
-            await new Promise(r => setTimeout(r, 800)); // Esperar renderizado
-
-            const dataUrl = await toPng(galleryRef.current, { 
-                quality: 1.0, 
-                pixelRatio: 2, 
-                cacheBust: true,
-                skipFonts: true // Acelera el proceso en móviles
-            });
-
-            const link = document.createElement('a');
-            link.download = `WarningDeck_PB_${nombreMazo || "Mazo"}.png`;
-            link.href = dataUrl;
-            link.click();
-            
-            // Limpiar memoria de Blobs
-            Array.from(images).forEach(img => {
-                if (img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
-            });
-
-        } catch (err) { alert('Error al generar la imagen. Intenta de nuevo.'); } 
-        finally { setGuardando(false); }
-    }, [nombreMazo]);
-
     const handleSaveDeck = async () => {
         if (!nombreMazo.trim()) return alert("Nombre requerido");
         const token = localStorage.getItem("token");
@@ -146,13 +104,32 @@ export default function PBBuilder() {
         try {
             const url = editingDeckId ? `${BACKEND_URL}/api/decks/${editingDeckId}` : `${BACKEND_URL}/api/decks`;
             const method = editingDeckId ? "PUT" : "POST";
-            await fetch(url, { 
+            const res = await fetch(url, { 
                 method, headers: { "Content-Type": "application/json", "auth-token": token }, 
                 body: JSON.stringify({ name: nombreMazo, cards: mazo.map(c => ({...c, quantity: c.cantidad})), format: formato, isPublic: isPublic }) 
             });
-            navigate("/my-decks");
+            if (res.ok) navigate("/my-decks");
         } catch (e) { alert("Error"); } finally { setGuardando(false); }
     };
+
+    const handleTakeScreenshot = useCallback(async () => {
+        if (!galleryRef.current) return;
+        setGuardando(true);
+        try {
+            // Delay para renderizado en móvil
+            await new Promise(r => setTimeout(r, 500));
+            const dataUrl = await toPng(galleryRef.current, { 
+                quality: 1.0, 
+                pixelRatio: 2, 
+                cacheBust: true,
+                style: { display: 'flex' } // Asegura visibilidad interna para la librería
+            });
+            const link = document.createElement('a'); 
+            link.download = `WD_PB_${nombreMazo || "Deck"}.png`; 
+            link.href = dataUrl; 
+            link.click();
+        } catch (err) { alert('Error captura'); } finally { setGuardando(false); }
+    }, [nombreMazo]);
 
     const mazoAgrupado = useMemo(() => {
         const g = {};
@@ -166,7 +143,7 @@ export default function PBBuilder() {
         <div className="h-screen flex flex-col md:flex-row font-sans bg-[#0c0e14] text-white overflow-hidden">
             <div className="flex-1 flex flex-col h-full relative overflow-hidden">
                 <div className="bg-slate-900/80 border-b border-yellow-500/20 p-3 flex justify-between items-center px-4 shadow-xl">
-                    <button onClick={() => navigate("/primer-bloque")} className="p-1.5 rounded-lg border border-yellow-500/30 text-yellow-500 text-xs font-bold hover:bg-yellow-500/10 transition-all uppercase italic tracking-tighter">Volver</button>
+                    <button onClick={() => navigate("/primer-bloque")} className="p-1.5 rounded-lg border border-yellow-500/30 text-yellow-500 text-xs font-bold hover:bg-yellow-500/10 transition-all italic">Volver</button>
                     <h2 className="text-xs font-black uppercase text-yellow-500 tracking-widest leading-none italic flex items-center gap-2"><Star size={14}/> Forja Primer Bloque</h2>
                     <div className="w-10"></div>
                 </div>
@@ -175,34 +152,27 @@ export default function PBBuilder() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         {MAIN_EDITIONS.map(ed => (
                             <button key={ed.id} onClick={() => { setMainEditionSelected(ed.id); setBusqueda(""); }}
-                                className={`py-3 px-1 rounded-2xl text-[10px] font-black uppercase transition-all border-2 shadow-lg ${mainEditionSelected === ed.id ? `bg-gradient-to-r ${ed.color} border-white scale-105 shadow-yellow-500/20` : 'bg-slate-900 border-slate-700 text-slate-500 hover:text-slate-200'}`}>
+                                className={`py-3 px-1 rounded-2xl text-[10px] font-black uppercase transition-all border-2 shadow-lg ${mainEditionSelected === ed.id ? `bg-gradient-to-r ${ed.color} border-white scale-105` : 'bg-slate-900 border-slate-700 text-slate-500 hover:text-slate-200'}`}>
                                 {ed.label}
                             </button>
                         ))}
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        <input type="text" placeholder="Búsqueda Global PB..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="flex-1 p-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm outline-none focus:border-yellow-500 font-bold" />
+                        <input type="text" placeholder="Búsqueda..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="flex-1 p-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm outline-none focus:border-yellow-500 font-bold" />
                         <select value={razaSeleccionada} onChange={(e) => setRazaSeleccionada(e.target.value)} className="bg-slate-950 border border-yellow-500/30 p-2 rounded-xl text-[11px] font-black text-yellow-400"><option value="">Raza...</option>{RAZAS_PB.map(r => <option key={r} value={r}>{r}</option>)}</select>
-                    </div>
-                    <div className="flex flex-wrap gap-2 justify-center">
-                        {TIPOS_PB.map((tipo) => (
-                            <button key={tipo.id} onClick={() => setTipoSeleccionado(tipoSeleccionado === tipo.id ? "" : tipo.id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 transition-all text-[10px] uppercase font-black ${tipoSeleccionado === tipo.id ? `border-yellow-500 text-yellow-500 bg-slate-800 shadow-lg` : 'border-slate-800 text-slate-500'}`}>
-                                {tipo.icon} {tipo.label}
-                            </button>
-                        ))}
                     </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar pb-24 md:pb-4" ref={gridContainerRef}>
-                    {loading ? <div className="text-center mt-20 text-yellow-500 font-bold animate-pulse text-xl uppercase tracking-tighter">Invocando leyendas...</div> : (
+                    {loading ? <div className="text-center mt-20 text-yellow-500 font-bold animate-pulse text-xl uppercase tracking-tighter">Invocando...</div> : (
                         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                             {cartas.map(c => {
                                 const cant = mazo.find(x => x.slug === c.slug)?.cantidad || 0;
                                 return (
                                     <div key={c.slug} className="relative cursor-pointer group" onClick={() => handleAdd(c)}>
-                                        <div className={`rounded-xl overflow-hidden border-2 transition-all duration-300 transform hover:scale-105 ${cant > 0 ? 'border-yellow-500 shadow-[0_0_15px_#eab308]' : 'border-slate-800'}`}>
+                                        <div className={`rounded-xl overflow-hidden border-2 transition-all duration-300 transform group-hover:scale-105 ${cant > 0 ? 'border-yellow-500 shadow-[0_0_15px_#eab308]' : 'border-slate-800'}`}>
                                             <img src={getImg(c)} className="w-full h-auto transition-transform" alt={c.name} />
-                                            {cant > 0 && <div className="absolute inset-0 bg-black/40 flex items-center justify-center animate-pulse"><div className="w-10 h-10 rounded-full bg-yellow-500 text-black flex items-center justify-center font-black text-xl border-2 border-white shadow-xl">{cant}</div></div>}
+                                            {cant > 0 && <div className="absolute inset-0 bg-black/40 flex items-center justify-center font-black text-xl border-2 border-white shadow-xl">{cant}</div>}
                                         </div>
                                         <button onClick={(e) => { e.stopPropagation(); setCardToZoom(c); }} className="absolute top-1.5 right-1.5 bg-black/60 backdrop-blur-md text-white w-7 h-7 rounded-lg flex items-center justify-center border border-white/20 hover:bg-yellow-600 transition-colors"><Search size={14} strokeWidth={3} /></button>
                                     </div>
@@ -225,15 +195,14 @@ export default function PBBuilder() {
                             <div className="flex items-center gap-2 mb-3"><div className="h-[2px] flex-1 bg-gradient-to-r from-yellow-600/50 to-transparent"></div><h3 className="text-yellow-500 text-[11px] font-black uppercase tracking-tighter italic px-2">{t}</h3></div>
                             <div className="space-y-2">
                                 {mazoAgrupado[t].map(c => (
-                                    <div key={c.slug} className="flex justify-between items-center text-sm py-2.5 px-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/5 group hover:bg-yellow-600/10 hover:border-yellow-500/30 transition-all duration-300 shadow-sm relative overflow-hidden">
-                                        <div className="absolute left-0 top-0 w-1 h-full bg-yellow-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    <div key={c.slug} className="flex justify-between items-center text-sm py-2.5 px-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/5 group hover:bg-yellow-600/10 transition-all cursor-pointer relative overflow-hidden">
                                         <div className="flex items-center gap-3 flex-1 min-w-0" onClick={() => setCardToZoom(c)}>
                                             <div className="bg-slate-800 text-yellow-500 w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs shadow-inner">{c.cantidad}</div>
-                                            <span className="truncate font-bold text-slate-200 group-hover:text-white transition-colors cursor-pointer uppercase text-[12px] tracking-tight">{c.name}</span>
+                                            <span className="truncate font-bold text-slate-200 uppercase text-[12px]">{c.name}</span>
                                         </div>
                                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                                            <button onClick={() => handleAdd(c)} className="w-8 h-8 flex items-center justify-center bg-yellow-500/20 hover:bg-yellow-500 text-yellow-500 hover:text-black rounded-xl active:scale-90"><Plus size={16} strokeWidth={3} /></button>
-                                            <button onClick={() => handleRemove(c.slug)} className="w-8 h-8 flex items-center justify-center bg-red-500/20 hover:bg-red-600 text-red-400 hover:text-white rounded-xl active:scale-90"><Minus size={16} strokeWidth={3} /></button>
+                                            <button onClick={() => handleAdd(c)} className="w-8 h-8 flex items-center justify-center bg-yellow-500/20 hover:bg-yellow-500 text-yellow-500 rounded-xl active:scale-90"><Plus size={16} strokeWidth={3} /></button>
+                                            <button onClick={() => handleRemove(c.slug)} className="w-8 h-8 flex items-center justify-center bg-red-500/20 hover:bg-red-600 text-red-400 rounded-xl active:scale-90"><Minus size={16} strokeWidth={3} /></button>
                                         </div>
                                     </div>
                                 ))}
@@ -249,7 +218,10 @@ export default function PBBuilder() {
 
             {/* DOCK MÓVIL */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-2 pb-4 z-50 flex items-center justify-between shadow-2xl">
-                <div className="flex flex-col px-3"><span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Total</span><span className={`text-lg font-black ${totalCartas === 50 ? 'text-green-500' : 'text-white'}`}>{totalCartas}/50</span></div>
+                <div className="flex flex-col px-3">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Total</span>
+                    <span className={`text-lg font-black ${totalCartas === 50 ? 'text-green-500' : 'text-white'}`}>{totalCartas}/50</span>
+                </div>
                 <div className="flex gap-2 pr-2">
                     <button onClick={() => setShowMobileList(true)} className="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-xs border border-slate-700 uppercase">Lista</button>
                     <button onClick={() => setModalMazoOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase">Imagen</button>
@@ -257,7 +229,7 @@ export default function PBBuilder() {
                 </div>
             </div>
 
-            {/* MODAL GALERÍA HD CON LOGO SELLO DE AGUA */}
+            {/* MODAL GALERÍA HD */}
             {modalMazoOpen && (
                 <div className="fixed inset-0 bg-black z-[120] flex flex-col overflow-hidden animate-fade-in text-white">
                     <div className="p-4 bg-slate-900 flex justify-between items-center px-6 border-b border-orange-500/20 shadow-xl">
@@ -266,12 +238,13 @@ export default function PBBuilder() {
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 pb-24 md:p-10 bg-[#0c0e14] flex flex-col items-center">
+                        {/* VISTA PREVIA MÓVIL */}
                         <div className="w-full max-w-4xl space-y-6 md:hidden">
                             <h1 className="text-3xl font-black uppercase text-center text-white italic leading-none">{nombreMazo || "Deck PB"}</h1>
                             <div className="grid grid-cols-3 gap-2">
                                 {mazo.map(c => (
                                     <div key={c.slug} className="relative group shadow-2xl">
-                                        <img src={getImg(c)} crossOrigin="anonymous" className="w-full rounded-md border border-white/5 shadow-xl" alt={c.name} />
+                                        <img src={getImg(c)} className="w-full rounded-md border border-white/5 shadow-xl" alt={c.name} />
                                         <div className="absolute -bottom-1 -right-1 bg-yellow-600 text-black text-[9px] font-black px-1.5 rounded-full shadow-xl">x{c.cantidad}</div>
                                     </div>
                                 ))}
@@ -300,10 +273,10 @@ export default function PBBuilder() {
                                     ))}
                                 </div>
                                 <div className="grid grid-cols-5 gap-3 relative z-10 text-center font-black">
-                                    {TIPOS_PB.map(t => (
-                                        <div key={t.id} className="flex flex-col items-center justify-center bg-slate-900 p-6 rounded-3xl border border-yellow-600/20 shadow-inner">
-                                            <span className="text-4xl font-black text-white leading-none mb-1">{statsForExport.counts[t.label] || 0}</span>
-                                            <span className="text-[8px] uppercase font-black text-slate-500 tracking-widest">{t.id}</span>
+                                    {ORDER_TYPES.map(t => (
+                                        <div key={t} className="bg-slate-900 p-6 rounded-3xl border border-yellow-600/20 shadow-inner flex flex-col items-center">
+                                            <span className="text-4xl font-black text-white leading-none mb-1">{statsForExport.counts[t] || 0}</span>
+                                            <span className="text-[8px] uppercase font-black text-slate-500 tracking-widest">{t}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -312,8 +285,8 @@ export default function PBBuilder() {
                             </div>
                         </div>
 
-                        {/* Clon para captura móvil fuera de pantalla */}
-                        <div className="md:hidden" style={{ position: 'fixed', top: '-10000px', left: '-10000px' }}>
+                        {/* Clon móvil fuera de pantalla */}
+                        <div className="md:hidden" style={{ position: 'fixed', top: '0', left: '-5000px' }}>
                              <div className="relative w-[1200px] flex flex-col bg-[#0c0e14] p-10 border-4 border-yellow-600 shadow-2xl overflow-hidden rounded-sm" 
                                   ref={window.innerWidth < 768 ? galleryRef : null}>
                                  <div className="flex justify-between items-end mb-8 border-b-2 border-yellow-500/20 pb-4 text-white font-black italic">
@@ -329,10 +302,10 @@ export default function PBBuilder() {
                                     ))}
                                  </div>
                                  <div className="grid grid-cols-5 gap-3">
-                                    {TIPOS_PB.map(t => (
-                                        <div key={t.id} className="flex flex-col items-center justify-center bg-slate-900 p-6 rounded-3xl border border-yellow-600/20 shadow-inner">
-                                            <span className="text-4xl font-black text-white">{statsForExport.counts[t.label] || 0}</span>
-                                            <span className="text-[8px] uppercase font-black text-slate-500 mt-1">{t.label}</span>
+                                    {ORDER_TYPES.map(t => (
+                                        <div key={t} className="flex flex-col items-center justify-center bg-slate-900 p-6 rounded-3xl border border-yellow-600/20">
+                                            <span className="text-4xl font-black text-white">{statsForExport.counts[t] || 0}</span>
+                                            <span className="text-[8px] uppercase font-black text-slate-500 mt-1">{t}</span>
                                         </div>
                                     ))}
                                  </div>
@@ -343,14 +316,14 @@ export default function PBBuilder() {
                     </div>
 
                     <div className="p-6 bg-slate-900 border-t border-white/5 flex justify-center">
-                        <button onClick={handleTakeScreenshot} disabled={guardando} className="w-full md:w-auto bg-yellow-600 hover:bg-yellow-500 text-black px-12 py-4 rounded-2xl font-black shadow-xl flex items-center justify-center gap-3 uppercase text-sm tracking-widest active:scale-95 transition-all">
+                        <button onClick={handleTakeScreenshot} disabled={guardando} className="w-full md:w-auto bg-yellow-600 hover:bg-yellow-500 text-black px-12 py-4 rounded-2xl font-black shadow-xl flex items-center justify-center gap-3 uppercase text-sm active:scale-95 transition-all">
                              <Camera size={20} /> {guardando ? 'SINCRONIZANDO...' : 'Descargar Infografía HD'}
                         </button>
                     </div>
                 </div>
             )}
 
-            {/* MODALES ZOOM, GUARDAR Y LISTA MÓVIL (Intactos) */}
+            {/* MODALES ZOOM, GUARDAR Y LISTA MÓVIL */}
             {cardToZoom && (
                 <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4 transition-all duration-300" onClick={() => setCardToZoom(null)}>
                     <button onClick={() => setCardToZoom(null)} className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-2xl z-[210] transition-all"><X size={24} strokeWidth={3} /></button>
