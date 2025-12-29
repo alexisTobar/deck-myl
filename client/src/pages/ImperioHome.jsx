@@ -160,17 +160,25 @@ function RaceRank({ name, power, trend, color }) {
 }
 
 function YTCard({ title, channelId }) {
+    // La URL correcta debe llevar el ID del canal que empieza con UC...
+    const embedUrl = `https://www.youtube.com/embed/videoseries?list=UU${channelId.substring(2)}`;
+    
     return (
         <div className="space-y-4 group">
             <div className="flex justify-between items-center px-4">
                 <h3 className="text-sm font-black text-orange-500 uppercase tracking-widest italic">{title}</h3>
-                <span className="bg-red-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter">Último Video</span>
+                <span className="bg-red-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter animate-pulse">
+                    Último Video
+                </span>
             </div>
-            <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white/5 shadow-2xl bg-black group-hover:border-orange-500/30 transition-all">
+            <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white/5 shadow-2xl bg-black group-hover:border-orange-500/30 transition-all transform group-hover:scale-[1.02] duration-500">
                 <iframe 
                     className="w-full h-full"
-                    src={`https://www.youtube.com/embed?listType=user_uploads&list=${channelId}`} 
-                    title={title} frameBorder="0" allowFullScreen
+                    src={embedUrl} 
+                    title={title} 
+                    frameBorder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    allowFullScreen
                 ></iframe>
             </div>
         </div>
