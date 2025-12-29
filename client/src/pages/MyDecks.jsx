@@ -79,20 +79,36 @@ export default function MyDecks() {
         finally { setDeckToDelete(null); }
     };
 
-    // ✅ EXPORTACIÓN NATIVA (CANVAS)
+    // ✅ FUNCIÓN DE DESCARGA DE TEXTO (RESTAURADA)
+    const handleDownloadTextList = (deck) => {
+        let textContent = `MAZO: ${deck.name.toUpperCase()}\n`;
+        textContent += `FORMATO: ${getFormatStyles(deck.format).label}\n`;
+        textContent += `TOTAL CARTAS: ${getDeckTotal(deck.cards)}\n`;
+        textContent += `-------------------------------\n\n`;
+        
+        // Agrupar por tipo si es posible o simplemente listar
+        deck.cards.forEach(c => {
+            textContent += `${c.quantity || 1}x ${c.name}\n`;
+        });
+
+        textContent += `\n-------------------------------\n Generado por WarningDeck.cl`;
+
+        const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
+        saveAs(blob, `Lista_${deck.name.replace(/\s+/g, '_')}.txt`);
+        showToast("Lista descargada");
+    };
+
+    // ✅ EXPORTACIÓN NATIVA IMAGEN (INTACTA)
     const handleDownloadInfographic = async (deck) => {
         setIsDownloading(true);
         try {
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
             const styles = getFormatStyles(deck.format);
-            
             canvas.width = 1200;
             canvas.height = 1000;
-            
             ctx.fillStyle = deck.format === 'primer_bloque' ? "#0c0e14" : "#0f0a07";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
             const loadImg = (url) => new Promise((resolve) => {
                 const img = new Image();
                 img.crossOrigin = "anonymous";
@@ -100,22 +116,18 @@ export default function MyDecks() {
                 img.onerror = () => resolve(null);
                 img.src = url;
             });
-
             const logo = await loadImg("https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png");
             if (logo) {
                 ctx.globalAlpha = 0.05;
                 ctx.drawImage(logo, 300, 250, 600, 600);
                 ctx.globalAlpha = 1.0;
             }
-
             ctx.fillStyle = styles.accentColor;
             ctx.font = "bold 24px Arial";
             ctx.fillText(styles.label.toUpperCase(), 50, 70);
-            
             ctx.fillStyle = "white";
             ctx.font = "italic bold 50px Arial";
             ctx.fillText(deck.name.toUpperCase(), 50, 130);
-
             let x = 50, y = 200;
             for (const card of deck.cards) {
                 const imgUrl = card.imgUrl || card.imageUrl || card.img;
@@ -131,10 +143,8 @@ export default function MyDecks() {
                 x += 140;
                 if (x > 1100) { x = 50; y += 200; }
             }
-
             canvas.toBlob((blob) => {
                 saveAs(blob, `WarningDeck_${deck.name}.png`);
-                setGuardando(false);
             });
         } catch (err) {
             showToast("Error al generar imagen", "error");
@@ -165,7 +175,6 @@ export default function MyDecks() {
 
     return (
         <div className="min-h-screen bg-slate-900 font-sans text-slate-200 pb-32 md:pb-20">
-            {/* ... HEADER Y FILTROS (Igual) ... */}
             <div className="bg-slate-800 border-b border-slate-700 sticky top-0 z-30 shadow-lg p-4">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
                     <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-red-600 uppercase italic tracking-tighter">Mis Mazos</h1>
@@ -203,12 +212,10 @@ export default function MyDecks() {
                 </div>
             </div>
 
-            {/* ✅ MODAL CON GALERÍA VISUAL DE CARTAS */}
             {selectedDeck && (
                 <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-2 md:p-4 backdrop-blur-sm" onClick={() => setSelectedDeck(null)}>
                     <div className="bg-slate-800 w-full max-w-6xl rounded-3xl shadow-2xl border border-slate-600 flex flex-col h-[95vh] md:h-[90vh] overflow-hidden" onClick={e => e.stopPropagation()}>
                         
-                        {/* Cabecera del Modal */}
                         <div className="p-4 md:p-6 border-b border-slate-700 flex justify-between bg-slate-900/80 items-center">
                             <div>
                                 <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter italic leading-none">{selectedDeck.name}</h2>
@@ -224,41 +231,32 @@ export default function MyDecks() {
                             <button onClick={() => setSelectedDeck(null)} className="bg-slate-700 p-2 rounded-full text-slate-400 hover:text-white transition-colors"><X size={24} /></button>
                         </div>
                         
-                        {/* ✅ ÁREA VISUAL: GALERÍA DE IMÁGENES */}
-                        <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-[#0c0e14] custom-scrollbar">
+                        {/* GALERÍA VISUAL */}
+                        <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-[#0c0e14]">
                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 md:gap-5">
                                 {selectedDeck.cards.map((c, i) => (
                                     <div key={i} className="relative group animate-fade-in">
                                         <div className="rounded-lg md:rounded-xl overflow-hidden border border-white/10 shadow-lg group-hover:border-orange-500/50 transition-all group-hover:scale-105">
-                                            <img 
-                                                src={getCardImage(c)} 
-                                                alt={c.name} 
-                                                className="w-full h-auto block"
-                                                loading="lazy"
-                                            />
-                                            {/* Cantidad sobre la carta */}
+                                            <img src={getCardImage(c)} alt={c.name} className="w-full h-auto block" loading="lazy" />
                                             <div className="absolute top-1 right-1 md:top-2 md:right-2 z-10">
                                                 <div className="bg-orange-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-black text-xs md:text-sm shadow-xl border border-white/20">
                                                     {c.quantity || 1}
                                                 </div>
                                             </div>
                                         </div>
-                                        {/* Nombre al pie (opcional para móviles) */}
-                                        <p className="mt-1 text-[8px] md:text-[10px] text-slate-400 uppercase font-bold truncate text-center px-1">
-                                            {c.name}
-                                        </p>
+                                        <p className="mt-1 text-[8px] md:text-[10px] text-slate-400 uppercase font-bold truncate text-center px-1">{c.name}</p>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Panel de Acciones */}
+                        {/* PANEL DE ACCIONES */}
                         <div className="p-4 border-t border-slate-700 bg-slate-900 grid grid-cols-2 md:grid-cols-5 gap-3">
                             <button onClick={() => togglePrivacy(selectedDeck)} className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-black text-[10px] uppercase border border-white/5">
                                 {selectedDeck.isPublic ? <><Lock size={16} className="text-red-500" /> Privado</> : <><Globe size={16} className="text-green-500" /> Público</>}
                             </button>
                             
-                            <button onClick={() => handleDownloadInfographic(selectedDeck)} disabled={isDownloading} className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black text-[10px] uppercase shadow-lg">
+                            <button onClick={() => handleDownloadInfographic(selectedDeck)} disabled={isDownloading} className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black text-[10px] uppercase shadow-lg transition-all">
                                 <Camera size={16} /> {isDownloading ? '...' : 'Infografía'}
                             </button>
 
@@ -266,8 +264,12 @@ export default function MyDecks() {
                                 <Edit3 size={16} /> Editar
                             </button>
 
-                            <button className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-black text-[10px] uppercase border border-white/5">
-                                <FileText size={16} /> Texto
+                            {/* ✅ BOTÓN DE TEXTO REPARADO */}
+                            <button 
+                                onClick={() => handleDownloadTextList(selectedDeck)}
+                                className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-black text-[10px] uppercase border border-white/5 transition-all"
+                            >
+                                <FileText size={16} /> Lista
                             </button>
                             
                             <button onClick={() => setDeckToDelete(selectedDeck)} className="flex items-center justify-center gap-2 bg-red-600/10 hover:bg-red-600 text-red-500 border border-red-600/30 py-3 rounded-xl font-black text-[10px] uppercase">
@@ -284,10 +286,9 @@ export default function MyDecks() {
                     <div className="bg-slate-800 p-8 rounded-3xl max-w-sm w-full text-center border border-slate-700 shadow-2xl">
                         <div className="w-16 h-16 bg-red-600/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4"><Trash2 size={32} /></div>
                         <h3 className="text-white text-xl font-black mb-2 uppercase italic">¿Eliminar?</h3>
-                        <p className="text-slate-400 text-sm mb-6">Esta acción es permanente.</p>
                         <div className="flex gap-4">
                             <button onClick={() => setDeckToDelete(null)} className="flex-1 bg-slate-700 py-3 rounded-xl text-white font-black text-xs uppercase">No</button>
-                            <button onClick={confirmDelete} className="flex-1 bg-red-600 py-3 rounded-xl text-white font-black text-xs uppercase">Sí, Borrar</button>
+                            <button onClick={confirmDelete} className="flex-1 bg-red-600 py-3 rounded-xl text-white font-black text-xs uppercase transition-all">Sí, Borrar</button>
                         </div>
                     </div>
                 </div>
