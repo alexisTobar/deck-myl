@@ -6,7 +6,7 @@ import {
   Sword, Instagram, Youtube, Twitter, Target, Crown, ChevronRight, PlayCircle, Newspaper
 } from "lucide-react";
 
-// ✅ Animaciones Locales Unificadas (Mismas que PB)
+// ✅ Animaciones Locales Unificadas
 const fadeInUp = {
   initial: { opacity: 0, y: 30 },
   whileInView: { opacity: 1, y: 0 },
@@ -25,12 +25,12 @@ export default function ImperioHome() {
     return (
         <div className="min-h-screen bg-[#070504] text-white font-sans overflow-x-hidden selection:bg-orange-600 relative">
             
-            {/* ✨ EFECTO DE PARTÍCULAS DE FUEGO */}
+            {/* ✨ EFECTO DE PARTÍCULAS DE FUEGO (Asegúrate de tener el CSS) */}
             <div className="absolute inset-0 pointer-events-none z-0">
                 <div className="fire-particles"></div>
             </div>
 
-            {/* 🐉 DRAGÓN IMPERIO DE FONDO - Ajustado Z-index para no tapar títulos */}
+            {/* 🐉 DRAGÓN IMPERIO DE FONDO */}
             <div className="fixed inset-0 pointer-events-none z-0 opacity-15">
                 <motion.img 
                     animate={{ scale: [1, 1.05, 1], rotate: [0, 2, 0] }}
@@ -41,7 +41,7 @@ export default function ImperioHome() {
                 />
             </div>
 
-            {/* HERO SECTION - Títulos corregidos con Z-index alto */}
+            {/* HERO SECTION - Títulos con Z-Index 10 para visibilidad total */}
             <section className="relative h-screen flex items-center justify-center border-b border-orange-500/10 z-10 px-4">
                 <div className="text-center max-w-6xl">
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex justify-center mb-6">
@@ -51,7 +51,7 @@ export default function ImperioHome() {
                     <motion.h1 
                         initial={{ opacity: 0, y: 20 }} 
                         animate={{ opacity: 1, y: 0 }} 
-                        className="text-7xl md:text-[11rem] font-black text-white mb-6 uppercase tracking-tighter italic leading-none drop-shadow-[0_0_40px_rgba(249,115,22,0.6)]"
+                        className="text-7xl md:text-[11rem] font-black text-white mb-6 uppercase tracking-tighter italic leading-none drop-shadow-[0_0_50px_rgba(249,115,22,0.6)]"
                     >
                         IMPERIO
                     </motion.h1>
@@ -90,12 +90,12 @@ export default function ImperioHome() {
                 </motion.div>
             </section>
 
-            {/* 🎥 FEED DE YOUTUBE IMPERIO - Fix IDs para visibilidad */}
+            {/* 🎥 SECCIÓN VIDEOS INTEGRADOS (LOS QUE ME PASASTE) */}
             <section className="max-w-7xl mx-auto px-6 py-32 relative z-10 border-t border-white/5">
                 <motion.div {...fadeInUp} className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
                     <div>
                         <h2 className="text-5xl font-black uppercase italic tracking-tighter leading-none">Analistas del <span className="text-orange-500">Meta</span></h2>
-                        <p className="text-slate-500 mt-2 font-bold uppercase tracking-widest text-xs italic">Aprende de los maestros de Imperio</p>
+                        <p className="text-slate-500 mt-2 font-bold uppercase tracking-widest text-xs italic">Contenido destacado de la comunidad</p>
                     </div>
                     <div className="flex items-center gap-4 text-red-600 font-black uppercase text-sm">
                         <Youtube size={24} /> Youtube Live
@@ -103,10 +103,33 @@ export default function ImperioHome() {
                 </motion.div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    {/* Sombras y Oscuridad ID: UC_Uv4-3vI-C3K69X_m9v-pA */}
-                    <YTCard title="Sombras y Oscuridad" channelId="UC_Uv4-3vI-C3K69X_m9v-pA" />
-                    {/* MyL Oficial ID: UC6un_m6_I-0pP7p0vWv4_6A */}
-                    <YTCard title="Mitos y Leyendas" channelId="UC6un_m6_I-0pP7p0vWv4_6A" />
+                    {/* VIDEO SOMBRA Y OSCURIDAD */}
+                    <div className="space-y-4 group">
+                        <h3 className="text-sm font-black text-orange-500 uppercase tracking-widest italic px-4">Sombras y Oscuridad</h3>
+                        <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white/5 shadow-2xl bg-black group-hover:border-orange-500/30 transition-all">
+                            <iframe 
+                                width="100%" height="100%" 
+                                src="https://www.youtube.com/embed/z-hekxgmP2I?si=AnbR17cXSuxJfvv9" 
+                                title="YouTube video player" frameBorder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                allowFullScreen
+                            ></iframe>
+                        </div>
+                    </div>
+
+                    {/* VIDEO MITOS Y LEYENDAS OFICIAL */}
+                    <div className="space-y-4 group">
+                        <h3 className="text-sm font-black text-orange-500 uppercase tracking-widest italic px-4">Mitos y Leyendas Oficial</h3>
+                        <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white/5 shadow-2xl bg-black group-hover:border-orange-500/30 transition-all">
+                            <iframe 
+                                width="100%" height="100%" 
+                                src="https://www.youtube.com/embed/u-am6kIUP_A?si=2oN8E5WCMWwAzN4a" 
+                                title="YouTube video player" frameBorder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                allowFullScreen
+                            ></iframe>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -130,16 +153,16 @@ export default function ImperioHome() {
                 </div>
             </section>
 
-            {/* 📱 FOOTER RESPONSIVO RECUPERADO */}
+            {/* 📱 FOOTER RESPONSIVO */}
             <footer className="bg-black py-20 border-t border-white/5 relative z-10 text-center md:text-left">
                 <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12">
                     <div>
-                        <h2 className="text-4xl font-black italic uppercase tracking-tighter mb-4 text-white font-serif">Warning<span className="text-orange-500">Deck</span></h2>
+                        <h2 className="text-4xl font-black italic uppercase tracking-tighter mb-4 text-white">Warning<span className="text-orange-500">Deck</span></h2>
                         <p className="text-slate-500 text-sm font-bold uppercase tracking-[0.3em] mb-6 italic">El Poder del Presente</p>
-                        <div className="flex justify-center md:justify-start gap-8 text-slate-400">
-                            <a href="https://www.instagram.com/myl_oficial/" target="_blank" className="hover:text-orange-500 transition-all scale-125"><Instagram size={24}/></a>
-                            <a href="https://www.youtube.com/@myloficial" target="_blank" className="hover:text-orange-500 transition-all scale-125"><Youtube size={24}/></a>
-                            <a href="#" className="hover:text-orange-500 transition-all scale-125"><Twitter size={24}/></a>
+                        <div className="flex justify-center md:justify-start gap-8">
+                            <a href="#" className="text-slate-400 hover:text-orange-500 transition-all scale-125"><Instagram size={24}/></a>
+                            <a href="#" className="text-slate-400 hover:text-orange-500 transition-all scale-125"><Youtube size={24}/></a>
+                            <a href="#" className="text-slate-400 hover:text-orange-500 transition-all scale-125"><Twitter size={24}/></a>
                         </div>
                     </div>
                     <div className="flex flex-col items-center md:items-end gap-2">
@@ -152,7 +175,7 @@ export default function ImperioHome() {
     );
 }
 
-// --- SUBCOMPONENTES COMPARTIDOS (Optimizado) ---
+// --- SUBCOMPONENTES ---
 
 function RaceRank({ name, power, trend, color }) {
     return (
@@ -162,30 +185,6 @@ function RaceRank({ name, power, trend, color }) {
                 <span className="text-xl font-black uppercase italic tracking-tighter text-slate-200">{name}</span>
             </div>
             <div className="text-right text-orange-500 font-black text-2xl group-hover:scale-110 transition-transform">{power}</div>
-        </div>
-    );
-}
-
-function YTCard({ title, channelId }) {
-    // Truco UU para convertir el ID de Canal en ID de Playlist de Subidas
-    const uploadPlaylistId = channelId.replace(/^UC/, 'UU');
-    
-    return (
-        <div className="space-y-4 group">
-            <div className="flex justify-between items-center px-4">
-                <h3 className="text-sm font-black text-orange-500 uppercase tracking-widest italic">{title}</h3>
-                <span className="bg-red-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter animate-pulse">Live Feed</span>
-            </div>
-            <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white/5 shadow-2xl bg-black group-hover:border-orange-500/30 transition-all">
-                <iframe 
-                    className="w-full h-full"
-                    src={`https://www.youtube.com/embed/videoseries?list=${uploadPlaylistId}`} 
-                    title={title} 
-                    frameBorder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                    allowFullScreen
-                ></iframe>
-            </div>
         </div>
     );
 }
