@@ -5,8 +5,17 @@ import BACKEND_URL from "../config";
 // ✅ Iconos Lucide
 import { 
   Plus, Minus, Eye, Save, Search, X, Camera, Globe, Layout, 
-  ShieldCheck, Users, Star, Layers, Shield, Sword
+  ShieldCheck, Users, Star, Layers, Shield, Sword, ChevronDown
 } from "lucide-react";
+
+// ✅ MAPEO NUMÉRICO CRÍTICO (Traducción de BD a Categorías)
+const TYPE_MAP = {
+    "1": "Aliado",
+    "2": "Talismán",
+    "3": "Arma",
+    "4": "Tótem",
+    "5": "Oro"
+};
 
 const EDICIONES_IMPERIO = { 
     "kvsm_titanes": "KVSM Titanes",
@@ -25,11 +34,11 @@ const EDICIONES_IMPERIO = {
 };
 
 const TIPOS_IMPERIO = [
-    { id: "Aliado", label: "Aliado", icon: <Users size={14} />, color: "border-blue-500 text-blue-400" },
-    { id: "Talismán", label: "Talismán", icon: <Shield size={14} />, color: "border-purple-500 text-purple-400" },
-    { id: "Arma", label: "Arma", icon: <Layout size={14} />, color: "border-red-500 text-red-400" },
-    { id: "Tótem", label: "Tótem", icon: <Layout size={14} />, color: "border-green-500 text-green-400" },
-    { id: "Oro", label: "Oro", icon: <Globe size={14} />, label: "Oro", color: "border-yellow-500 text-yellow-400" }
+    { id: "1", label: "Aliado", icon: <Users size={14} />, color: "border-blue-500 text-blue-400" },
+    { id: "2", label: "Talismán", icon: <Shield size={14} />, color: "border-purple-500 text-purple-400" },
+    { id: "3", label: "Arma", icon: <Layout size={14} />, color: "border-red-500 text-red-400" },
+    { id: "4", label: "Tótem", icon: <Layout size={14} />, color: "border-green-500 text-green-400" },
+    { id: "5", label: "Oro", icon: <Globe size={14} />, label: "Oro", color: "border-yellow-500 text-yellow-400" }
 ];
 
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
@@ -56,11 +65,11 @@ export default function ImperioBuilder() {
     const [cardToZoom, setCardToZoom] = useState(null);
     const [guardando, setGuardando] = useState(false);
 
-    // ✅ Listado lateral: Clasificación por tipo
+    // ✅ Listado lateral con traducción de TYPE_MAP
     const mazoAgrupado = useMemo(() => {
         const g = {};
         mazo.forEach(c => { 
-            const t = c.type || "Otros"; 
+            const t = TYPE_MAP[String(c.type)] || "Otros"; 
             if (!g[t]) g[t] = []; 
             g[t].push(c); 
         });
@@ -69,11 +78,13 @@ export default function ImperioBuilder() {
 
     const statsForExport = useMemo(() => {
         const counts = { Aliado: 0, Talismán: 0, Arma: 0, Tótem: 0, Oro: 0 };
-        mazo.forEach(c => { if (counts[c.type] !== undefined) counts[c.type] += c.cantidad; });
+        mazo.forEach(c => { 
+            const typeName = TYPE_MAP[String(c.type)];
+            if (counts[typeName] !== undefined) counts[typeName] += c.cantidad; 
+        });
         return { counts };
     }, [mazo]);
 
-    // ✅ Carga del mazo para edición (Fix de normalización)
     useEffect(() => {
         if (location.state?.deckToEdit) {
             const d = location.state.deckToEdit;
@@ -81,11 +92,7 @@ export default function ImperioBuilder() {
                 setNombreMazo(d.name || "");
                 setEditingDeckId(d._id);
                 setIsPublic(d.isPublic || false);
-                setMazo(d.cards.map(c => ({ 
-                    ...c, 
-                    cantidad: c.quantity || c.cantidad || 1, 
-                    imgUrl: getImg(c) 
-                })));
+                setMazo(d.cards.map(c => ({ ...c, cantidad: c.quantity || 1, imgUrl: getImg(c) })));
             }
         }
     }, [location.state]);
@@ -107,7 +114,6 @@ export default function ImperioBuilder() {
         return () => clearTimeout(timer);
     }, [busqueda, edicionSeleccionada, tipoSeleccionado, formato]);
 
-    // ✅ handleAdd funcional para asegurar que se agregue a la lista de la derecha
     const handleAdd = (c) => {
         setMazo(prevMazo => {
             const ex = prevMazo.find(x => x.slug === c.slug);
@@ -121,7 +127,6 @@ export default function ImperioBuilder() {
                 }
                 return prevMazo;
             }
-            // Agregamos la carta asegurando que herede el 'type' para la agrupación
             return [...prevMazo, { ...c, cantidad: 1, imgUrl: getImg(c) }];
         });
     };
@@ -144,7 +149,6 @@ export default function ImperioBuilder() {
         } catch (e) { alert("Error"); } finally { setGuardando(false); }
     };
 
-    // ✅ handleTakeScreenshot íntegro (Igual que PB pero con colores de Imperio)
     const handleTakeScreenshot = async () => {
         setGuardando(true);
         try {
@@ -155,7 +159,6 @@ export default function ImperioBuilder() {
             canvas.height = 250 + (rows * 200) + 150; 
             ctx.fillStyle = "#0f0a07"; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
             const loadImg = (url) => new Promise((resolve) => {
                 const img = new Image();
                 img.crossOrigin = "anonymous";
@@ -163,14 +166,12 @@ export default function ImperioBuilder() {
                 img.onerror = () => resolve(null);
                 img.src = url;
             });
-
             const logo = await loadImg("https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png");
             if (logo) {
                 ctx.globalAlpha = 0.05;
                 ctx.drawImage(logo, canvas.width/2 - 300, canvas.height/2 - 300, 600, 600);
                 ctx.globalAlpha = 1.0;
             }
-
             ctx.fillStyle = "#f97316"; 
             ctx.font = "bold 24px Arial";
             ctx.fillText("WORKSHOP IMPERIO", 50, 60);
@@ -182,7 +183,6 @@ export default function ImperioBuilder() {
             ctx.textAlign = "right";
             ctx.fillText(`${mazo.reduce((a, b) => a + b.cantidad, 0)} CARTAS`, 1150, 130);
             ctx.textAlign = "left";
-
             let x = 50, y = 180;
             for (const card of mazo) {
                 const img = await loadImg(card.imgUrl);
@@ -197,11 +197,10 @@ export default function ImperioBuilder() {
                 x += 140;
                 if (x > 1100) { x = 50; y += 200; }
             }
-
             const distY = canvas.height - 110;
             let startX = 50;
             ORDER_TYPES.forEach((type) => {
-                ctx.fillStyle = "#1e1b18";
+                ctx.fillStyle = "#1e1b18"; 
                 ctx.fillRect(startX, distY, 210, 80);
                 ctx.fillStyle = "#f97316";
                 ctx.font = "bold 14px Arial";
@@ -211,7 +210,6 @@ export default function ImperioBuilder() {
                 ctx.fillText(statsForExport.counts[type] || 0, startX + 15, distY + 68);
                 startX += 230;
             });
-
             canvas.toBlob((blob) => {
                 saveAs(blob, `WD_Imp_${nombreMazo || "Deck"}.png`);
                 setGuardando(false);
@@ -231,9 +229,21 @@ export default function ImperioBuilder() {
                 </div>
 
                 <div className="p-4 bg-slate-900/40 border-b border-slate-800 space-y-4">
-                    <div className="flex gap-2">
-                        <input type="text" placeholder="Búsqueda Global..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="flex-1 p-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm outline-none focus:border-orange-500 font-bold" />
-                        <select value={edicionSeleccionada} onChange={(e) => setEdicionSeleccionada(e.target.value)} className="bg-slate-950 border border-slate-700 p-2 rounded-xl text-[13px] font-bold text-orange-400">{Object.entries(EDICIONES_IMPERIO).map(([s, l]) => <option key={s} value={s}>{l}</option>)}</select>
+                    <div className="flex flex-col md:flex-row gap-3">
+                        {/* ✅ SELECTOR DE EDICIONES REINTREGRADO */}
+                        <div className="relative flex-1">
+                            <select 
+                                value={edicionSeleccionada} 
+                                onChange={(e) => { setEdicionSeleccionada(e.target.value); setBusqueda(""); }}
+                                className="w-full bg-slate-950 border border-slate-700 text-orange-400 p-2.5 rounded-xl appearance-none font-bold outline-none focus:border-orange-500 cursor-pointer text-sm"
+                            >
+                                {Object.entries(EDICIONES_IMPERIO).map(([id, label]) => (
+                                    <option key={id} value={id}>{label}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-3 top-3 text-slate-500 pointer-events-none" size={16} />
+                        </div>
+                        <input type="text" placeholder="Búsqueda Global..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="flex-[2] p-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm outline-none focus:border-orange-500 font-bold" />
                     </div>
                     <div className="flex flex-wrap gap-2 justify-center">
                         {TIPOS_IMPERIO.map((tipo) => (
@@ -264,7 +274,6 @@ export default function ImperioBuilder() {
                 </div>
             </div>
 
-            {/* SIDEBAR DERECHO (REPARADO) */}
             <div className="hidden md:flex w-85 border-l border-white/10 flex-col h-screen bg-gradient-to-b from-slate-900 via-[#0f0a07] to-black shadow-2xl">
                 <div className="p-5 border-b border-orange-500/30 bg-slate-900/50 backdrop-blur-md font-black text-orange-500 uppercase tracking-widest flex justify-between items-center shadow-lg">
                     <div className="flex items-center gap-2"><Layout size={18}/><span className="italic">Grimorio Imperio</span></div>
@@ -297,7 +306,17 @@ export default function ImperioBuilder() {
                 </div>
             </div>
 
-            {/* MODALES REINTEGRADOS */}
+            {/* DOCK MÓVIL */}
+            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-2 pb-4 z-50 flex items-center justify-between shadow-2xl">
+                <div className="flex flex-col px-3"><span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Total</span><span className={`text-lg font-black ${totalCartas === 50 ? 'text-green-500' : 'text-white'}`}>{totalCartas}/50</span></div>
+                <div className="flex gap-2 pr-2">
+                    <button onClick={() => setShowMobileList(true)} className="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-xs border border-slate-700 uppercase">Lista</button>
+                    <button onClick={handleTakeScreenshot} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest">Descargar</button>
+                    <button onClick={() => setModalGuardarOpen(true)} className="bg-orange-600 text-white px-4 py-2 rounded-lg font-bold text-xs shadow-lg flex items-center justify-center"><Save size={16} /></button>
+                </div>
+            </div>
+
+            {/* MODAL ZOOM */}
             {cardToZoom && (
                 <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4 transition-all duration-300" onClick={() => setCardToZoom(null)}>
                     <button onClick={() => setCardToZoom(null)} className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-2xl z-[210] transition-all"><X size={24} strokeWidth={3} /></button>
@@ -312,19 +331,50 @@ export default function ImperioBuilder() {
                 </div>
             )}
 
+            {/* MODAL GUARDAR */}
             {modalGuardarOpen && (
                 <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setModalGuardarOpen(false)}>
                     <div className="bg-slate-800 p-6 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl text-white" onClick={e => e.stopPropagation()}>
                         <h3 className="text-xl font-black mb-6 uppercase text-orange-500 tracking-tighter italic text-center">Guardar Estrategia Imperio</h3>
                         <input value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 outline-none focus:border-yellow-500 mb-4 transition-all text-white font-bold" placeholder="Nombre del mazo..." />
                         <label className="flex items-center gap-3 bg-slate-900 p-3 rounded-xl cursor-pointer hover:bg-slate-950 transition-colors">
-                            <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-5 h-5 accent-orange-600" />
+                            <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-5 h-5 accent-yellow-600" />
                             <span className="text-sm font-bold text-slate-300 italic uppercase tracking-tighter">Arena Global <Globe size={14} className="inline ml-1 text-orange-500" /></span>
                         </label>
                         <div className="flex justify-end gap-3 mt-8">
                             <button onClick={() => setModalGuardarOpen(false)} className="text-slate-400 font-black px-4 hover:text-white transition-colors uppercase italic text-xs tracking-widest">Cancelar</button>
                             <button onClick={handleSaveDeck} disabled={guardando || !nombreMazo.trim()} className="bg-orange-600 text-white px-8 py-2 rounded-xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-transform flex items-center gap-2 italic"><Save size={16} /> Confirmar</button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL LISTA MÓVIL */}
+            {showMobileList && (
+                <div className="md:hidden fixed inset-0 z-[60] bg-black/80 flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
+                    <div className="bg-slate-900 rounded-t-3xl h-[70vh] p-5 overflow-auto border-t border-slate-700 shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-black uppercase text-orange-500 italic">Mi Lista ({totalCartas}/50)</h3>
+                            <button onClick={() => setShowMobileList(false)} className="text-slate-400"><X size={24} /></button>
+                        </div>
+                        {ORDER_TYPES.map(t => mazoAgrupado[t] && (
+                            <div key={t} className="mb-4">
+                                <h4 className="text-orange-600 text-[10px] font-black uppercase mb-2 border-b border-orange-800 pb-1">{t}</h4>
+                                {mazoAgrupado[t].map(c => (
+                                    <div key={c.slug} className="flex justify-between items-center py-2 border-b border-slate-800 last:border-0">
+                                        <div className="flex items-center gap-3">
+                                            <img src={getImg(c)} className="w-10 h-12 rounded shadow-md object-cover" alt={c.name} />
+                                            <span className="text-sm font-medium">{c.name}</span>
+                                        </div>
+                                        <div className="flex items-center gap-4 bg-slate-950 p-1.5 px-4 rounded-full border border-slate-800">
+                                            <button onClick={() => handleRemove(c.slug)} className="text-red-500 font-black active:scale-90 transition-transform"><Minus size={18} /></button>
+                                            <span className="font-black text-sm w-4 text-center">{c.cantidad}</span>
+                                            <button onClick={() => handleAdd(c)} disabled={c.cantidad >= 3} className="text-green-500 font-black active:scale-90 transition-transform disabled:opacity-30"><Plus size={18} /></button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}
