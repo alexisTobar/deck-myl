@@ -87,30 +87,33 @@ export default function PBBuilder() {
         return () => clearTimeout(timer);
     }, [busqueda, mainEditionSelected, tipoSeleccionado, razaSeleccionada]);
 
-    // ✅ LÓGICA DE AGREGADO CON RESTRICCIONES DAR
+    // ✅ LÓGICA DE AGREGADO REPARADA: Restricción por NOMBRE (Global para todas las versiones)
     const handleAdd = (c) => {
-        // 1. Bloqueo si está prohibida
-        if (c.restriction === "banned") return alert(`🚫 ${c.name} está PROHIBIDA en este formato.`);
+        if (c.restriction === "banned") return alert(`🚫 ${c.name} está PROHIBIDA.`);
 
-        const ex = mazo.find(x => x.slug === c.slug);
-        const totalCartas = mazo.reduce((a, b) => a + b.cantidad, 0);
-        
-        if (totalCartas >= 50 && !ex) return alert("Mazo lleno");
+        // Buscamos cuántas copias hay en total de cartas con el MISMO NOMBRE
+        const copiasMismoNombre = mazo
+            .filter(x => x.name.toLowerCase().trim() === c.name.toLowerCase().trim())
+            .reduce((acc, curr) => acc + curr.cantidad, 0);
 
-        // 2. Definir límite según restricción
+        const totalMazo = mazo.reduce((a, b) => a + b.cantidad, 0);
+        if (totalMazo >= 50 && !mazo.find(x => x.slug === c.slug)) return alert("Mazo lleno");
+
+        // Definir límite según restricción
         let limit = 3;
         if (c.restriction === "limited1") limit = 1;
         if (c.restriction === "limited2") limit = 2;
 
-        if (ex) { 
-            if (ex.cantidad < limit) {
-                setMazo(mazo.map(x => x.slug === c.slug ? { ...x, cantidad: x.cantidad + 1 } : x)); 
-            } else {
-                alert(`⚠️ Límite alcanzado: Sólo puedes tener ${limit} copia(s) de ${c.name}.`);
-            }
+        if (copiasMismoNombre >= limit) {
+            return alert(`⚠️ Restricción DAR: Solo puedes tener ${limit} copias de "${c.name}" en total (incluyendo todas sus versiones).`);
         }
-        else { 
-            setMazo([...mazo, { ...c, cantidad: 1, imgUrl: getImg(c) }]); 
+
+        // Si pasó el filtro de nombre, procedemos a agregar por Slug (para mantener la versión visual elegida)
+        const ex = mazo.find(x => x.slug === c.slug);
+        if (ex) {
+            setMazo(mazo.map(x => x.slug === c.slug ? { ...x, cantidad: x.cantidad + 1 } : x));
+        } else {
+            setMazo([...mazo, { ...c, cantidad: 1, imgUrl: getImg(c) }]);
         }
     };
 
@@ -251,7 +254,6 @@ export default function PBBuilder() {
                                         } ${c.restriction === 'banned' ? 'opacity-40 grayscale' : ''}`}>
                                             <img src={getImg(c)} className="w-full h-auto transition-transform" alt={c.name} />
                                             
-                                            {/* ✅ Badge visual DAR en el buscador */}
                                             {c.restriction && c.restriction !== 'unrestricted' && (
                                                 <div className="absolute top-1 left-1 bg-red-600 p-1 rounded-md text-[8px] font-black uppercase text-white shadow-xl flex items-center gap-1">
                                                     <ShieldAlert size={10}/> {c.restriction === 'banned' ? 'BAN' : c.restriction === 'limited1' ? '1' : '2'}
@@ -301,16 +303,6 @@ export default function PBBuilder() {
                 </div>
             </div>
 
-            {/* DOCK MÓVIL */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-2 pb-4 z-50 flex items-center justify-between shadow-2xl">
-                <div className="flex flex-col px-3"><span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Total</span><span className={`text-lg font-black ${totalCartas === 50 ? 'text-green-500' : 'text-white'}`}>{totalCartas}/50</span></div>
-                <div className="flex gap-2 pr-2">
-                    <button onClick={() => setShowMobileList(true)} className="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-xs border border-slate-700 uppercase">Lista</button>
-                    <button onClick={handleTakeScreenshot} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest">Descargar</button>
-                    <button onClick={() => setModalGuardarOpen(true)} className="bg-yellow-600 text-black px-4 py-2 rounded-lg font-bold text-xs shadow-lg flex items-center justify-center"><Save size={16} /></button>
-                </div>
-            </div>
-
             {/* MODAL ZOOM */}
             {cardToZoom && (
                 <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4 transition-all duration-300" onClick={() => setCardToZoom(null)}>
@@ -319,14 +311,15 @@ export default function PBBuilder() {
                         <img src={getImg(cardToZoom)} className="w-full h-auto rounded-2xl shadow-[0_0_50px_rgba(234,179,8,0.3)] border-4 border-yellow-500/20" alt="zoom" />
                         <div className="mt-8 flex items-center justify-center gap-10 bg-slate-900/90 p-4 px-10 rounded-full border border-slate-700 shadow-2xl backdrop-blur-lg">
                             <button onClick={() => handleRemove(cardToZoom.slug)} className="w-14 h-14 rounded-full bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white flex items-center justify-center transition-all active:scale-90"><Minus size={24} strokeWidth={3} /></button>
-                            <span className="text-4xl font-black text-white leading-none">{mazo.find(x => x.slug === cardToZoom.slug)?.cantidad || 0}</span>
+                            <span className="text-4xl font-black text-white leading-none">
+                                {mazo.filter(x => x.name === cardToZoom.name).reduce((acc, curr) => acc + curr.cantidad, 0)}
+                            </span>
                             <button onClick={() => handleAdd(cardToZoom)} className="w-14 h-14 rounded-full bg-green-600/20 hover:bg-green-600 text-green-500 hover:text-white flex items-center justify-center transition-all active:scale-90"><Plus size={24} strokeWidth={3} /></button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* MODAL GUARDAR */}
             {modalGuardarOpen && (
                 <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setModalGuardarOpen(false)}>
                     <div className="bg-slate-800 p-6 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl text-white" onClick={e => e.stopPropagation()}>
@@ -340,36 +333,6 @@ export default function PBBuilder() {
                             <button onClick={() => setModalGuardarOpen(false)} className="text-slate-400 font-black px-4 hover:text-white transition-colors uppercase italic text-xs tracking-widest">Cancelar</button>
                             <button onClick={handleSaveDeck} disabled={guardando || !nombreMazo.trim()} className="bg-yellow-600 text-white px-8 py-2 rounded-xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-transform flex items-center gap-2 italic"><Save size={16} /> Confirmar</button>
                         </div>
-                    </div>
-                </div>
-            )}
-
-            {/* MODAL LISTA MÓVIL */}
-            {showMobileList && (
-                <div className="md:hidden fixed inset-0 z-[60] bg-black/80 flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
-                    <div className="bg-slate-900 rounded-t-3xl h-[70vh] p-5 overflow-auto border-t border-slate-700 shadow-2xl" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-black uppercase text-yellow-500 italic">Mi Lista ({totalCartas}/50)</h3>
-                            <button onClick={() => setShowMobileList(false)} className="text-slate-400"><X size={24} /></button>
-                        </div>
-                        {ORDER_TYPES.map(t => mazoAgrupado[t] && (
-                            <div key={t} className="mb-4">
-                                <h4 className="text-orange-600 text-[10px] font-black uppercase mb-2 border-b border-orange-800 pb-1">{t}</h4>
-                                {mazoAgrupado[t].map(c => (
-                                    <div key={c.slug} className="flex justify-between items-center py-2 border-b border-slate-800 last:border-0">
-                                        <div className="flex items-center gap-3">
-                                            <img src={getImg(c)} className="w-10 h-12 rounded shadow-md object-cover" alt={c.name} />
-                                            <span className="text-sm font-medium">{c.name}</span>
-                                        </div>
-                                        <div className="flex items-center gap-4 bg-slate-950 p-1.5 px-4 rounded-full border border-slate-800">
-                                            <button onClick={() => handleRemove(c.slug)} className="text-red-500 font-black active:scale-90 transition-transform"><Minus size={18} /></button>
-                                            <span className="font-black text-sm w-4 text-center">{c.cantidad}</span>
-                                            <button onClick={() => handleAdd(c)} disabled={c.cantidad >= 3} className="text-green-500 font-black active:scale-90 transition-transform disabled:opacity-30"><Plus size={18} /></button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ))}
                     </div>
                 </div>
             )}
