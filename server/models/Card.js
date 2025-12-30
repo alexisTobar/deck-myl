@@ -2,28 +2,37 @@ const mongoose = require('mongoose');
 
 const GlobalCardSchema = new mongoose.Schema({
     // --- CAMPOS COMUNES ---
-    slug: { type: String, unique: true }, // ID único (Ej: 'es559' o 'espada-sagrada-1')
+    slug: { type: String, unique: true }, 
     name: { type: String, required: true, index: true },
-    type: { type: String }, // Aliado, Talisman, etc.
-    imgUrl: { type: String }, // URL final de la imagen (Cloudinary o local)
-    edition: { type: String }, // Nombre humano de la edición (Ej: "Espada Sagrada")
+    type: { type: String }, 
+    imgUrl: { type: String }, 
+    edition: { type: String }, 
 
-    // --- CAMPO NUEVO PARA AGRUPACIÓN DE EDICIONES ---
-    main_edition: { type: String, default: "" }, // ✅ AGREGADO: Para Espada Sagrada, Helénica, etc.
+    // --- CAMPO DE RESTRICCIONES DAR ---
+    // ✅ AGREGADO: Esto permitirá que el Backend guarde el baneo o limitación
+    restriction: { 
+        type: String, 
+        enum: ['unrestricted', 'limited1', 'limited2', 'banned'], 
+        default: 'unrestricted',
+        index: true 
+    },
+
+    // --- CAMPO PARA AGRUPACIÓN DE EDICIONES ---
+    main_edition: { type: String, default: "" }, 
 
     // --- CAMPOS NUEVOS (PRIMER BLOQUE / GENERAL) ---
     format: { 
         type: String, 
         enum: ['imperio', 'primer_bloque'], 
         default: 'imperio',
-        index: true // Vital para filtrar rápido
+        index: true 
     },
-    race: { type: String },     // Raza (Ej: Caballero, Dragón)
-    cost: { type: Number },     // Coste
-    strength: { type: Number }, // Fuerza
-    ability: { type: String },  // Habilidad (Texto)
+    race: { type: String },     
+    cost: { type: Number },     
+    strength: { type: Number }, 
+    ability: { type: String },  
 
-    // --- CAMPOS ESPECÍFICOS DE IMPERIO (LEGACY) ---
+    // --- CAMPOS ESPECÍFICOS DE IMPERIO ---
     edition_slug: String, 
     ed_edid: String,      
     edid: String,       
@@ -34,7 +43,8 @@ const GlobalCardSchema = new mongoose.Schema({
 // Índices para búsqueda ultra rápida
 GlobalCardSchema.index({ name: 'text' });
 GlobalCardSchema.index({ format: 1 }); 
-// Indexar main_edition para que el constructor de PB cargue rápido
 GlobalCardSchema.index({ main_edition: 1 }); 
+// ✅ Nuevo índice para filtrar cartas baneadas o limitadas rápido
+GlobalCardSchema.index({ restriction: 1 }); 
 
 module.exports = mongoose.model('Card', GlobalCardSchema);
