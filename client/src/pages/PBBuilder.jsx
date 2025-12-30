@@ -2,9 +2,9 @@ import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { saveAs } from 'file-saver';
 import BACKEND_URL from "../config";
-import {
-    Plus, Minus, Eye, Save, Search, X, Camera, Globe, Layout,
-    ShieldCheck, Users, Star, Layers, Shield, ShieldAlert
+import { 
+  Plus, Minus, Eye, Save, Search, X, Camera, Globe, Layout, 
+  ShieldCheck, Users, Star, Layers, Shield, ShieldAlert 
 } from "lucide-react";
 
 const MAIN_EDITIONS = [
@@ -31,7 +31,7 @@ export default function PBBuilder() {
     const gridContainerRef = useRef(null);
 
     const formato = "primer_bloque";
-    const [mainEditionSelected, setMainEditionSelected] = useState(location.state?.initialEdition || "espada_sagrada");
+    const [mainEditionSelected, setMainEditionSelected] = useState(location.state?.initialEdition || "espada_sagrada"); 
     const [tipoSeleccionado, setTipoSeleccionado] = useState("");
     const [razaSeleccionada, setRazaSeleccionada] = useState("");
     const [busqueda, setBusqueda] = useState("");
@@ -124,113 +124,163 @@ export default function PBBuilder() {
         try {
             const url = editingDeckId ? `${BACKEND_URL}/api/decks/${editingDeckId}` : `${BACKEND_URL}/api/decks`;
             const method = editingDeckId ? "PUT" : "POST";
-            const res = await fetch(url, {
-                method, headers: { "Content-Type": "application/json", "auth-token": token },
-                body: JSON.stringify({ name: nombreMazo, cards: mazo.map(c => ({ ...c, quantity: c.cantidad })), format: formato, isPublic: isPublic })
+            const res = await fetch(url, { 
+                method, headers: { "Content-Type": "application/json", "auth-token": token }, 
+                body: JSON.stringify({ name: nombreMazo, cards: mazo.map(c => ({...c, quantity: c.cantidad})), format: formato, isPublic: isPublic }) 
             });
             if (res.ok) navigate("/my-decks");
         } catch (e) { alert("Error"); } finally { setGuardando(false); }
     };
 
     const handleTakeScreenshot = async () => {
-        setGuardando(true);
-        try {
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
+    setGuardando(true);
+    try {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
 
-            // --- AJUSTE 1: Cálculo de filas para 10 cartas ---
-            const cardsPerRow = 10;
-            const rows = Math.ceil(mazo.length / cardsPerRow);
+        const cardsPerRow = 10;
+        const rows = Math.ceil(mazo.length / cardsPerRow);
+        
+        canvas.width = 1200;
+        // Altura extendida para dar espacio a los gráficos y footer moderno
+        canvas.height = 300 + (rows * 160) + 180; 
 
-            canvas.width = 1200;
-            // Ajustamos la altura: 250 (header) + (filas * altura de celda) + 150 (footer stats)
-            canvas.height = 250 + (rows * 160) + 150;
+        // Fondo Principal
+        ctx.fillStyle = "#0c0e14";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.fillStyle = "#0c0e14";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const loadImg = (url) => new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => resolve(img);
+            img.onerror = () => resolve(null);
+            img.src = url;
+        });
 
-            const loadImg = (url) => new Promise((resolve) => {
-                const img = new Image();
-                img.crossOrigin = "anonymous";
-                img.onload = () => resolve(img);
-                img.onerror = () => resolve(null);
-                img.src = url;
-            });
+        const logoUrl = "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png";
+        const logo = await loadImg(logoUrl);
 
-            const logo = await loadImg("https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png");
-            if (logo) {
-                ctx.globalAlpha = 0.05;
-                ctx.drawImage(logo, canvas.width / 2 - 300, canvas.height / 2 - 300, 600, 600);
-                ctx.globalAlpha = 1.0;
-            }
-
-            ctx.fillStyle = "#eab308";
-            ctx.font = "bold 24px Arial";
-            ctx.fillText("WORKSHOP PRIMER BLOQUE", 50, 60);
-
-            ctx.fillStyle = "white";
-            ctx.font = "italic bold 60px Arial";
-            ctx.fillText(nombreMazo.toUpperCase() || "ESTRATEGIA", 50, 130);
-
-            ctx.fillStyle = "#eab308";
-            ctx.font = "bold 30px Arial";
-            ctx.textAlign = "right";
-            ctx.fillText(`${mazo.reduce((a, b) => a + b.cantidad, 0)} CARTAS`, 1150, 130);
-            ctx.textAlign = "left";
-
-            // --- AJUSTE 2: Dibujado de 10 cartas ---
-            let x = 50, y = 180;
-            const cardWidth = 105;  // Reducimos un poco el ancho para que quepan 10 con margen
-            const cardHeight = 147; // Mantenemos proporción
-            const spacingX = 110;   // Espacio horizontal entre inicios de carta
-            const spacingY = 160;   // Espacio vertical entre filas
-
-            for (const card of mazo) {
-                const img = await loadImg(card.imgUrl);
-                if (img) {
-                    ctx.drawImage(img, x, y, cardWidth, cardHeight);
-
-                    // Indicador de cantidad (el cuadrito x1, x2...)
-                    ctx.fillStyle = "#eab308";
-                    ctx.fillRect(x + 75, y + 122, 30, 25);
-                    ctx.fillStyle = "black";
-                    ctx.font = "bold 14px Arial";
-                    ctx.fillText(`x${card.cantidad}`, x + 79, y + 140);
-                }
-
-                // Lógica de salto de fila
-                x += spacingX;
-                // Si x supera el ancho disponible para 10 cartas (aprox 1100-1150)
-                if (x > 1100) {
-                    x = 50;
-                    y += spacingY;
-                }
-            }
-
-            // --- RECUADROS DE DISTRIBUCIÓN ---
-            const distY = canvas.height - 110;
-            let startX = 50;
-            ORDER_TYPES.forEach((type) => {
-                ctx.fillStyle = "#1e293b";
-                ctx.fillRect(startX, distY, 210, 80);
-                ctx.fillStyle = "#94a3b8";
-                ctx.font = "bold 14px Arial";
-                ctx.fillText(type.toUpperCase(), startX + 15, distY + 30);
-                ctx.fillStyle = "white";
-                ctx.font = "bold 35px Arial";
-                ctx.fillText(statsForExport.counts[type] || 0, startX + 15, distY + 68);
-                startX += 230;
-            });
-
-            canvas.toBlob((blob) => {
-                saveAs(blob, `WD_PB_${nombreMazo || "Deck"}.png`);
-                setGuardando(false);
-            });
-        } catch (err) {
-            alert('Error generando imagen');
-            setGuardando(false);
+        // 1. Sello de agua central
+        if (logo) {
+            ctx.save();
+            ctx.globalAlpha = 0.04;
+            ctx.drawImage(logo, canvas.width/2 - 350, canvas.height/2 - 350, 700, 700);
+            ctx.restore();
         }
-    };
+
+        // 2. Logo corporativo superior
+        if (logo) {
+            ctx.drawImage(logo, 50, 30, 80, 80);
+        }
+
+        // Títulos
+        ctx.fillStyle = "#eab308";
+        ctx.font = "bold 20px Orbitron, Arial"; // Asumiendo estética futurista
+        ctx.fillText("ESTRATEGIA OFICIAL", 150, 60);
+
+        ctx.fillStyle = "white";
+        ctx.font = "italic bold 55px Arial";
+        ctx.fillText(nombreMazo.toUpperCase() || "MAZO SIN NOMBRE", 150, 110);
+
+        // Badge total de cartas
+        const totalCards = mazo.reduce((a, b) => a + b.cantidad, 0);
+        ctx.fillStyle = "#1e293b";
+        ctx.roundRect ? ctx.roundRect(950, 50, 200, 60, 15) : ctx.fillRect(950, 50, 200, 60);
+        ctx.fill();
+        ctx.fillStyle = "#eab308";
+        ctx.font = "bold 28px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(`${totalCards} CARTAS`, 1050, 90);
+        ctx.textAlign = "left";
+
+        // Dibujado de Cartas
+        let x = 50, y = 180;
+        const cardWidth = 105;
+        const cardHeight = 147;
+        const spacingX = 112;
+        const spacingY = 165;
+
+        for (const card of mazo) {
+            const img = await loadImg(card.imgUrl);
+            if (img) {
+                // Sombra de carta
+                ctx.shadowColor = "rgba(0,0,0,0.5)";
+                ctx.shadowBlur = 10;
+                ctx.drawImage(img, x, y, cardWidth, cardHeight);
+                ctx.shadowBlur = 0;
+                
+                // Indicador de cantidad redondeado
+                ctx.fillStyle = "#eab308";
+                const badgeX = x + 75;
+                const badgeY = y + 120;
+                if(ctx.roundRect) {
+                    ctx.beginPath();
+                    ctx.roundRect(badgeX, badgeY, 32, 28, 8);
+                    ctx.fill();
+                } else {
+                    ctx.fillRect(badgeX, badgeY, 32, 28);
+                }
+                
+                ctx.fillStyle = "black";
+                ctx.font = "black 16px Arial";
+                ctx.fillText(`x${card.cantidad}`, badgeX + 4, badgeY + 20);
+            }
+            x += spacingX;
+            if (x > 1120) { x = 50; y += spacingY; }
+        }
+
+        // --- SECCIÓN FOOTER: ESTADÍSTICAS E ICONOS ---
+        const footerY = canvas.height - 150;
+        let startX = 50;
+        const boxWidth = 215;
+
+        ORDER_TYPES.forEach((type, index) => {
+            const count = statsForExport.counts[type] || 0;
+            const percentage = totalCards > 0 ? (count / totalCards) : 0;
+
+            // Caja con bordes redondeados
+            ctx.fillStyle = "#161b22";
+            if(ctx.roundRect) {
+                ctx.beginPath();
+                ctx.roundRect(startX, footerY, boxWidth, 100, 20);
+                ctx.fill();
+                ctx.strokeStyle = "#eab30833";
+                ctx.stroke();
+            }
+
+            // Dibujar Mini Iconos según tipo
+            ctx.fillStyle = "#eab308";
+            ctx.font = "bold 12px Arial";
+            ctx.fillText(type.toUpperCase(), startX + 15, footerY + 30);
+
+            // Cantidad Grande
+            ctx.fillStyle = "white";
+            ctx.font = "bold 40px Arial";
+            ctx.fillText(count, startX + 15, footerY + 75);
+
+            // Pequeño gráfico de barra debajo del número
+            ctx.fillStyle = "#334155";
+            ctx.fillRect(startX + 15, footerY + 85, boxWidth - 40, 6);
+            ctx.fillStyle = "#eab308";
+            ctx.fillRect(startX + 15, footerY + 85, (boxWidth - 40) * percentage, 6);
+
+            startX += boxWidth + 15;
+        });
+
+        // Marca de agua final de la App
+        ctx.fillStyle = "#475569";
+        ctx.font = "12px Arial";
+        ctx.fillText("GENERADO POR WARNING DECK BUILDER • 2025", 50, canvas.height - 20);
+
+        canvas.toBlob((blob) => {
+            saveAs(blob, `WD_PB_${nombreMazo || "Deck"}.png`);
+            setGuardando(false);
+        });
+    } catch (err) {
+        console.error(err);
+        setGuardando(false);
+    }
+};
 
     const mazoAgrupado = useMemo(() => {
         const g = {};
@@ -245,7 +295,7 @@ export default function PBBuilder() {
             <div className="flex-1 flex flex-col h-full relative overflow-hidden">
                 <div className="bg-slate-900/80 border-b border-yellow-500/20 p-3 flex justify-between items-center px-4 shadow-xl">
                     <button onClick={() => navigate("/primer-bloque")} className="p-1.5 rounded-lg border border-yellow-500/30 text-yellow-500 text-xs font-bold hover:bg-yellow-500/10 transition-all italic tracking-tighter">Volver</button>
-                    <h2 className="text-xs font-black uppercase text-yellow-500 tracking-widest leading-none italic flex items-center gap-2"><Star size={14} /> Forja Primer Bloque</h2>
+                    <h2 className="text-xs font-black uppercase text-yellow-500 tracking-widest leading-none italic flex items-center gap-2"><Star size={14}/> Forja Primer Bloque</h2>
                     <div className="w-10"></div>
                 </div>
 
@@ -278,13 +328,14 @@ export default function PBBuilder() {
                                 const cant = mazo.find(x => x.slug === c.slug)?.cantidad || 0;
                                 return (
                                     <div key={c.slug} className="relative cursor-pointer group" onClick={() => handleAdd(c)}>
-                                        <div className={`rounded-xl overflow-hidden border-2 transition-all duration-300 transform hover:scale-105 ${cant > 0 ? 'border-yellow-500 shadow-[0_0_15px_#eab308]' : 'border-slate-800'
-                                            } ${c.restriction === 'banned' ? 'opacity-40 grayscale' : ''}`}>
+                                        <div className={`rounded-xl overflow-hidden border-2 transition-all duration-300 transform hover:scale-105 ${
+                                            cant > 0 ? 'border-yellow-500 shadow-[0_0_15px_#eab308]' : 'border-slate-800'
+                                        } ${c.restriction === 'banned' ? 'opacity-40 grayscale' : ''}`}>
                                             <img src={getImg(c)} className="w-full h-auto transition-transform" alt={c.name} />
-
+                                            
                                             {c.restriction && c.restriction !== 'unrestricted' && (
                                                 <div className="absolute top-1 left-1 bg-red-600 p-1 rounded-md text-[8px] font-black uppercase text-white shadow-xl flex items-center gap-1">
-                                                    <ShieldAlert size={10} /> {c.restriction === 'banned' ? 'BAN' : c.restriction === 'limited1' ? '1' : '2'}
+                                                    <ShieldAlert size={10}/> {c.restriction === 'banned' ? 'BAN' : c.restriction === 'limited1' ? '1' : '2'}
                                                 </div>
                                             )}
 
@@ -301,7 +352,7 @@ export default function PBBuilder() {
 
             <div className="hidden md:flex w-85 border-l border-white/10 flex-col h-screen bg-gradient-to-b from-slate-900 via-[#0c0e14] to-black shadow-2xl">
                 <div className="p-5 border-b border-yellow-500/30 bg-slate-900/50 backdrop-blur-md font-black text-yellow-500 uppercase tracking-widest flex justify-between items-center shadow-lg">
-                    <div className="flex items-center gap-2"><Layout size={18} /><span className="italic">Grimorio PB</span></div>
+                    <div className="flex items-center gap-2"><Layout size={18}/><span className="italic">Grimorio PB</span></div>
                     <div className={`px-3 py-1 rounded-full text-xs transition-all duration-500 border ${totalCartas === 50 ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 shadow-[0_0_10px_rgba(234,179,8,0.3)]' : 'bg-slate-800 border-slate-700 text-slate-300'}`}>{totalCartas} / 50</div>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar bg-transparent">
