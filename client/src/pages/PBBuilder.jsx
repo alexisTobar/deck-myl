@@ -188,7 +188,7 @@ export default function PBBuilder() {
         ctx.roundRect ? ctx.roundRect(950, 50, 200, 60, 15) : ctx.fillRect(950, 50, 200, 60);
         ctx.fill();
         ctx.fillStyle = "#ffffffff";
-        ctx.font = "bold 30px Arial";
+        ctx.font = "bold 17px Arial";
         ctx.textAlign = "center";
         ctx.fillText(`${totalCards} CARTAS`, 1050, 90);
         ctx.textAlign = "left";
