@@ -85,6 +85,7 @@ export default function ImperioBuilder() {
         return { counts };
     }, [mazo]);
 
+    // ✅ REPARADO: Se agregó el mapeo de TYPE para que aparezcan en el listado al EDITAR
     useEffect(() => {
         if (location.state?.deckToEdit) {
             const d = location.state.deckToEdit;
@@ -92,7 +93,12 @@ export default function ImperioBuilder() {
                 setNombreMazo(d.name || "");
                 setEditingDeckId(d._id);
                 setIsPublic(d.isPublic || false);
-                setMazo(d.cards.map(c => ({ ...c, cantidad: c.quantity || 1, imgUrl: getImg(c) })));
+                setMazo(d.cards.map(c => ({ 
+                    ...c, 
+                    cantidad: c.quantity || 1, 
+                    imgUrl: getImg(c),
+                    type: String(c.type) // Aseguramos que el tipo sea string para que mazoAgrupado lo reconozca
+                })));
             }
         }
     }, [location.state]);
@@ -127,7 +133,7 @@ export default function ImperioBuilder() {
                 }
                 return prevMazo;
             }
-            return [...prevMazo, { ...c, cantidad: 1, imgUrl: getImg(c) }];
+            return [...prevMazo, { ...c, cantidad: 1, imgUrl: getImg(c), type: String(c.type) }];
         });
     };
 
@@ -230,7 +236,6 @@ export default function ImperioBuilder() {
 
                 <div className="p-4 bg-slate-900/40 border-b border-slate-800 space-y-4">
                     <div className="flex flex-col md:flex-row gap-3">
-                        {/* ✅ SELECTOR DE EDICIONES REINTREGRADO */}
                         <div className="relative flex-1">
                             <select 
                                 value={edicionSeleccionada} 
@@ -321,7 +326,7 @@ export default function ImperioBuilder() {
                 <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4 transition-all duration-300" onClick={() => setCardToZoom(null)}>
                     <button onClick={() => setCardToZoom(null)} className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-2xl z-[210] transition-all"><X size={24} strokeWidth={3} /></button>
                     <div className="relative max-w-sm w-full flex flex-col items-center animate-scale-up" onClick={(e) => e.stopPropagation()}>
-                        <img src={getImg(cardToZoom)} className="w-full h-auto rounded-2xl shadow-[0_0_50px_rgba(234,179,8,0.3)] border-4 border-yellow-500/20" alt="zoom" />
+                        <img src={getImg(cardToZoom)} className="w-full h-auto rounded-2xl shadow-[0_0_50px_rgba(249,115,22,0.3)] border-4 border-yellow-500/20" alt="zoom" />
                         <div className="mt-8 flex items-center justify-center gap-10 bg-slate-900/90 p-4 px-10 rounded-full border border-slate-700 shadow-2xl backdrop-blur-lg">
                             <button onClick={() => handleRemove(cardToZoom.slug)} className="w-14 h-14 rounded-full bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white flex items-center justify-center transition-all active:scale-90"><Minus size={24} strokeWidth={3} /></button>
                             <span className="text-4xl font-black text-white leading-none">{mazo.find(x => x.slug === cardToZoom.slug)?.cantidad || 0}</span>
@@ -336,14 +341,14 @@ export default function ImperioBuilder() {
                 <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setModalGuardarOpen(false)}>
                     <div className="bg-slate-800 p-6 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl text-white" onClick={e => e.stopPropagation()}>
                         <h3 className="text-xl font-black mb-6 uppercase text-orange-500 tracking-tighter italic text-center">Guardar Estrategia Imperio</h3>
-                        <input value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 outline-none focus:border-yellow-500 mb-4 transition-all text-white font-bold" placeholder="Nombre del mazo..." />
+                        <input value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 outline-none focus:border-orange-500 mb-4 transition-all text-white font-bold" placeholder="Nombre del mazo..." />
                         <label className="flex items-center gap-3 bg-slate-900 p-3 rounded-xl cursor-pointer hover:bg-slate-950 transition-colors">
                             <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-5 h-5 accent-yellow-600" />
                             <span className="text-sm font-bold text-slate-300 italic uppercase tracking-tighter">Arena Global <Globe size={14} className="inline ml-1 text-orange-500" /></span>
                         </label>
                         <div className="flex justify-end gap-3 mt-8">
                             <button onClick={() => setModalGuardarOpen(false)} className="text-slate-400 font-black px-4 hover:text-white transition-colors uppercase italic text-xs tracking-widest">Cancelar</button>
-                            <button onClick={handleSaveDeck} disabled={guardando || !nombreMazo.trim()} className="bg-orange-600 text-white px-8 py-2 rounded-xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-transform flex items-center gap-2 italic"><Save size={16} /> Confirmar</button>
+                            <button onClick={handleSaveDeck} disabled={guardando || !nombreMazo.trim()} className="bg-yellow-600 text-white px-8 py-2 rounded-xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-transform flex items-center gap-2 italic"><Save size={16} /> Confirmar</button>
                         </div>
                     </div>
                 </div>
