@@ -5,7 +5,7 @@ import BACKEND_URL from "../config";
 // ✅ Iconos Lucide
 import { 
   Plus, Minus, Eye, Save, Search, X, Camera, Globe, Layout, 
-  ShieldCheck, Users, Star, Layers, Shield, Sword, ChevronDown
+  ShieldCheck, Users, Star, Layers, Shield, Sword, ChevronDown, ShieldAlert
 } from "lucide-react";
 
 // ✅ MAPEO NUMÉRICO CRÍTICO (Traducción de BD a Categorías)
@@ -65,7 +65,6 @@ export default function ImperioBuilder() {
     const [cardToZoom, setCardToZoom] = useState(null);
     const [guardando, setGuardando] = useState(false);
 
-    // ✅ Listado lateral con traducción de TYPE_MAP
     const mazoAgrupado = useMemo(() => {
         const g = {};
         mazo.forEach(c => { 
@@ -85,7 +84,6 @@ export default function ImperioBuilder() {
         return { counts };
     }, [mazo]);
 
-    // ✅ REPARADO: Se agregó el mapeo de TYPE para que aparezcan en el listado al EDITAR
     useEffect(() => {
         if (location.state?.deckToEdit) {
             const d = location.state.deckToEdit;
@@ -97,7 +95,7 @@ export default function ImperioBuilder() {
                     ...c, 
                     cantidad: c.quantity || 1, 
                     imgUrl: getImg(c),
-                    type: String(c.type) // Aseguramos que el tipo sea string para que mazoAgrupado lo reconozca
+                    type: String(c.type)
                 })));
             }
         }
@@ -120,18 +118,36 @@ export default function ImperioBuilder() {
         return () => clearTimeout(timer);
     }, [busqueda, edicionSeleccionada, tipoSeleccionado, formato]);
 
+    // ✅ LÓGICA DE AGREGADO CON RESTRICCIONES DAR PARA IMPERIO (POR NOMBRE)
     const handleAdd = (c) => {
+        // 1. Bloqueo si está prohibida
+        if (c.restriction === "banned") return alert(`🚫 ${c.name} está PROHIBIDA en Imperio.`);
+
+        // 2. Buscar copias por NOMBRE (Independiente de la edición/slug)
+        const copiasMismoNombre = mazo
+            .filter(x => x.name.toLowerCase().trim() === c.name.toLowerCase().trim())
+            .reduce((acc, curr) => acc + curr.cantidad, 0);
+
+        const totalActual = mazo.reduce((a, b) => a + b.cantidad, 0);
+        if (totalActual >= 50 && !mazo.find(x => x.slug === c.slug)) {
+            alert("Mazo lleno (Máximo 50 cartas)");
+            return;
+        }
+
+        // 3. Definir límite según campo de la base de datos
+        let limit = 3;
+        if (c.restriction === "limited1") limit = 1;
+        if (c.restriction === "limited2") limit = 2;
+
+        if (copiasMismoNombre >= limit) {
+            return alert(`⚠️ Restricción DAR Imperio: Sólo puedes tener ${limit} copia(s) de "${c.name}" en total.`);
+        }
+
+        // 4. Proceder con el agregado normal por Slug
         setMazo(prevMazo => {
             const ex = prevMazo.find(x => x.slug === c.slug);
-            if (prevMazo.reduce((a, b) => a + b.cantidad, 0) >= 50 && !ex) {
-                alert("Mazo lleno");
-                return prevMazo;
-            }
             if (ex) {
-                if (ex.cantidad < 3) {
-                    return prevMazo.map(x => x.slug === c.slug ? { ...x, cantidad: x.cantidad + 1 } : x);
-                }
-                return prevMazo;
+                return prevMazo.map(x => x.slug === c.slug ? { ...x, cantidad: x.cantidad + 1 } : x);
             }
             return [...prevMazo, { ...c, cantidad: 1, imgUrl: getImg(c), type: String(c.type) }];
         });
@@ -160,67 +176,63 @@ export default function ImperioBuilder() {
         try {
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
-            const rows = Math.ceil(mazo.length / 8);
+            const cardsPerRow = 10;
+            const rows = Math.ceil(mazo.length / cardsPerRow);
             canvas.width = 1200;
-            canvas.height = 250 + (rows * 200) + 150; 
+            canvas.height = 300 + (rows * 160) + 180; 
             ctx.fillStyle = "#0f0a07"; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             const loadImg = (url) => new Promise((resolve) => {
-                const img = new Image();
-                img.crossOrigin = "anonymous";
-                img.onload = () => resolve(img);
-                img.onerror = () => resolve(null);
+                const img = new Image(); img.crossOrigin = "anonymous";
+                img.onload = () => resolve(img); img.onerror = () => resolve(null);
                 img.src = url;
             });
             const logo = await loadImg("https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png");
             if (logo) {
-                ctx.globalAlpha = 0.05;
-                ctx.drawImage(logo, canvas.width/2 - 300, canvas.height/2 - 300, 600, 600);
-                ctx.globalAlpha = 1.0;
+                ctx.save(); ctx.globalAlpha = 0.04;
+                ctx.drawImage(logo, canvas.width/2 - 350, canvas.height/2 - 350, 700, 700);
+                ctx.restore(); ctx.drawImage(logo, 50, 30, 80, 80);
             }
-            ctx.fillStyle = "#f97316"; 
-            ctx.font = "bold 24px Arial";
-            ctx.fillText("WORKSHOP IMPERIO", 50, 60);
-            ctx.fillStyle = "white";
-            ctx.font = "italic bold 60px Arial";
-            ctx.fillText(nombreMazo.toUpperCase() || "ESTRATEGIA", 50, 130);
-            ctx.fillStyle = "#f97316";
-            ctx.font = "bold 30px Arial";
-            ctx.textAlign = "right";
-            ctx.fillText(`${mazo.reduce((a, b) => a + b.cantidad, 0)} CARTAS`, 1150, 130);
-            ctx.textAlign = "left";
+            ctx.fillStyle = "#f97316"; ctx.font = "bold 24px Arial";
+            ctx.fillText("WORKSHOP IMPERIO", 150, 60);
+            ctx.fillStyle = "white"; ctx.font = "italic bold 55px Arial";
+            ctx.fillText(nombreMazo.toUpperCase() || "ESTRATEGIA", 150, 110);
+            const totalC = mazo.reduce((a, b) => a + b.cantidad, 0);
+            ctx.fillStyle = "#1e1b18";
+            if(ctx.roundRect) ctx.roundRect(950, 50, 200, 60, 15); else ctx.fillRect(950, 50, 200, 60);
+            ctx.fill(); ctx.fillStyle = "#f97316"; ctx.font = "bold 28px Arial"; ctx.textAlign = "center";
+            ctx.fillText(`${totalC} CARTAS`, 1050, 90); ctx.textAlign = "left";
+
             let x = 50, y = 180;
             for (const card of mazo) {
                 const img = await loadImg(card.imgUrl);
                 if (img) {
-                    ctx.drawImage(img, x, y, 125, 175);
+                    ctx.shadowColor = "rgba(0,0,0,0.5)"; ctx.shadowBlur = 10;
+                    ctx.drawImage(img, x, y, 105, 147); ctx.shadowBlur = 0;
                     ctx.fillStyle = "#f97316";
-                    ctx.fillRect(x + 95, y + 150, 30, 25);
-                    ctx.fillStyle = "white";
-                    ctx.font = "bold 16px Arial";
-                    ctx.fillText(`x${card.cantidad}`, x + 100, y + 170);
+                    if(ctx.roundRect) { ctx.beginPath(); ctx.roundRect(x+75, y+120, 32, 28, 8); ctx.fill(); }
+                    else ctx.fillRect(x+75, y+120, 32, 28);
+                    ctx.fillStyle = "white"; ctx.font = "bold 16px Arial";
+                    ctx.fillText(`x${card.cantidad}`, x+79, y+140);
                 }
-                x += 140;
-                if (x > 1100) { x = 50; y += 200; }
+                x += 112; if (x > 1120) { x = 50; y += 165; }
             }
-            const distY = canvas.height - 110;
-            let startX = 50;
+            const footerY = canvas.height - 150; let startX = 50;
             ORDER_TYPES.forEach((type) => {
-                ctx.fillStyle = "#1e1b18"; 
-                ctx.fillRect(startX, distY, 210, 80);
-                ctx.fillStyle = "#f97316";
-                ctx.font = "bold 14px Arial";
-                ctx.fillText(type.toUpperCase(), startX + 15, distY + 30);
-                ctx.fillStyle = "white";
-                ctx.font = "bold 35px Arial";
-                ctx.fillText(statsForExport.counts[type] || 0, startX + 15, distY + 68);
+                const count = statsForExport.counts[type] || 0;
+                const perc = totalC > 0 ? (count / totalC) : 0;
+                ctx.fillStyle = "#1e1b18";
+                if(ctx.roundRect) { ctx.beginPath(); ctx.roundRect(startX, footerY, 215, 100, 20); ctx.fill(); ctx.strokeStyle = "#f9731633"; ctx.stroke(); }
+                ctx.fillStyle = "#f97316"; ctx.font = "bold 12px Arial"; ctx.fillText(type.toUpperCase(), startX + 15, footerY + 30);
+                ctx.fillStyle = "white"; ctx.font = "bold 40px Arial"; ctx.fillText(count, startX + 15, footerY + 75);
+                ctx.fillStyle = "#332211"; ctx.fillRect(startX + 15, footerY + 85, 175, 6);
+                ctx.fillStyle = "#f97316"; ctx.fillRect(startX + 15, footerY + 85, 175 * perc, 6);
                 startX += 230;
             });
-            canvas.toBlob((blob) => {
-                saveAs(blob, `WD_Imp_${nombreMazo || "Deck"}.png`);
-                setGuardando(false);
-            });
-        } catch (err) { alert('Error generando imagen'); setGuardando(false); }
+            ctx.fillStyle = "#475569"; ctx.font = "12px Arial";
+            ctx.fillText("GENERADO POR WARNING DECK BUILDER • 2025", 50, canvas.height - 20);
+            canvas.toBlob((blob) => { saveAs(blob, `WD_Imp_${nombreMazo || "Deck"}.png`); setGuardando(false); });
+        } catch (err) { alert('Error imagen'); setGuardando(false); }
     };
 
     const totalCartas = mazo.reduce((acc, c) => acc + c.cantidad, 0);
@@ -237,9 +249,7 @@ export default function ImperioBuilder() {
                 <div className="p-4 bg-slate-900/40 border-b border-slate-800 space-y-4">
                     <div className="flex flex-col md:flex-row gap-3">
                         <div className="relative flex-1">
-                            <select 
-                                value={edicionSeleccionada} 
-                                onChange={(e) => { setEdicionSeleccionada(e.target.value); setBusqueda(""); }}
+                            <select value={edicionSeleccionada} onChange={(e) => { setEdicionSeleccionada(e.target.value); setBusqueda(""); }}
                                 className="w-full bg-slate-950 border border-slate-700 text-orange-400 p-2.5 rounded-xl appearance-none font-bold outline-none focus:border-orange-500 cursor-pointer text-sm"
                             >
                                 {Object.entries(EDICIONES_IMPERIO).map(([id, label]) => (
@@ -263,11 +273,22 @@ export default function ImperioBuilder() {
                     {loading ? <div className="text-center mt-20 animate-pulse text-orange-500 font-bold uppercase tracking-tighter">Invocando...</div> : (
                         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                             {cartas.map(c => {
-                                const cant = mazo.find(x => x.slug === c.slug)?.cantidad || 0;
+                                // Cálculo de copias por nombre para visualización
+                                const mazoItem = mazo.find(x => x.slug === c.slug);
+                                const cant = mazoItem ? mazoItem.cantidad : 0;
+                                
                                 return (
                                     <div key={c.slug} className="relative cursor-pointer group" onClick={() => handleAdd(c)}>
-                                        <div className={`rounded-xl overflow-hidden border-2 transition-all duration-300 transform hover:scale-105 ${cant > 0 ? 'border-orange-500 shadow-[0_0_15px_#f97316]' : 'border-slate-800'}`}>
+                                        <div className={`rounded-xl overflow-hidden border-2 transition-all duration-300 transform hover:scale-105 ${cant > 0 ? 'border-orange-500 shadow-[0_0_15px_#f97316]' : 'border-slate-800'} ${c.restriction === 'banned' ? 'opacity-40 grayscale' : ''}`}>
                                             <img src={getImg(c)} className="w-full h-auto transition-transform" alt={c.name} />
+                                            
+                                            {/* ✅ Badge visual DAR Imperio */}
+                                            {c.restriction && c.restriction !== 'unrestricted' && (
+                                                <div className="absolute top-1 left-1 bg-red-600 p-1 rounded-md text-[8px] font-black uppercase text-white shadow-xl flex items-center gap-1">
+                                                    <ShieldAlert size={10}/> {c.restriction === 'banned' ? 'BAN' : c.restriction === 'limited1' ? '1' : '2'}
+                                                </div>
+                                            )}
+
                                             {cant > 0 && <div className="absolute inset-0 bg-black/40 flex items-center justify-center animate-pulse"><div className="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center font-black text-xl border-2 border-white shadow-xl">{cant}</div></div>}
                                         </div>
                                         <button onClick={(e) => { e.stopPropagation(); setCardToZoom(c); }} className="absolute top-1.5 right-1.5 bg-black/60 backdrop-blur-md text-white w-7 h-7 rounded-lg flex items-center justify-center border border-white/20 hover:bg-orange-600 transition-colors"><Search size={14} strokeWidth={3} /></button>
@@ -326,10 +347,12 @@ export default function ImperioBuilder() {
                 <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4 transition-all duration-300" onClick={() => setCardToZoom(null)}>
                     <button onClick={() => setCardToZoom(null)} className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-2xl z-[210] transition-all"><X size={24} strokeWidth={3} /></button>
                     <div className="relative max-w-sm w-full flex flex-col items-center animate-scale-up" onClick={(e) => e.stopPropagation()}>
-                        <img src={getImg(cardToZoom)} className="w-full h-auto rounded-2xl shadow-[0_0_50px_rgba(249,115,22,0.3)] border-4 border-yellow-500/20" alt="zoom" />
+                        <img src={getImg(cardToZoom)} className="w-full h-auto rounded-2xl shadow-[0_0_50px_rgba(234,179,8,0.3)] border-4 border-yellow-500/20" alt="zoom" />
                         <div className="mt-8 flex items-center justify-center gap-10 bg-slate-900/90 p-4 px-10 rounded-full border border-slate-700 shadow-2xl backdrop-blur-lg">
                             <button onClick={() => handleRemove(cardToZoom.slug)} className="w-14 h-14 rounded-full bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white flex items-center justify-center transition-all active:scale-90"><Minus size={24} strokeWidth={3} /></button>
-                            <span className="text-4xl font-black text-white leading-none">{mazo.find(x => x.slug === cardToZoom.slug)?.cantidad || 0}</span>
+                            <span className="text-4xl font-black text-white leading-none">
+                                {mazo.filter(x => x.name.toLowerCase().trim() === cardToZoom.name.toLowerCase().trim()).reduce((acc, curr) => acc + curr.cantidad, 0)}
+                            </span>
                             <button onClick={() => handleAdd(cardToZoom)} className="w-14 h-14 rounded-full bg-green-600/20 hover:bg-green-600 text-green-500 hover:text-white flex items-center justify-center transition-all active:scale-90"><Plus size={24} strokeWidth={3} /></button>
                         </div>
                     </div>
@@ -343,12 +366,12 @@ export default function ImperioBuilder() {
                         <h3 className="text-xl font-black mb-6 uppercase text-orange-500 tracking-tighter italic text-center">Guardar Estrategia Imperio</h3>
                         <input value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 outline-none focus:border-orange-500 mb-4 transition-all text-white font-bold" placeholder="Nombre del mazo..." />
                         <label className="flex items-center gap-3 bg-slate-900 p-3 rounded-xl cursor-pointer hover:bg-slate-950 transition-colors">
-                            <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-5 h-5 accent-yellow-600" />
+                            <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-5 h-5 accent-orange-600" />
                             <span className="text-sm font-bold text-slate-300 italic uppercase tracking-tighter">Arena Global <Globe size={14} className="inline ml-1 text-orange-500" /></span>
                         </label>
                         <div className="flex justify-end gap-3 mt-8">
                             <button onClick={() => setModalGuardarOpen(false)} className="text-slate-400 font-black px-4 hover:text-white transition-colors uppercase italic text-xs tracking-widest">Cancelar</button>
-                            <button onClick={handleSaveDeck} disabled={guardando || !nombreMazo.trim()} className="bg-yellow-600 text-white px-8 py-2 rounded-xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-transform flex items-center gap-2 italic"><Save size={16} /> Confirmar</button>
+                            <button onClick={handleSaveDeck} disabled={guardando || !nombreMazo.trim()} className="bg-orange-600 text-white px-8 py-2 rounded-xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-transform flex items-center gap-2 italic"><Save size={16} /> Confirmar</button>
                         </div>
                     </div>
                 </div>
@@ -374,7 +397,7 @@ export default function ImperioBuilder() {
                                         <div className="flex items-center gap-4 bg-slate-950 p-1.5 px-4 rounded-full border border-slate-800">
                                             <button onClick={() => handleRemove(c.slug)} className="text-red-500 font-black active:scale-90 transition-transform"><Minus size={18} /></button>
                                             <span className="font-black text-sm w-4 text-center">{c.cantidad}</span>
-                                            <button onClick={() => handleAdd(c)} disabled={c.cantidad >= 3} className="text-green-500 font-black active:scale-90 transition-transform disabled:opacity-30"><Plus size={18} /></button>
+                                            <button onClick={() => handleAdd(c)} className="text-green-500 font-black active:scale-90 transition-transform"><Plus size={18} /></button>
                                         </div>
                                     </div>
                                 ))}
