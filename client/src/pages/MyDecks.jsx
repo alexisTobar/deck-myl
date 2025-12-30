@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { saveAs } from 'file-saver';
 import BACKEND_URL from "../config";
 // ✅ Iconos Lucide
-import { Search, Trash2, Edit3, Download, Globe, Lock, X, Camera, FileText, LayoutGrid } from "lucide-react";
+import { Search, Trash2, Edit3, Globe, Lock, X, Camera, FileText, LayoutGrid, ChevronDown } from "lucide-react";
+
+const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 
 const getFormatStyles = (format) => {
     if (format === 'primer_bloque') {
@@ -79,175 +81,154 @@ export default function MyDecks() {
         finally { setDeckToDelete(null); }
     };
 
-    // ✅ FUNCIÓN DE DESCARGA DE TEXTO (RESTAURADA)
     const handleDownloadTextList = (deck) => {
         let textContent = `MAZO: ${deck.name.toUpperCase()}\n`;
         textContent += `FORMATO: ${getFormatStyles(deck.format).label}\n`;
         textContent += `TOTAL CARTAS: ${getDeckTotal(deck.cards)}\n`;
         textContent += `-------------------------------\n\n`;
-        
-        // Agrupar por tipo si es posible o simplemente listar
         deck.cards.forEach(c => {
             textContent += `${c.quantity || 1}x ${c.name}\n`;
         });
-
         textContent += `\n-------------------------------\n Generado por WarningDeck.cl`;
-
         const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
         saveAs(blob, `Lista_${deck.name.replace(/\s+/g, '_')}.txt`);
         showToast("Lista descargada");
     };
 
-    // ✅ EXPORTACIÓN NATIVA IMAGEN (INTACTA)
+    // ✅ EXPORTACIÓN IMAGEN REPARADA PARA LA VISTA DE MIS MAZOS
     const handleDownloadInfographic = async (deck) => {
         setIsDownloading(true);
         try {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const cards = deck.cards;
+            const cardsPerRow = 10;
+            const rows = Math.ceil(cards.length / cardsPerRow);
+            
+            canvas.width = 1200;
+            canvas.height = 300 + (rows * 160) + 180; 
 
-        const cardsPerRow = 10;
-        const rows = Math.ceil(mazo.length / cardsPerRow);
-        
-        canvas.width = 1200;
-        // Altura extendida para dar espacio a los gráficos y footer moderno
-        canvas.height = 300 + (rows * 160) + 180; 
+            ctx.fillStyle = "#0c0e14";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Fondo Principal
-        ctx.fillStyle = "#0c0e14";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const loadImg = (url) => new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.onload = () => resolve(img);
+                img.onerror = () => resolve(null);
+                img.src = url;
+            });
 
-        const loadImg = (url) => new Promise((resolve) => {
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.onload = () => resolve(img);
-            img.onerror = () => resolve(null);
-            img.src = url;
-        });
+            const logoUrl = "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png";
+            const logo = await loadImg(logoUrl);
 
-        const logoUrl = "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png";
-        const logo = await loadImg(logoUrl);
+            if (logo) {
+                ctx.save();
+                ctx.globalAlpha = 0.04;
+                ctx.drawImage(logo, canvas.width/2 - 350, canvas.height/2 - 350, 700, 700);
+                ctx.restore();
+                ctx.drawImage(logo, 50, 30, 80, 80);
+            }
 
-        // 1. Sello de agua central
-        if (logo) {
-            ctx.save();
-            ctx.globalAlpha = 0.04;
-            ctx.drawImage(logo, canvas.width/2 - 350, canvas.height/2 - 350, 700, 700);
-            ctx.restore();
-        }
+            const accentColor = getFormatStyles(deck.format).accentColor;
+            ctx.fillStyle = accentColor;
+            ctx.font = "bold 20px Arial";
+            ctx.fillText("ESTRATEGIA GUARDADA", 150, 60);
 
-        // 2. Logo corporativo superior
-        if (logo) {
-            ctx.drawImage(logo, 50, 30, 80, 80);
-        }
+            ctx.fillStyle = "white";
+            ctx.font = "italic bold 55px Arial";
+            ctx.fillText(deck.name.toUpperCase(), 150, 110);
 
-        // Títulos
-        ctx.fillStyle = "#eab308";
-        ctx.font = "bold 20px Orbitron, Arial"; // Asumiendo estética futurista
-        ctx.fillText("ESTRATEGIA OFICIAL", 150, 60);
+            const totalCards = getDeckTotal(cards);
+            ctx.fillStyle = "#1e293b";
+            if(ctx.roundRect) ctx.roundRect(950, 50, 200, 60, 15); else ctx.fillRect(950, 50, 200, 60);
+            ctx.fill();
+            ctx.fillStyle = accentColor;
+            ctx.font = "bold 28px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(`${totalCards} CARTAS`, 1050, 90);
+            ctx.textAlign = "left";
 
-        ctx.fillStyle = "white";
-        ctx.font = "italic bold 55px Arial";
-        ctx.fillText(nombreMazo.toUpperCase() || "MAZO SIN NOMBRE", 150, 110);
+            // Estadísticas locales para el deck seleccionado
+            const counts = { Aliado: 0, Talismán: 0, Arma: 0, Tótem: 0, Oro: 0 };
+            cards.forEach(c => { if (counts[c.type] !== undefined) counts[c.type] += (c.quantity || 1); });
 
-        // Badge total de cartas
-        const totalCards = mazo.reduce((a, b) => a + b.cantidad, 0);
-        ctx.fillStyle = "#1e293b";
-        ctx.roundRect ? ctx.roundRect(950, 50, 200, 60, 15) : ctx.fillRect(950, 50, 200, 60);
-        ctx.fill();
-        ctx.fillStyle = "#eab308";
-        ctx.font = "bold 28px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText(`${totalCards} CARTAS`, 1050, 90);
-        ctx.textAlign = "left";
+            let x = 50, y = 180;
+            const cardWidth = 105;
+            const cardHeight = 147;
+            const spacingX = 112;
+            const spacingY = 165;
 
-        // Dibujado de Cartas
-        let x = 50, y = 180;
-        const cardWidth = 105;
-        const cardHeight = 147;
-        const spacingX = 112;
-        const spacingY = 165;
+            for (const card of cards) {
+                const img = await loadImg(card.imgUrl || card.imageUrl || card.img);
+                if (img) {
+                    ctx.shadowColor = "rgba(0,0,0,0.5)";
+                    ctx.shadowBlur = 10;
+                    ctx.drawImage(img, x, y, cardWidth, cardHeight);
+                    ctx.shadowBlur = 0;
+                    
+                    ctx.fillStyle = accentColor;
+                    const badgeX = x + 75;
+                    const badgeY = y + 120;
+                    if(ctx.roundRect) {
+                        ctx.beginPath();
+                        ctx.roundRect(badgeX, badgeY, 32, 28, 8);
+                        ctx.fill();
+                    } else {
+                        ctx.fillRect(badgeX, badgeY, 32, 28);
+                    }
+                    ctx.fillStyle = "black";
+                    ctx.font = "bold 16px Arial";
+                    ctx.fillText(`x${card.quantity || 1}`, badgeX + 4, badgeY + 20);
+                }
+                x += spacingX;
+                if (x > 1120) { x = 50; y += spacingY; }
+            }
 
-        for (const card of mazo) {
-            const img = await loadImg(card.imgUrl);
-            if (img) {
-                // Sombra de carta
-                ctx.shadowColor = "rgba(0,0,0,0.5)";
-                ctx.shadowBlur = 10;
-                ctx.drawImage(img, x, y, cardWidth, cardHeight);
-                ctx.shadowBlur = 0;
-                
-                // Indicador de cantidad redondeado
-                ctx.fillStyle = "#eab308";
-                const badgeX = x + 75;
-                const badgeY = y + 120;
+            const footerY = canvas.height - 150;
+            let startX = 50;
+            const boxWidth = 215;
+
+            ORDER_TYPES.forEach((type) => {
+                const count = counts[type] || 0;
+                const percentage = totalCards > 0 ? (count / totalCards) : 0;
+
+                ctx.fillStyle = "#161b22";
                 if(ctx.roundRect) {
                     ctx.beginPath();
-                    ctx.roundRect(badgeX, badgeY, 32, 28, 8);
+                    ctx.roundRect(startX, footerY, boxWidth, 100, 20);
                     ctx.fill();
-                } else {
-                    ctx.fillRect(badgeX, badgeY, 32, 28);
+                    ctx.strokeStyle = accentColor + "33";
+                    ctx.stroke();
                 }
-                
-                ctx.fillStyle = "black";
-                ctx.font = "black 16px Arial";
-                ctx.fillText(`x${card.cantidad}`, badgeX + 4, badgeY + 20);
-            }
-            x += spacingX;
-            if (x > 1120) { x = 50; y += spacingY; }
+                ctx.fillStyle = accentColor;
+                ctx.font = "bold 12px Arial";
+                ctx.fillText(type.toUpperCase(), startX + 15, footerY + 30);
+                ctx.fillStyle = "white";
+                ctx.font = "bold 40px Arial";
+                ctx.fillText(count, startX + 15, footerY + 75);
+                ctx.fillStyle = "#334155";
+                ctx.fillRect(startX + 15, footerY + 85, boxWidth - 40, 6);
+                ctx.fillStyle = accentColor;
+                ctx.fillRect(startX + 15, footerY + 85, (boxWidth - 40) * percentage, 6);
+                startX += boxWidth + 15;
+            });
+
+            ctx.fillStyle = "#475569";
+            ctx.font = "12px Arial";
+            ctx.fillText("GENERADO POR WARNING DECK BUILDER • 2025", 50, canvas.height - 20);
+
+            canvas.toBlob((blob) => {
+                saveAs(blob, `WD_${deck.format}_${deck.name}.png`);
+                setIsDownloading(false);
+                showToast("Imagen exportada");
+            });
+        } catch (err) {
+            console.error(err);
+            setIsDownloading(false);
+            showToast("Error al generar imagen", "error");
         }
-
-        // --- SECCIÓN FOOTER: ESTADÍSTICAS E ICONOS ---
-        const footerY = canvas.height - 150;
-        let startX = 50;
-        const boxWidth = 215;
-
-        ORDER_TYPES.forEach((type, index) => {
-            const count = statsForExport.counts[type] || 0;
-            const percentage = totalCards > 0 ? (count / totalCards) : 0;
-
-            // Caja con bordes redondeados
-            ctx.fillStyle = "#161b22";
-            if(ctx.roundRect) {
-                ctx.beginPath();
-                ctx.roundRect(startX, footerY, boxWidth, 100, 20);
-                ctx.fill();
-                ctx.strokeStyle = "#eab30833";
-                ctx.stroke();
-            }
-
-            // Dibujar Mini Iconos según tipo
-            ctx.fillStyle = "#eab308";
-            ctx.font = "bold 12px Arial";
-            ctx.fillText(type.toUpperCase(), startX + 15, footerY + 30);
-
-            // Cantidad Grande
-            ctx.fillStyle = "white";
-            ctx.font = "bold 40px Arial";
-            ctx.fillText(count, startX + 15, footerY + 75);
-
-            // Pequeño gráfico de barra debajo del número
-            ctx.fillStyle = "#334155";
-            ctx.fillRect(startX + 15, footerY + 85, boxWidth - 40, 6);
-            ctx.fillStyle = "#eab308";
-            ctx.fillRect(startX + 15, footerY + 85, (boxWidth - 40) * percentage, 6);
-
-            startX += boxWidth + 15;
-        });
-
-        // Marca de agua final de la App
-        ctx.fillStyle = "#475569";
-        ctx.font = "12px Arial";
-        ctx.fillText("GENERADO POR WARNING DECK BUILDER • 2025", 50, canvas.height - 20);
-
-        canvas.toBlob((blob) => {
-            saveAs(blob, `WD_PB_${nombreMazo || "Deck"}.png`);
-            setGuardando(false);
-        });
-    } catch (err) {
-        console.error(err);
-        setGuardando(false);
-    }
-};
+    };
 
     const showToast = (msg, type = "success") => {
         setToast({ show: true, msg, type });
@@ -289,23 +270,30 @@ export default function MyDecks() {
             </div>
 
             <div className="max-w-7xl mx-auto p-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {processedDecks.map((deck) => (
-                        <div key={deck._id} onClick={() => setSelectedDeck(deck)} className="group relative bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 hover:border-orange-500 transition-all cursor-pointer h-72 flex flex-col">
-                            <div className="absolute inset-0 bg-slate-900">
-                                <div className="w-full h-full bg-cover bg-center opacity-40 group-hover:scale-110 transition-transform duration-700" style={{ backgroundImage: `url(${getCardImage(deck.cards[0])})` }}></div>
-                                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent"></div>
+                {processedDecks.length === 0 ? (
+                    <div className="text-center py-20 bg-slate-800/50 rounded-3xl border border-dashed border-slate-700">
+                        <LayoutGrid size={48} className="mx-auto text-slate-600 mb-4" />
+                        <p className="text-slate-400 font-bold uppercase">No se encontraron mazos</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {processedDecks.map((deck) => (
+                            <div key={deck._id} onClick={() => setSelectedDeck(deck)} className="group relative bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 hover:border-orange-500 transition-all cursor-pointer h-72 flex flex-col">
+                                <div className="absolute inset-0 bg-slate-900">
+                                    <div className="w-full h-full bg-cover bg-center opacity-40 group-hover:scale-110 transition-transform duration-700" style={{ backgroundImage: `url(${getCardImage(deck.cards[0])})` }}></div>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent"></div>
+                                </div>
+                                <div className="absolute top-3 left-3 z-20">
+                                    <span className={`text-[10px] font-black px-3 py-1 rounded-full border shadow-xl ${getFormatStyles(deck.format).badgeClass}`}>{getFormatStyles(deck.format).label}</span>
+                                </div>
+                                <div className="relative z-10 mt-auto p-5">
+                                    <h2 className="text-xl font-black text-white uppercase truncate tracking-tighter">{deck.name}</h2>
+                                    <p className="text-[10px] text-orange-400 font-bold mt-1 tracking-widest">{getDeckTotal(deck.cards)} CARTAS</p>
+                                </div>
                             </div>
-                            <div className="absolute top-3 left-3 z-20">
-                                <span className={`text-[10px] font-black px-3 py-1 rounded-full border shadow-xl ${getFormatStyles(deck.format).badgeClass}`}>{getFormatStyles(deck.format).label}</span>
-                            </div>
-                            <div className="relative z-10 mt-auto p-5">
-                                <h2 className="text-xl font-black text-white uppercase truncate tracking-tighter">{deck.name}</h2>
-                                <p className="text-[10px] text-orange-400 font-bold mt-1 tracking-widest">{getDeckTotal(deck.cards)} CARTAS</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {selectedDeck && (
@@ -327,7 +315,6 @@ export default function MyDecks() {
                             <button onClick={() => setSelectedDeck(null)} className="bg-slate-700 p-2 rounded-full text-slate-400 hover:text-white transition-colors"><X size={24} /></button>
                         </div>
                         
-                        {/* GALERÍA VISUAL */}
                         <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-[#0c0e14]">
                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 md:gap-5">
                                 {selectedDeck.cards.map((c, i) => (
@@ -346,26 +333,21 @@ export default function MyDecks() {
                             </div>
                         </div>
 
-                        {/* PANEL DE ACCIONES */}
                         <div className="p-4 border-t border-slate-700 bg-slate-900 grid grid-cols-2 md:grid-cols-5 gap-3">
                             <button onClick={() => togglePrivacy(selectedDeck)} className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-black text-[10px] uppercase border border-white/5">
                                 {selectedDeck.isPublic ? <><Lock size={16} className="text-red-500" /> Privado</> : <><Globe size={16} className="text-green-500" /> Público</>}
                             </button>
                             
                             <button onClick={() => handleDownloadInfographic(selectedDeck)} disabled={isDownloading} className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black text-[10px] uppercase shadow-lg transition-all">
-                                <Camera size={16} /> {isDownloading ? '...' : 'Infografía'}
+                                <Camera size={16} /> {isDownloading ? 'Generando...' : 'Exportar Imagen'}
                             </button>
 
                             <button onClick={() => handleEdit(selectedDeck)} className="flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-500 text-white py-3 rounded-xl font-black text-[10px] uppercase shadow-lg">
                                 <Edit3 size={16} /> Editar
                             </button>
 
-                            {/* ✅ BOTÓN DE TEXTO REPARADO */}
-                            <button 
-                                onClick={() => handleDownloadTextList(selectedDeck)}
-                                className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-black text-[10px] uppercase border border-white/5 transition-all"
-                            >
-                                <FileText size={16} /> Lista
+                            <button onClick={() => handleDownloadTextList(selectedDeck)} className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-black text-[10px] uppercase border border-white/5 transition-all">
+                                <FileText size={16} /> Lista Texto
                             </button>
                             
                             <button onClick={() => setDeckToDelete(selectedDeck)} className="flex items-center justify-center gap-2 bg-red-600/10 hover:bg-red-600 text-red-500 border border-red-600/30 py-3 rounded-xl font-black text-[10px] uppercase">
@@ -376,21 +358,20 @@ export default function MyDecks() {
                 </div>
             )}
 
-            {/* Modal de Borrado Confirm... */}
             {deckToDelete && (
                 <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/95 p-4 backdrop-blur-sm">
                     <div className="bg-slate-800 p-8 rounded-3xl max-w-sm w-full text-center border border-slate-700 shadow-2xl">
                         <div className="w-16 h-16 bg-red-600/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4"><Trash2 size={32} /></div>
-                        <h3 className="text-white text-xl font-black mb-2 uppercase italic">¿Eliminar?</h3>
+                        <h3 className="text-white text-xl font-black mb-2 uppercase italic">¿Eliminar Mazo?</h3>
+                        <p className="text-slate-400 text-sm mb-6 uppercase font-bold">Esta acción no se puede deshacer.</p>
                         <div className="flex gap-4">
-                            <button onClick={() => setDeckToDelete(null)} className="flex-1 bg-slate-700 py-3 rounded-xl text-white font-black text-xs uppercase">No</button>
+                            <button onClick={() => setDeckToDelete(null)} className="flex-1 bg-slate-700 py-3 rounded-xl text-white font-black text-xs uppercase">Cancelar</button>
                             <button onClick={confirmDelete} className="flex-1 bg-red-600 py-3 rounded-xl text-white font-black text-xs uppercase transition-all">Sí, Borrar</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* TOAST NOTIFICACIÓN */}
             {toast.show && (
                 <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl animate-fade-in-up flex items-center gap-3 ${toast.type === 'error' ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}`}>
                     {toast.msg}
