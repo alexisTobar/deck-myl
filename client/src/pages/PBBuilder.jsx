@@ -137,7 +137,7 @@ export default function PBBuilder() {
         try {
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
-            const rows = Math.ceil(mazo.length / 8);
+            const rows = Math.ceil(mazo.length / 10);
             canvas.width = 1200;
             canvas.height = 250 + (rows * 200) + 150; 
             ctx.fillStyle = "#0c0e14";
