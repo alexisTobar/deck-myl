@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import BACKEND_URL from "../config";
-import { Plus, Layout, Save, X, ChevronLeft, Star } from "lucide-react";
+import { Plus, Layout, Save, X, ChevronLeft, Star, ShieldAlert } from "lucide-react";
 
 // ✅ IMPERIO: Se mantiene intacto
 const EDICIONES_IMPERIO = { 
@@ -42,13 +42,13 @@ export default function AdminCards() {
     const initialFormState = {
         name: "", slug: "", edition: "", edition_slug: "",
         type: "Aliado", race: "", imgUrl: "", format: "", 
-        cost: 0, strength: 0, ability: "", rarity: "1"
+        cost: 0, strength: 0, ability: "", rarity: "1",
+        restriction: "unrestricted" // ✅ Nuevo campo: unrestricted, banned, limited1, limited2
     };
 
     const [formData, setFormData] = useState(initialFormState);
     const token = localStorage.getItem("token");
 
-    // ✅ Definición de la función resetForm para evitar el ReferenceError
     const resetForm = () => {
         setEditingCard(null);
         setFormData({ 
@@ -106,7 +106,7 @@ export default function AdminCards() {
             if (res.ok) {
                 alert("Operación exitosa en la base de datos ✅");
                 fetchCartas();
-                resetForm(); // ✅ Usamos la función definida arriba
+                resetForm();
             } else {
                 alert("Error en el servidor al guardar.");
             }
@@ -143,7 +143,6 @@ export default function AdminCards() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                    {/* FORMULARIO DE EDICIÓN / CREACIÓN */}
                     <div className="lg:col-span-1 bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 shadow-2xl h-fit sticky top-24">
                         <h2 className="text-xl font-black mb-8 uppercase text-yellow-500 italic flex items-center gap-2">
                             {editingCard ? <Layout size={20}/> : <Plus size={20}/>} 
@@ -154,10 +153,21 @@ export default function AdminCards() {
                                 <label className="text-[10px] font-black text-slate-500 uppercase ml-2">Nombre</label>
                                 <input type="text" placeholder="Ej: Rey Arturo" className="w-full p-3 bg-slate-800 rounded-xl outline-none border border-white/5 font-bold focus:border-orange-500 transition-colors" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
                             </div>
+
+                            {/* ✅ NUEVO CAMPO: RESTRICCIÓN DAR */}
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black text-red-500 uppercase ml-2 flex items-center gap-1"><ShieldAlert size={12}/> Restricción DAR</label>
+                                <select className="w-full p-3 bg-slate-950 rounded-xl border border-red-500/30 outline-none text-xs font-black text-white cursor-pointer" value={formData.restriction} onChange={e => setFormData({...formData, restriction: e.target.value})}>
+                                    <option value="unrestricted">Sin Restricción (3 copias)</option>
+                                    <option value="limited2">Limitada (2 copias)</option>
+                                    <option value="limited1">Única (1 copia)</option>
+                                    <option value="banned">Prohibida (Baneada)</option>
+                                </select>
+                            </div>
                             
                             <div className="space-y-1">
-                                <label className="text-[10px] font-black text-slate-500 uppercase ml-2">Edición de la Carta</label>
-                                <select className="w-full p-3 bg-slate-800 rounded-xl border border-white/5 outline-none text-xs font-black cursor-pointer" value={formData.edition} onChange={e => setFormData({...formData, edition: e.target.value, edition_slug: e.target.value})} required>
+                                <label className="text-[10px] font-black text-slate-500 uppercase ml-2">Edición</label>
+                                <select className="w-full p-3 bg-slate-800 rounded-xl border border-white/5 outline-none text-xs font-black" value={formData.edition} onChange={e => setFormData({...formData, edition: e.target.value, edition_slug: e.target.value})} required>
                                     {Object.entries(formato === "imperio" ? EDICIONES_IMPERIO : EDICIONES_PB).map(([slug, label]) => (<option key={slug} value={slug}>{label}</option>))}
                                 </select>
                             </div>
@@ -190,7 +200,7 @@ export default function AdminCards() {
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-black text-slate-500 uppercase ml-2">Raza</label>
                                         <select className="w-full p-3 bg-slate-800 rounded-xl border border-white/5 outline-none text-xs font-black" value={formData.race} onChange={e => setFormData({...formData, race: e.target.value})}>
-                                            <option value="">Seleccionar Raza...</option>
+                                            <option value="">Raza...</option>
                                             {RAZAS_PB.map(r => <option key={r} value={r}>{r}</option>)}
                                         </select>
                                     </div>
@@ -203,56 +213,52 @@ export default function AdminCards() {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-black text-slate-500 uppercase ml-2">URL Imagen (WebP)</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase ml-2">URL Imagen</label>
                                 <input type="text" placeholder="https://..." className="w-full p-3 bg-slate-800 rounded-xl border border-white/5 outline-none text-xs font-bold" value={formData.imgUrl} onChange={e => setFormData({...formData, imgUrl: e.target.value})} required />
                             </div>
                             
                             <div className="pt-4 space-y-2">
                                 <button type="submit" className={`w-full py-4 rounded-2xl font-black uppercase shadow-lg active:scale-95 flex items-center justify-center gap-2 transition-all ${formato === 'imperio' ? 'bg-orange-600 text-white hover:bg-orange-500' : 'bg-yellow-600 text-black hover:bg-yellow-500'}`}>
-                                    <Save size={18}/> {editingCard ? "Actualizar Registro" : "Invocación de Carta"}
+                                    <Save size={18}/> {editingCard ? "Actualizar" : "Guardar"}
                                 </button>
                                 {editingCard && (
-                                    <button type="button" onClick={resetForm} className="w-full py-2 text-[10px] font-black text-slate-500 hover:text-white uppercase tracking-widest transition-colors flex items-center justify-center gap-1">
-                                        <X size={14}/> Cancelar Edición
+                                    <button type="button" onClick={resetForm} className="w-full py-2 text-[10px] font-black text-slate-500 hover:text-white uppercase transition-colors flex items-center justify-center gap-1">
+                                        <X size={14}/> Cancelar
                                     </button>
                                 )}
                             </div>
                         </form>
                     </div>
 
-                    {/* LISTADO DE CARTAS */}
                     <div className="lg:col-span-3">
                         {loading ? (
-                            <div className="flex flex-col items-center justify-center py-40 gap-4">
+                            <div className="flex flex-col items-center py-40 gap-4">
                                 <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
-                                <span className="font-black text-slate-500 tracking-[0.3em] uppercase italic">Sincronizando...</span>
+                                <span className="font-black text-slate-500 uppercase italic">Cargando...</span>
                             </div>
                         ) : (
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-6 overflow-y-auto max-h-[85vh] p-2 custom-scrollbar">
-                                {cartas.length === 0 ? (
-                                    <div className="col-span-full text-center py-20 text-slate-600 font-black uppercase tracking-widest">No hay cartas en esta edición</div>
-                                ) : cartas.map(c => (
+                                {cartas.map(c => (
                                     <div key={c._id} className="bg-slate-900 p-2 rounded-2xl border border-white/5 group relative overflow-hidden shadow-2xl hover:border-yellow-500/50 transition-all">
-                                        <img src={getImg(c)} className="w-full h-auto rounded-xl transition-transform group-hover:scale-105 duration-700 ease-out" alt={c.name} />
-                                        <div className="mt-2 text-center pb-2 px-1">
-                                            <p className="text-[11px] font-black truncate uppercase text-white tracking-tighter">{c.name}</p>
-                                            <p className="text-[8px] text-slate-500 font-bold uppercase">{c.slug}</p>
+                                        <img src={getImg(c)} className="w-full h-auto rounded-xl transition-transform group-hover:scale-105" alt={c.name} />
+                                        <div className="mt-2 text-center pb-2">
+                                            <p className="text-[11px] font-black truncate uppercase text-white">{c.name}</p>
+                                            {/* ✅ Badge visual de restricción */}
+                                            {c.restriction && c.restriction !== "unrestricted" && (
+                                                <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase ${
+                                                    c.restriction === 'banned' ? 'bg-red-600 text-white' : 
+                                                    c.restriction === 'limited1' ? 'bg-orange-600 text-white' : 'bg-blue-600 text-white'
+                                                }`}>
+                                                    {c.restriction === 'banned' ? 'Baneada' : c.restriction === 'limited1' ? 'Unica' : 'Limitada'}
+                                                </span>
+                                            )}
                                         </div>
-                                        <div className="absolute inset-0 bg-slate-950/90 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-all duration-300 backdrop-blur-sm">
+                                        <div className="absolute inset-0 bg-slate-950/90 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-all duration-300">
                                             <button onClick={() => {
                                                 setEditingCard(c);
-                                                setFormData({ 
-                                                    ...c, 
-                                                    edition: c.edition || c.edition_slug, 
-                                                    imgUrl: getImg(c),
-                                                    cost: c.cost || 0,
-                                                    strength: c.strength || 0,
-                                                    ability: c.ability || ""
-                                                });
+                                                setFormData({ ...c, imgUrl: getImg(c), restriction: c.restriction || "unrestricted" });
                                                 window.scrollTo({top: 0, behavior: 'smooth'});
-                                            }} className="w-28 bg-blue-600 hover:bg-blue-500 py-3 rounded-full text-[10px] font-black uppercase shadow-xl flex items-center justify-center gap-2">
-                                                <Layout size={14}/> Editar
-                                            </button>
+                                            }} className="bg-blue-600 p-3 rounded-full"><Layout size={16}/></button>
                                         </div>
                                     </div>
                                 ))}

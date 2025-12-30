@@ -4,7 +4,7 @@ import { saveAs } from 'file-saver';
 import BACKEND_URL from "../config";
 import { 
   Plus, Minus, Eye, Save, Search, X, Camera, Globe, Layout, 
-  ShieldCheck, Users, Star, Layers, Shield 
+  ShieldCheck, Users, Star, Layers, Shield, ShieldAlert 
 } from "lucide-react";
 
 const MAIN_EDITIONS = [
@@ -87,11 +87,31 @@ export default function PBBuilder() {
         return () => clearTimeout(timer);
     }, [busqueda, mainEditionSelected, tipoSeleccionado, razaSeleccionada]);
 
+    // ✅ LÓGICA DE AGREGADO CON RESTRICCIONES DAR
     const handleAdd = (c) => {
+        // 1. Bloqueo si está prohibida
+        if (c.restriction === "banned") return alert(`🚫 ${c.name} está PROHIBIDA en este formato.`);
+
         const ex = mazo.find(x => x.slug === c.slug);
-        if (mazo.reduce((a, b) => a + b.cantidad, 0) >= 50 && !ex) return alert("Mazo lleno");
-        if (ex) { if (ex.cantidad < 3) setMazo(mazo.map(x => x.slug === c.slug ? { ...x, cantidad: x.cantidad + 1 } : x)); }
-        else { setMazo([...mazo, { ...c, cantidad: 1, imgUrl: getImg(c) }]); }
+        const totalCartas = mazo.reduce((a, b) => a + b.cantidad, 0);
+        
+        if (totalCartas >= 50 && !ex) return alert("Mazo lleno");
+
+        // 2. Definir límite según restricción
+        let limit = 3;
+        if (c.restriction === "limited1") limit = 1;
+        if (c.restriction === "limited2") limit = 2;
+
+        if (ex) { 
+            if (ex.cantidad < limit) {
+                setMazo(mazo.map(x => x.slug === c.slug ? { ...x, cantidad: x.cantidad + 1 } : x)); 
+            } else {
+                alert(`⚠️ Límite alcanzado: Sólo puedes tener ${limit} copia(s) de ${c.name}.`);
+            }
+        }
+        else { 
+            setMazo([...mazo, { ...c, cantidad: 1, imgUrl: getImg(c) }]); 
+        }
     };
 
     const handleRemove = (slug) => setMazo(mazo.map(c => c.slug === slug ? { ...c, cantidad: c.cantidad - 1 } : c).filter(c => c.cantidad > 0));
@@ -112,21 +132,16 @@ export default function PBBuilder() {
         } catch (e) { alert("Error"); } finally { setGuardando(false); }
     };
 
-    // ✅ REDISEÑO DE IMAGEN: Estadísticas por tipo integradas
     const handleTakeScreenshot = async () => {
         setGuardando(true);
         try {
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
-            
-            // Calculamos altura dinámica (Añadimos espacio para los recuadros de abajo)
             const rows = Math.ceil(mazo.length / 8);
             canvas.width = 1200;
             canvas.height = 250 + (rows * 200) + 150; 
-            
             ctx.fillStyle = "#0c0e14";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
             const loadImg = (url) => new Promise((resolve) => {
                 const img = new Image();
                 img.crossOrigin = "anonymous";
@@ -134,32 +149,23 @@ export default function PBBuilder() {
                 img.onerror = () => resolve(null);
                 img.src = url;
             });
-
-            // Sello de agua
             const logo = await loadImg("https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png");
             if (logo) {
                 ctx.globalAlpha = 0.05;
                 ctx.drawImage(logo, canvas.width/2 - 300, canvas.height/2 - 300, 600, 600);
                 ctx.globalAlpha = 1.0;
             }
-
-            // Cabecera
             ctx.fillStyle = "#eab308";
             ctx.font = "bold 24px Arial";
             ctx.fillText("WORKSHOP PRIMER BLOQUE", 50, 60);
-            
             ctx.fillStyle = "white";
             ctx.font = "italic bold 60px Arial";
             ctx.fillText(nombreMazo.toUpperCase() || "ESTRATEGIA", 50, 130);
-
-            // Total cartas a la derecha
             ctx.fillStyle = "#eab308";
             ctx.font = "bold 30px Arial";
             ctx.textAlign = "right";
             ctx.fillText(`${mazo.reduce((a, b) => a + b.cantidad, 0)} CARTAS`, 1150, 130);
             ctx.textAlign = "left";
-
-            // Dibujar Cartas
             let x = 50, y = 180;
             for (const card of mazo) {
                 const img = await loadImg(card.imgUrl);
@@ -174,30 +180,19 @@ export default function PBBuilder() {
                 x += 140;
                 if (x > 1100) { x = 50; y += 200; }
             }
-
-            // --- RECUADROS DE DISTRIBUCIÓN (ABAJO) ---
             const distY = canvas.height - 110;
             let startX = 50;
-            const boxWidth = 210;
-
             ORDER_TYPES.forEach((type) => {
-                // Fondo del recuadro
                 ctx.fillStyle = "#1e293b";
-                ctx.fillRect(startX, distY, boxWidth, 80);
-                
-                // Texto Tipo
+                ctx.fillRect(startX, distY, 210, 80);
                 ctx.fillStyle = "#94a3b8";
                 ctx.font = "bold 14px Arial";
                 ctx.fillText(type.toUpperCase(), startX + 15, distY + 30);
-                
-                // Cantidad
                 ctx.fillStyle = "white";
                 ctx.font = "bold 35px Arial";
                 ctx.fillText(statsForExport.counts[type] || 0, startX + 15, distY + 68);
-                
-                startX += boxWidth + 20;
+                startX += 230;
             });
-
             canvas.toBlob((blob) => {
                 saveAs(blob, `WD_PB_${nombreMazo || "Deck"}.png`);
                 setGuardando(false);
@@ -251,8 +246,18 @@ export default function PBBuilder() {
                                 const cant = mazo.find(x => x.slug === c.slug)?.cantidad || 0;
                                 return (
                                     <div key={c.slug} className="relative cursor-pointer group" onClick={() => handleAdd(c)}>
-                                        <div className={`rounded-xl overflow-hidden border-2 transition-all duration-300 transform hover:scale-105 ${cant > 0 ? 'border-yellow-500 shadow-[0_0_15px_#eab308]' : 'border-slate-800'}`}>
+                                        <div className={`rounded-xl overflow-hidden border-2 transition-all duration-300 transform hover:scale-105 ${
+                                            cant > 0 ? 'border-yellow-500 shadow-[0_0_15px_#eab308]' : 'border-slate-800'
+                                        } ${c.restriction === 'banned' ? 'opacity-40 grayscale' : ''}`}>
                                             <img src={getImg(c)} className="w-full h-auto transition-transform" alt={c.name} />
+                                            
+                                            {/* ✅ Badge visual DAR en el buscador */}
+                                            {c.restriction && c.restriction !== 'unrestricted' && (
+                                                <div className="absolute top-1 left-1 bg-red-600 p-1 rounded-md text-[8px] font-black uppercase text-white shadow-xl flex items-center gap-1">
+                                                    <ShieldAlert size={10}/> {c.restriction === 'banned' ? 'BAN' : c.restriction === 'limited1' ? '1' : '2'}
+                                                </div>
+                                            )}
+
                                             {cant > 0 && <div className="absolute inset-0 bg-black/40 flex items-center justify-center animate-pulse"><div className="w-10 h-10 rounded-full bg-yellow-500 text-black flex items-center justify-center font-black text-xl border-2 border-white shadow-xl">{cant}</div></div>}
                                         </div>
                                         <button onClick={(e) => { e.stopPropagation(); setCardToZoom(c); }} className="absolute top-1.5 right-1.5 bg-black/60 backdrop-blur-md text-white w-7 h-7 rounded-lg flex items-center justify-center border border-white/20 hover:bg-yellow-600 transition-colors"><Search size={14} strokeWidth={3} /></button>
@@ -349,7 +354,7 @@ export default function PBBuilder() {
                         </div>
                         {ORDER_TYPES.map(t => mazoAgrupado[t] && (
                             <div key={t} className="mb-4">
-                                <h4 className="text-yellow-600 text-[10px] font-black uppercase mb-2 border-b border-orange-800 pb-1">{t}</h4>
+                                <h4 className="text-orange-600 text-[10px] font-black uppercase mb-2 border-b border-orange-800 pb-1">{t}</h4>
                                 {mazoAgrupado[t].map(c => (
                                     <div key={c.slug} className="flex justify-between items-center py-2 border-b border-slate-800 last:border-0">
                                         <div className="flex items-center gap-3">
