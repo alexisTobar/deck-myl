@@ -102,56 +102,152 @@ export default function MyDecks() {
     const handleDownloadInfographic = async (deck) => {
         setIsDownloading(true);
         try {
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
-            const styles = getFormatStyles(deck.format);
-            canvas.width = 1200;
-            canvas.height = 1000;
-            ctx.fillStyle = deck.format === 'primer_bloque' ? "#0c0e14" : "#0f0a07";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            const loadImg = (url) => new Promise((resolve) => {
-                const img = new Image();
-                img.crossOrigin = "anonymous";
-                img.onload = () => resolve(img);
-                img.onerror = () => resolve(null);
-                img.src = url;
-            });
-            const logo = await loadImg("https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png");
-            if (logo) {
-                ctx.globalAlpha = 0.05;
-                ctx.drawImage(logo, 300, 250, 600, 600);
-                ctx.globalAlpha = 1.0;
-            }
-            ctx.fillStyle = styles.accentColor;
-            ctx.font = "bold 24px Arial";
-            ctx.fillText(styles.label.toUpperCase(), 50, 70);
-            ctx.fillStyle = "white";
-            ctx.font = "italic bold 50px Arial";
-            ctx.fillText(deck.name.toUpperCase(), 50, 130);
-            let x = 50, y = 200;
-            for (const card of deck.cards) {
-                const imgUrl = card.imgUrl || card.imageUrl || card.img;
-                const img = await loadImg(imgUrl);
-                if (img) {
-                    ctx.drawImage(img, x, y, 120, 170);
-                    ctx.fillStyle = styles.accentColor;
-                    ctx.fillRect(x + 85, y + 140, 35, 30);
-                    ctx.fillStyle = deck.format === 'primer_bloque' ? "black" : "white";
-                    ctx.font = "bold 18px Arial";
-                    ctx.fillText(`x${card.quantity || 1}`, x + 90, y + 162);
-                }
-                x += 140;
-                if (x > 1100) { x = 50; y += 200; }
-            }
-            canvas.toBlob((blob) => {
-                saveAs(blob, `WarningDeck_${deck.name}.png`);
-            });
-        } catch (err) {
-            showToast("Error al generar imagen", "error");
-        } finally {
-            setIsDownloading(false);
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        const cardsPerRow = 10;
+        const rows = Math.ceil(mazo.length / cardsPerRow);
+        
+        canvas.width = 1200;
+        // Altura extendida para dar espacio a los gráficos y footer moderno
+        canvas.height = 300 + (rows * 160) + 180; 
+
+        // Fondo Principal
+        ctx.fillStyle = "#0c0e14";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const loadImg = (url) => new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => resolve(img);
+            img.onerror = () => resolve(null);
+            img.src = url;
+        });
+
+        const logoUrl = "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png";
+        const logo = await loadImg(logoUrl);
+
+        // 1. Sello de agua central
+        if (logo) {
+            ctx.save();
+            ctx.globalAlpha = 0.04;
+            ctx.drawImage(logo, canvas.width/2 - 350, canvas.height/2 - 350, 700, 700);
+            ctx.restore();
         }
-    };
+
+        // 2. Logo corporativo superior
+        if (logo) {
+            ctx.drawImage(logo, 50, 30, 80, 80);
+        }
+
+        // Títulos
+        ctx.fillStyle = "#eab308";
+        ctx.font = "bold 20px Orbitron, Arial"; // Asumiendo estética futurista
+        ctx.fillText("ESTRATEGIA OFICIAL", 150, 60);
+
+        ctx.fillStyle = "white";
+        ctx.font = "italic bold 55px Arial";
+        ctx.fillText(nombreMazo.toUpperCase() || "MAZO SIN NOMBRE", 150, 110);
+
+        // Badge total de cartas
+        const totalCards = mazo.reduce((a, b) => a + b.cantidad, 0);
+        ctx.fillStyle = "#1e293b";
+        ctx.roundRect ? ctx.roundRect(950, 50, 200, 60, 15) : ctx.fillRect(950, 50, 200, 60);
+        ctx.fill();
+        ctx.fillStyle = "#eab308";
+        ctx.font = "bold 28px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(`${totalCards} CARTAS`, 1050, 90);
+        ctx.textAlign = "left";
+
+        // Dibujado de Cartas
+        let x = 50, y = 180;
+        const cardWidth = 105;
+        const cardHeight = 147;
+        const spacingX = 112;
+        const spacingY = 165;
+
+        for (const card of mazo) {
+            const img = await loadImg(card.imgUrl);
+            if (img) {
+                // Sombra de carta
+                ctx.shadowColor = "rgba(0,0,0,0.5)";
+                ctx.shadowBlur = 10;
+                ctx.drawImage(img, x, y, cardWidth, cardHeight);
+                ctx.shadowBlur = 0;
+                
+                // Indicador de cantidad redondeado
+                ctx.fillStyle = "#eab308";
+                const badgeX = x + 75;
+                const badgeY = y + 120;
+                if(ctx.roundRect) {
+                    ctx.beginPath();
+                    ctx.roundRect(badgeX, badgeY, 32, 28, 8);
+                    ctx.fill();
+                } else {
+                    ctx.fillRect(badgeX, badgeY, 32, 28);
+                }
+                
+                ctx.fillStyle = "black";
+                ctx.font = "black 16px Arial";
+                ctx.fillText(`x${card.cantidad}`, badgeX + 4, badgeY + 20);
+            }
+            x += spacingX;
+            if (x > 1120) { x = 50; y += spacingY; }
+        }
+
+        // --- SECCIÓN FOOTER: ESTADÍSTICAS E ICONOS ---
+        const footerY = canvas.height - 150;
+        let startX = 50;
+        const boxWidth = 215;
+
+        ORDER_TYPES.forEach((type, index) => {
+            const count = statsForExport.counts[type] || 0;
+            const percentage = totalCards > 0 ? (count / totalCards) : 0;
+
+            // Caja con bordes redondeados
+            ctx.fillStyle = "#161b22";
+            if(ctx.roundRect) {
+                ctx.beginPath();
+                ctx.roundRect(startX, footerY, boxWidth, 100, 20);
+                ctx.fill();
+                ctx.strokeStyle = "#eab30833";
+                ctx.stroke();
+            }
+
+            // Dibujar Mini Iconos según tipo
+            ctx.fillStyle = "#eab308";
+            ctx.font = "bold 12px Arial";
+            ctx.fillText(type.toUpperCase(), startX + 15, footerY + 30);
+
+            // Cantidad Grande
+            ctx.fillStyle = "white";
+            ctx.font = "bold 40px Arial";
+            ctx.fillText(count, startX + 15, footerY + 75);
+
+            // Pequeño gráfico de barra debajo del número
+            ctx.fillStyle = "#334155";
+            ctx.fillRect(startX + 15, footerY + 85, boxWidth - 40, 6);
+            ctx.fillStyle = "#eab308";
+            ctx.fillRect(startX + 15, footerY + 85, (boxWidth - 40) * percentage, 6);
+
+            startX += boxWidth + 15;
+        });
+
+        // Marca de agua final de la App
+        ctx.fillStyle = "#475569";
+        ctx.font = "12px Arial";
+        ctx.fillText("GENERADO POR WARNING DECK BUILDER • 2025", 50, canvas.height - 20);
+
+        canvas.toBlob((blob) => {
+            saveAs(blob, `WD_PB_${nombreMazo || "Deck"}.png`);
+            setGuardando(false);
+        });
+    } catch (err) {
+        console.error(err);
+        setGuardando(false);
+    }
+};
 
     const showToast = (msg, type = "success") => {
         setToast({ show: true, msg, type });
