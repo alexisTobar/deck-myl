@@ -1,5 +1,6 @@
 const router = require('express').Router();
-const Deck = require('../models/Deck'); 
+const Deck = require('../models/Deck');
+const User = require('../models/User'); // Importante para obtener el nick del autor del comentario
 const verifyToken = require('../middleware/verifyToken');
 
 // ==========================================
@@ -11,7 +12,7 @@ router.get('/community/all', async (req, res) => {
     try {
         const isTop = req.query.top === 'true';
 
-        // ✅ MEJORA: .populate('user', 'username') para traer el nick "Juegos Vikingos"
+        // ✅ MEJORA: .populate('user', 'username') para traer el nick
         let query = Deck.find({ isPublic: true }).populate('user', 'username');
 
         if (isTop) {
@@ -19,7 +20,7 @@ router.get('/community/all', async (req, res) => {
             const top3 = allPublic
                 .sort((a, b) => (b.likes ? b.likes.length : 0) - (a.likes ? a.likes.length : 0))
                 .slice(0, 3);
-            
+
             return res.json(top3);
         } else {
             query = query.sort({ createdAt: -1 });
@@ -50,7 +51,6 @@ router.get('/my-decks', verifyToken, async (req, res) => {
 // 3. GUARDAR UN MAZO NUEVO (POST)
 router.post('/', verifyToken, async (req, res) => {
     try {
-        // ✅ MEJORA: Ahora recibimos 'format' e 'isPublic' del frontend
         const { name, cards, format, isPublic } = req.body;
 
         if (!name || !cards || cards.length === 0) {
@@ -70,8 +70,8 @@ router.post('/', verifyToken, async (req, res) => {
             user: req.user.id,
             name: name,
             cards: formattedCards,
-            format: format || 'imperio', // ✅ Guardamos el formato (imperio o primer_bloque)
-            isPublic: isPublic || false, // ✅ Guardamos si el usuario lo quiso hacer público de entrada
+            format: format || 'imperio',
+            isPublic: isPublic || false,
             likes: []
         });
 
@@ -124,7 +124,6 @@ router.put('/like/:id', verifyToken, async (req, res) => {
 // 6. ACTUALIZAR CONTENIDO DEL MAZO (PUT)
 router.put('/:id', verifyToken, async (req, res) => {
     try {
-        // ✅ MEJORA: También permitimos actualizar el formato y la privacidad al editar
         const { name, cards, format, isPublic } = req.body;
 
         const deck = await Deck.findOne({ _id: req.params.id, user: req.user.id });
@@ -141,8 +140,8 @@ router.put('/:id', verifyToken, async (req, res) => {
 
         deck.name = name;
         deck.cards = formattedCards;
-        if (format) deck.format = format; // ✅ Actualizamos formato si viene
-        if (isPublic !== undefined) deck.isPublic = isPublic; // ✅ Actualizamos privacidad si viene
+        if (format) deck.format = format;
+        if (isPublic !== undefined) deck.isPublic = isPublic;
 
         await deck.save();
         res.json(deck);
@@ -163,6 +162,90 @@ router.delete('/:id', verifyToken, async (req, res) => {
         res.json({ message: "Eliminado" });
     } catch (error) {
         res.status(500).json({ error: "Error al eliminar" });
+    }
+});
+
+// ==========================================
+// ✅ NUEVAS RUTAS: COMENTARIOS Y ESTADÍSTICAS
+// ==========================================
+
+// 8. AGREGAR UN COMENTARIO
+router.post('/:id/comment', verifyToken, async (req, res) => {
+    try {
+        const { text } = req.body;
+        const deck = await Deck.findById(req.params.id);
+        const user = await User.findById(req.user.id);
+
+        if (!deck) return res.status(404).json({ error: "Mazo no encontrado" });
+
+        const newComment = {
+            userId: user._id,
+            username: user.username,
+            text: text,
+            createdAt: new Date()
+        };
+
+        deck.comments.push(newComment);
+        await deck.save();
+
+        // Retornamos el mazo actualizado con el nick del dueño para el modal
+        const updatedDeck = await Deck.findById(req.params.id).populate('user', 'username');
+        res.json(updatedDeck);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al agregar comentario" });
+    }
+});
+
+// 9. ELIMINAR UN COMENTARIO (SOLO ADMIN)
+router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
+    try {
+        const deck = await Deck.findById(req.params.id);
+        if (!deck) return res.status(404).json({ error: "Mazo no encontrado" });
+
+        deck.comments = deck.comments.filter(c => c._id.toString() !== req.params.commentId);
+        await deck.save();
+
+        const updatedDeck = await Deck.findById(req.params.id).populate('user', 'username');
+        res.json(updatedDeck);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al eliminar comentario" });
+    }
+});
+
+// 10. META REPORT: CARTAS MÁS POPULARES
+router.get('/stats/meta', async (req, res) => {
+    try {
+        // Obtenemos todos los mazos guardados en la base de datos
+        const allDecks = await Deck.find();
+        const cardUsage = {};
+
+        allDecks.forEach(deck => {
+            deck.cards.forEach(card => {
+                const key = card.slug || card.name;
+                if (cardUsage[key]) {
+                    cardUsage[key].usageCount += (card.quantity || 1);
+                } else {
+                    cardUsage[key] = {
+                        name: card.name,
+                        imgUrl: card.imgUrl || card.img,
+                        format: deck.format,
+                        usageCount: card.quantity || 1
+                    };
+                }
+            });
+        });
+
+        // Convertimos el objeto en array y ordenamos por las más usadas
+        const sortedMeta = Object.values(cardUsage)
+            .sort((a, b) => b.usageCount - a.usageCount)
+            .slice(0, 15); // Top 15 cartas
+
+        res.json(sortedMeta);
+    } catch (error) {
+        console.error("Error en Meta Report:", error);
+        res.status(500).json({ error: "Error al calcular estadísticas" });
     }
 });
 

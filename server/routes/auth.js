@@ -2,7 +2,8 @@ const router = require('express').Router();
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { OAuth2Client } = require('google-auth-library'); 
+const { OAuth2Client } = require('google-auth-library');
+const verifyToken = require('../middleware/verifyToken'); // Asegúrate de tener este middleware
 
 const JWT_SECRET = "clave_secreta_mitos_leyendas_123";
 
@@ -10,32 +11,20 @@ const JWT_SECRET = "clave_secreta_mitos_leyendas_123";
 const client = new OAuth2Client("570011480834-rs6o3vggmdovvouj8gi9gi4p0l2mnqdm.apps.googleusercontent.com");
 
 // ==========================================
-// 1. REGISTRO NORMAL (Email y Contraseña)
+// 1. REGISTRO NORMAL
 // ==========================================
 router.post('/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
+        if (!username || !email || !password) return res.status(400).json({ error: "Faltan datos" });
+        if (password.length < 6) return res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
 
-        // Validaciones básicas
-        if (!username || !email || !password) {
-            return res.status(400).json({ error: "Faltan datos" });
-        }
-
-        // VALIDACIÓN IMPORTANTE: Como quitamos el 'minlength' del Modelo para Google,
-        // debemos validar manualmente aquí que la contraseña normal sea segura.
-        if (password.length < 6) {
-            return res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
-        }
-
-        // Verificar si el email ya existe
         const emailExist = await User.findOne({ email });
         if (emailExist) return res.status(400).json({ error: "El email ya está registrado" });
 
-        // Encriptar contraseña
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Crear usuario
         const newUser = new User({
             username,
             email,
@@ -44,9 +33,7 @@ router.post('/register', async (req, res) => {
 
         await newUser.save();
         res.status(201).json({ message: "Usuario creado exitosamente" });
-
     } catch (error) {
-        console.error(error);
         res.status(500).json({ error: "Error en el servidor al registrar" });
     }
 });
@@ -57,119 +44,95 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-
-        // Verificar si el usuario existe
         const user = await User.findOne({ email });
         if (!user) return res.status(400).json({ error: "Email o contraseña incorrectos" });
+        if (!user.password) return res.status(400).json({ error: "Usa el botón de Google." });
 
-        // SEGURIDAD: Si el usuario es de Google, no tiene password guardada.
-        // Bloqueamos el intento para que no falle bcrypt.
-        if (!user.password) {
-            return res.status(400).json({ error: "Este usuario se registró con Google. Usa el botón de Google." });
-        }
-
-        // Verificar contraseña
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) return res.status(400).json({ error: "Email o contraseña incorrectos" });
 
-        // Crear Token
-        const token = jwt.sign(
-            { id: user._id, username: user.username },
-            JWT_SECRET,
-            { expiresIn: '7d' } 
-        );
+        const token = jwt.sign({ id: user._id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
 
         res.json({
             token,
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email
-            }
+            user: { id: user._id, username: user.username, email: user.email, role: user.role }
         });
-
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error en el servidor al iniciar sesión" });
+        res.status(500).json({ error: "Error en el servidor" });
     }
 });
 
 // ==========================================
-// 3. VERIFICAR USUARIO GOOGLE (Paso 1 del Login)
+// 3. GOOGLE VERIFY & REGISTER (Tus rutas actuales)
 // ==========================================
 router.post('/google', async (req, res) => {
     const { token } = req.body;
     try {
-        // Verificar token con Google
         const ticket = await client.verifyIdToken({
             idToken: token,
             audience: "570011480834-rs6o3vggmdovvouj8gi9gi4p0l2mnqdm.apps.googleusercontent.com"
         });
         const { email, sub: googleId } = ticket.getPayload();
-
-        // Buscar si existe en nuestra BD
         let user = await User.findOne({ email });
 
         if (user) {
-            // USUARIO YA EXISTE -> Login directo
-            const appToken = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
+            const appToken = jwt.sign({ id: user._id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
             res.json({ token: appToken, isNew: false, user });
         } else {
-            // USUARIO NO EXISTE -> Avisar al frontend para pedir datos extra (Nick, Edad, CL)
             res.json({ isNew: true, email, googleId });
         }
     } catch (err) {
-        console.error("Error Google Verify:", err);
-        res.status(500).json({ error: "Error autenticando con Google" });
+        res.status(500).json({ error: "Error Google" });
+    }
+});
+
+router.post('/google-register', async (req, res) => {
+    const { email, googleId, username, age, cl } = req.body;
+    try {
+        if (!username) return res.status(400).json({ msg: 'Nick obligatorio' });
+        let userCheck = await User.findOne({ username: username.trim() });
+        if (userCheck) return res.status(400).json({ msg: "Nick ocupado" });
+
+        const newUser = new User({
+            email, googleId, username: username.trim(), age, cl, password: ""
+        });
+
+        await newUser.save();
+        const token = jwt.sign({ id: newUser._id, username: newUser.username, role: newUser.role }, JWT_SECRET, { expiresIn: '7d' });
+        res.json({ token });
+    } catch (error) {
+        res.status(500).json({ error: "Error registro Google" });
     }
 });
 
 // ==========================================
-// 4. REGISTRO FINAL CON GOOGLE (Paso 2: Datos Extra)
+// 🛡️ NUEVAS RUTAS: ADMINISTRACIÓN (Dashboard)
 // ==========================================
-router.post('/google-register', async (req, res) => {
-    // Recibimos todos los datos, incluido el CL
-    const { email, googleId, username, age, cl } = req.body;
 
-    // DEBUG: Mira esto en los logs de Render si algo falla
-    console.log("📝 Registro Google intentado:", { username, email, age, cl });
-
+// 1. Obtener todos los usuarios registrados
+router.get('/all', verifyToken, async (req, res) => {
     try {
-        // Validar que el username no llegue vacío
-        if (!username || username.trim() === "") {
-            return res.status(400).json({ msg: 'El nombre de usuario es obligatorio' });
-        }
-
-        // Validar username único
-        // Usamos trim() para limpiar espacios accidentales
-        let userCheck = await User.findOne({ username: username.trim() });
-        
-        if (userCheck) {
-            console.log("❌ Nick ocupado:", username);
-            return res.status(400).json({ msg: `El nick '${username}' ya está ocupado. Intenta otro.` });
-        }
-
-        // Crear usuario sin contraseña (password vacío "")
-        // IMPORTANTE: Esto funciona porque quitamos el 'minlength' en el Modelo User.js
-        const newUser = new User({
-            email,
-            googleId,
-            username: username.trim(),
-            age,
-            cl,         // <--- Guardamos el CL
-            password: "" 
-        });
-
-        await newUser.save();
-        console.log("✅ Usuario Google creado:", username);
-
-        // Login automático (Generar token)
-        const token = jwt.sign({ id: newUser._id, username: newUser.username }, JWT_SECRET, { expiresIn: '7d' });
-        res.json({ token });
-
+        // Traemos todos los campos excepto el password
+        const users = await User.find().select('-password').sort({ createdAt: -1 });
+        res.json(users);
     } catch (error) {
-        console.error("🔥 Error en google-register:", error);
-        res.status(500).json({ error: "Error al registrar usuario de Google" });
+        res.status(500).json({ message: "Error al obtener la lista de usuarios" });
+    }
+});
+
+// 2. Cambiar rol o Banear usuario
+router.put('/role/:id', verifyToken, async (req, res) => {
+    try {
+        const { role } = req.body; // Ejemplo: "admin", "user", o "banned"
+        const user = await User.findByIdAndUpdate(
+            req.params.id,
+            { role: role },
+            { new: true }
+        ).select('-password');
+
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ message: "Error al actualizar usuario" });
     }
 });
 
