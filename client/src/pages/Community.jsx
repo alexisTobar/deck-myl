@@ -170,7 +170,7 @@ export default function Community() {
 
             <div className="max-w-7xl mx-auto px-4 mt-12">
 
-                {/* --- SECCIÓN PODIO REORDENADO (MÓVIL 1-2-3 / WEB 2-1-3) --- */}
+                {/* --- SECCIÓN PODIO REORDENADO --- */}
                 {topDecks.length > 0 ? (
                     <div className="mb-24">
                         <h2 className="text-center text-3xl font-black mb-12 flex flex-col items-center justify-center gap-2 text-white uppercase italic">
@@ -178,11 +178,8 @@ export default function Community() {
                             Salón de la Fama
                         </h2>
                         <div className="flex flex-col md:flex-row items-center md:items-end justify-center gap-6 md:gap-8">
-                            {/* RANK 2 */}
                             {topDecks[1] && <PodiumCard deck={topDecks[1]} rank={2} userId={userId} onLike={handleLike} onClick={() => setSelectedDeck(topDecks[1])} getImg={getImg} className="order-2 md:order-1" />}
-                            {/* RANK 1: Destacado visualmente */}
                             {topDecks[0] && <PodiumCard deck={topDecks[0]} rank={1} userId={userId} onLike={handleLike} onClick={() => setSelectedDeck(topDecks[0])} getImg={getImg} className="order-1 md:order-2" isWinner />}
-                            {/* RANK 3 */}
                             {topDecks[2] && <PodiumCard deck={topDecks[2]} rank={3} userId={userId} onLike={handleLike} onClick={() => setSelectedDeck(topDecks[2])} getImg={getImg} className="order-3 md:order-3" />}
                         </div>
                     </div>
@@ -211,37 +208,37 @@ export default function Community() {
                 </div>
             </div>
 
-            {/* --- MODAL DETALLE ACTUALIZADO CON COMENTARIOS --- */}
+            {/* --- MODAL DETALLE CON ARREGLO DE ESPACIOS PARA MÓVIL --- */}
             {selectedDeck && (
                 <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-2 md:p-4" onClick={() => setSelectedDeck(null)}>
-                    <div className="bg-slate-900 w-full max-w-6xl max-h-[95vh] rounded-[2.5rem] border border-white/10 flex flex-col md:flex-row overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <div className="bg-slate-900 w-full max-w-6xl max-h-[90vh] md:max-h-[95vh] rounded-[2rem] md:rounded-[2.5rem] border border-white/10 flex flex-col md:flex-row overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
 
-                        {/* Izquierda: Visualización del mazo (Ancho completo en móvil, flexible en web) */}
-                        <div className="flex-[3] flex flex-col overflow-hidden h-full border-b md:border-b-0 md:border-r border-white/5">
-                            <div className="p-6 md:p-8 border-b border-white/5 bg-slate-900/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        {/* Izquierda: Visualización del mazo (Se adapta mejor en móvil) */}
+                        <div className="flex-[3] flex flex-col overflow-hidden h-[50vh] md:h-full border-b md:border-b-0 md:border-r border-white/5">
+                            <div className="p-4 md:p-8 border-b border-white/5 bg-slate-900/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4">
                                 <div>
-                                    <h2 className="text-2xl md:text-3xl font-black text-white uppercase italic leading-none">{selectedDeck.name}</h2>
-                                    <p className="text-orange-500 font-black text-sm uppercase mt-2 tracking-tighter">
+                                    <h2 className="text-xl md:text-3xl font-black text-white uppercase italic leading-none">{selectedDeck.name}</h2>
+                                    <p className="text-orange-500 font-black text-[10px] md:text-sm uppercase mt-1 md:mt-2 tracking-tighter">
                                         Por: @{selectedDeck.user?.username || selectedDeck.author?.username || selectedDeck.creator?.username || "Invocador"}
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-3 w-full md:w-auto">
+                                <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
                                     <button
                                         onClick={() => handleClone(selectedDeck)}
-                                        className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-2xl font-black uppercase text-xs transition-all shadow-lg active:scale-95"
+                                        className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 md:px-8 py-2 md:py-3 rounded-xl md:rounded-2xl font-black uppercase text-[10px] md:text-xs transition-all shadow-lg active:scale-95"
                                     >
-                                        <Copy size={18} /> Clonar Mazo
+                                        <Copy size={16} /> Clonar
                                     </button>
-                                    <button onClick={() => setSelectedDeck(null)} className="p-3 bg-slate-800 rounded-2xl hover:bg-red-600 transition-colors text-white">
-                                        <X size={24} />
+                                    <button onClick={() => setSelectedDeck(null)} className="p-2 md:p-3 bg-slate-800 rounded-xl md:rounded-2xl hover:bg-red-600 transition-colors text-white">
+                                        <X size={20} />
                                     </button>
                                 </div>
                             </div>
-                            <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-black/20 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 custom-scrollbar min-h-0">
+                            <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-black/20 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2 md:gap-3 custom-scrollbar min-h-0">
                                 {selectedDeck.cards.map((c, i) => (
                                     <div key={i} className="relative group">
-                                        <img src={getImg(c)} className="w-full rounded-xl border border-white/5 group-hover:scale-105 transition-transform shadow-lg" alt={c.name} />
-                                        <div className="absolute -bottom-1 -right-1 bg-orange-600 text-white w-7 h-7 flex items-center justify-center text-[11px] font-black rounded-lg shadow-xl border border-white/20">
+                                        <img src={getImg(c)} className="w-full rounded-lg md:rounded-xl border border-white/5 group-hover:scale-105 transition-transform shadow-lg" alt={c.name} />
+                                        <div className="absolute -bottom-1 -right-1 bg-orange-600 text-white w-5 h-5 md:w-7 md:h-7 flex items-center justify-center text-[9px] md:text-[11px] font-black rounded-lg shadow-xl border border-white/20">
                                             x{c.quantity}
                                         </div>
                                     </div>
@@ -249,52 +246,52 @@ export default function Community() {
                             </div>
                         </div>
 
-                        {/* Derecha: Panel de Comentarios (Ancho fijo en web) */}
-                        <div className="flex-1 min-w-[320px] md:max-w-[400px] bg-slate-800/30 flex flex-col h-[45vh] md:h-auto overflow-hidden">
-                            <div className="p-5 border-b border-white/5 font-black text-xs uppercase flex items-center gap-2 text-orange-500 bg-slate-900/30">
+                        {/* Derecha: Panel de Comentarios (Fijado y accesible en móvil) */}
+                        <div className="flex-[2] md:max-w-[400px] bg-slate-800/30 flex flex-col h-[40vh] md:h-auto overflow-hidden">
+                            <div className="p-4 md:p-5 border-b border-white/5 font-black text-[10px] md:text-xs uppercase flex items-center gap-2 text-orange-500 bg-slate-900/30">
                                 <MessageSquare size={18} /> Conversación ({selectedDeck.comments?.length || 0})
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar min-h-0">
+                            <div className="flex-1 overflow-y-auto p-4 md:p-5 space-y-3 md:space-y-4 custom-scrollbar min-h-0">
                                 {selectedDeck.comments?.map((com, idx) => (
-                                    <div key={com._id || idx} className="bg-black/30 p-4 rounded-2xl border border-white/5 relative group animate-fade-in">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <p className="text-[10px] font-black text-orange-400 uppercase tracking-widest">@{com.username}</p>
+                                    <div key={com._id || idx} className="bg-black/30 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5 relative group animate-fade-in">
+                                        <div className="flex justify-between items-start mb-1 md:mb-2">
+                                            <p className="text-[9px] md:text-[10px] font-black text-orange-400 uppercase tracking-widest">@{com.username}</p>
                                             {isAdmin && (
                                                 <button onClick={() => handleDeleteComment(com._id)} className="text-slate-500 hover:text-red-500 transition-colors">
-                                                    <Trash2 size={14} />
+                                                    <Trash2 size={12} md:size={14} />
                                                 </button>
                                             )}
                                         </div>
-                                        <p className="text-xs text-slate-200 leading-relaxed font-medium">{com.text}</p>
+                                        <p className="text-[11px] md:text-xs text-slate-200 leading-relaxed font-medium">{com.text}</p>
                                     </div>
                                 ))}
                                 {(!selectedDeck.comments || selectedDeck.comments.length === 0) && (
-                                    <div className="flex flex-col items-center justify-center h-full opacity-30 mt-10">
-                                        <MessageSquare size={40} className="mb-2" />
-                                        <p className="text-[10px] font-black uppercase">Sin comentarios aún</p>
+                                    <div className="flex flex-col items-center justify-center h-full opacity-30 mt-4 md:mt-10">
+                                        <MessageSquare size={30} md:size={40} className="mb-2" />
+                                        <p className="text-[9px] md:text-[10px] font-black uppercase">Sin comentarios</p>
                                     </div>
                                 )}
                             </div>
 
-                            {/* Input de Comentario */}
+                            {/* Input de Comentario (Asegurado al fondo del modal) */}
                             {token ? (
-                                <div className="p-5 bg-slate-900 border-t border-white/5 flex gap-2">
+                                <div className="p-3 md:p-5 bg-slate-900 border-t border-white/5 flex gap-2">
                                     <input
                                         type="text"
-                                        placeholder="Escribe un comentario..."
+                                        placeholder="Escribe algo..."
                                         value={newComment}
                                         onChange={(e) => setNewComment(e.target.value)}
                                         onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
-                                        className="flex-1 bg-slate-800 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-orange-500 transition-all text-white placeholder-slate-500"
+                                        className="flex-1 bg-slate-800 border border-white/5 rounded-lg md:rounded-xl px-3 md:px-4 py-2 md:py-2.5 text-[11px] md:text-xs outline-none focus:border-orange-500 transition-all text-white placeholder-slate-500"
                                     />
-                                    <button onClick={handleAddComment} className="bg-orange-600 p-2.5 rounded-xl text-white active:scale-95 transition-all shadow-lg hover:bg-orange-500">
-                                        <Send size={18} />
+                                    <button onClick={handleAddComment} className="bg-orange-600 p-2 md:p-2.5 rounded-lg md:rounded-xl text-white active:scale-95 transition-all shadow-lg hover:bg-orange-500">
+                                        <Send size={16} md:size={18} />
                                     </button>
                                 </div>
                             ) : (
-                                <div className="p-5 bg-slate-900 text-center border-t border-white/5 cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => navigate("/login")}>
-                                    <p className="text-[10px] font-black text-slate-400 hover:text-orange-500 transition-colors uppercase italic">Inicia sesión para participar</p>
+                                <div className="p-4 md:p-5 bg-slate-900 text-center border-t border-white/5 cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => navigate("/login")}>
+                                    <p className="text-[9px] md:text-[10px] font-black text-slate-400 hover:text-orange-500 transition-colors uppercase italic">Inicia sesión para participar</p>
                                 </div>
                             )}
                         </div>
@@ -305,7 +302,7 @@ export default function Community() {
     );
 }
 
-// --- COMPONENTES DE TARJETA ---
+// ... PodiumCard y StandardCard se mantienen iguales ...
 
 function PodiumCard({ deck, rank, userId, onLike, onClick, getImg, className, isWinner }) {
     const bgImage = getImg(deck.cards?.[0]);
@@ -315,26 +312,26 @@ function PodiumCard({ deck, rank, userId, onLike, onClick, getImg, className, is
         <div
             onClick={onClick}
             className={`relative rounded-[2.5rem] overflow-hidden border-4 shadow-2xl cursor-pointer group transition-all duration-500 hover:-translate-y-2 flex-shrink-0 
-            ${isWinner ? 'w-full md:w-96 h-[32rem] border-yellow-500 z-10' : 'w-full md:w-72 h-80 border-slate-700 opacity-90'} ${className}`}
+            ${isWinner ? 'w-full md:w-96 h-[26rem] md:h-[32rem] border-yellow-500 z-10' : 'w-full md:w-72 h-72 md:h-80 border-slate-700 opacity-90'} ${className}`}
         >
             <div className="absolute inset-0 bg-slate-900">
                 {bgImage && <img src={bgImage} className="w-full h-full object-cover opacity-40 group-hover:scale-110 transition-transform duration-1000" />}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/40 to-transparent"></div>
             </div>
-            <div className={`absolute top-6 left-6 font-black text-2xl w-14 h-14 flex items-center justify-center rounded-2xl shadow-2xl z-20 
+            <div className={`absolute top-6 left-6 font-black text-xl md:text-2xl w-10 h-10 md:w-14 md:h-14 flex items-center justify-center rounded-xl md:rounded-2xl shadow-2xl z-20 
                 ${isWinner ? 'bg-yellow-500 text-black' : 'bg-slate-800 text-white border border-white/10'}`}>
                 {rank}
             </div>
-            <div className="absolute bottom-0 p-8 z-20 w-full">
-                <h3 className="font-black text-2xl drop-shadow-md text-white uppercase italic truncate">{deck.name}</h3>
-                <p className="text-orange-500 text-xs mb-4 font-black uppercase tracking-widest">@{authorName}</p>
+            <div className="absolute bottom-0 p-6 md:p-8 z-20 w-full">
+                <h3 className="font-black text-xl md:text-2xl drop-shadow-md text-white uppercase italic truncate">{deck.name}</h3>
+                <p className="text-orange-500 text-[10px] md:text-xs mb-3 md:mb-4 font-black uppercase tracking-widest">@{authorName}</p>
                 <div className="flex items-center gap-3">
-                    <button onClick={(e) => onLike(deck._id, e)} className="bg-white/10 px-6 py-2.5 rounded-2xl text-sm font-black flex items-center gap-2 backdrop-blur-md border border-white/10 hover:bg-white/20 transition-all">
-                        <Heart size={18} className={deck.likes?.includes(userId) ? "fill-red-500 text-red-500" : "text-white"} />
+                    <button onClick={(e) => onLike(deck._id, e)} className="bg-white/10 px-4 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl text-[11px] md:text-sm font-black flex items-center gap-2 backdrop-blur-md border border-white/10 hover:bg-white/20 transition-all">
+                        <Heart size={16} className={deck.likes?.includes(userId) ? "fill-red-500 text-red-500" : "text-white"} />
                         {deck.likes?.length || 0}
                     </button>
-                    <div className="bg-orange-600/20 p-2.5 rounded-2xl border border-orange-500/20 text-orange-500">
-                        <ExternalLink size={18} />
+                    <div className="bg-orange-600/20 p-2 md:p-2.5 rounded-xl md:rounded-2xl border border-orange-500/20 text-orange-500">
+                        <ExternalLink size={16} />
                     </div>
                 </div>
             </div>
@@ -347,22 +344,22 @@ function StandardCard({ deck, userId, onLike, onClick, getImg }) {
     const authorName = deck.user?.username || deck.author?.username || deck.creator?.username || "Invocador";
 
     return (
-        <div onClick={onClick} className="group relative bg-slate-900 rounded-[2rem] overflow-hidden border border-white/5 hover:border-orange-500/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)] cursor-pointer h-72 flex flex-col shadow-lg">
-            <div className="h-40 bg-slate-800 relative overflow-hidden">
+        <div onClick={onClick} className="group relative bg-slate-900 rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border border-white/5 hover:border-orange-500/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)] cursor-pointer h-64 md:h-72 flex flex-col shadow-lg">
+            <div className="h-32 md:h-40 bg-slate-800 relative overflow-hidden">
                 {bgImage && <img src={bgImage} className="w-full h-full object-cover opacity-40 group-hover:scale-110 transition-transform duration-700" />}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent"></div>
-                <div className="absolute bottom-3 left-4 font-black truncate w-10/12 text-white uppercase italic text-sm tracking-tighter drop-shadow-md">
+                <div className="absolute bottom-2 md:bottom-3 left-3 md:left-4 font-black truncate w-10/12 text-white uppercase italic text-[11px] md:text-sm tracking-tighter drop-shadow-md">
                     {deck.name}
                 </div>
             </div>
-            <div className="p-5 flex-1 flex flex-col justify-between">
-                <div className="text-[10px] text-orange-500 font-black uppercase tracking-widest">@{authorName}</div>
-                <div className="flex justify-between items-center mt-2">
-                    <button onClick={(e) => onLike(deck._id, e)} className="text-xs font-black px-4 py-2 rounded-xl bg-white/5 hover:bg-red-500/20 transition-all flex items-center gap-2 border border-white/5">
-                        <Heart size={14} className={deck.likes?.includes(userId) ? "fill-red-500 text-red-500" : "text-white"} />
+            <div className="p-3 md:p-5 flex-1 flex flex-col justify-between">
+                <div className="text-[8px] md:text-[10px] text-orange-500 font-black uppercase tracking-widest">@{authorName}</div>
+                <div className="flex justify-between items-center mt-1 md:mt-2">
+                    <button onClick={(e) => onLike(deck._id, e)} className="text-[10px] md:text-xs font-black px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl bg-white/5 hover:bg-red-500/20 transition-all flex items-center gap-2 border border-white/5">
+                        <Heart size={12} md:size={14} className={deck.likes?.includes(userId) ? "fill-red-500 text-red-500" : "text-white"} />
                         {deck.likes?.length || 0}
                     </button>
-                    <span className="text-[9px] font-black text-slate-500 uppercase italic group-hover:text-orange-500 transition-colors">
+                    <span className="text-[8px] md:text-[9px] font-black text-slate-500 uppercase italic group-hover:text-orange-500 transition-colors">
                         Detalles →
                     </span>
                 </div>
