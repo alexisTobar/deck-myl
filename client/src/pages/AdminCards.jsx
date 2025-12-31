@@ -2,10 +2,10 @@ import { useState, useEffect, useMemo } from "react";
 import BACKEND_URL from "../config";
 import {
     Plus, Layout, Save, X, ChevronLeft, Star, ShieldAlert,
-    Search, Layers, Users, BarChart3, MessageSquare, Trash2, ShieldCheck
+    Search, Layers, Users, BarChart3, MessageSquare, Trash2, ShieldCheck, Activity
 } from "lucide-react";
 
-// ✅ IMPERIO: Ediciones
+// ✅ TUS CONSTANTES ORIGINALES (MANTENIDAS ÍNTEGRAS)
 const EDICIONES_IMPERIO = {
     "all": "🌐 TODAS LAS EDICIONES",
     "25_Aniversario_Imp": "25 aniversario",
@@ -23,7 +23,6 @@ const EDICIONES_IMPERIO = {
     "espiritu_samurai": "Espíritu Samurai"
 };
 
-// ✅ PRIMER BLOQUE: Ediciones
 const EDICIONES_PB = {
     "all": "🌐 TODAS LAS EDICIONES",
     "espada_sagrada": "ESPADA SAGRADA",
@@ -45,8 +44,9 @@ const RAZAS_PB = ["Caballero", "Héroe", "Defensor", "Eterno", "Dragón", "Olím
 
 const getImg = (c) => c?.imgUrl || c?.imageUrl || c?.img || "https://via.placeholder.com/250x350?text=No+Image";
 
-export default function AdminCards() {
-    const [step, setStep] = useState("selector");
+export default function AdminDashboard() {
+    // ✅ MEJORA: Cambio de step a 'dashboard' como inicio
+    const [step, setStep] = useState("dashboard");
     const [formato, setFormato] = useState("");
     const [edicionFiltro, setEdicionFiltro] = useState("all");
     const [cartas, setCartas] = useState([]);
@@ -54,8 +54,8 @@ export default function AdminCards() {
     const [editingCard, setEditingCard] = useState(null);
     const [busquedaInterna, setBusquedaInterna] = useState("");
 
-    // ✅ MEJORA: Nuevos estados para Usuarios y Reportes
-    const [activeTab, setActiveTab] = useState("cards"); // cards, users, meta
+    // ✅ TUS ESTADOS DE MEJORA MANTENIDOS
+    const [activeTab, setActiveTab] = useState("cards");
     const [usuarios, setUsuarios] = useState([]);
     const [statsMeta, setStatsMeta] = useState([]);
 
@@ -80,15 +80,15 @@ export default function AdminCards() {
         });
     };
 
+    // ✅ LOGICA DE CARGA DINÁMICA
     useEffect(() => {
-        if (formato) {
+        if (formato && step === "editor") {
             fetchCartas();
-            if (activeTab === "users") fetchUsuarios();
-            if (activeTab === "meta") fetchMetaStats();
         }
-    }, [edicionFiltro, formato, activeTab]);
+        if (activeTab === "users" && step === "editor") fetchUsuarios();
+        if (activeTab === "meta" && step === "editor") fetchMetaStats();
+    }, [edicionFiltro, formato, activeTab, step]);
 
-    // ✅ LÓGICA ORIGINAL ÍNTEGRA: Filtrado inteligente
     const cartasFiltradas = useMemo(() => {
         return cartas.filter(c =>
             c.name?.toLowerCase().includes(busquedaInterna.toLowerCase()) ||
@@ -108,10 +108,9 @@ export default function AdminCards() {
         finally { setLoading(false); }
     };
 
-    // ✅ MEJORA: Obtener usuarios para gestión
     const fetchUsuarios = async () => {
         try {
-            const res = await fetch(`${BACKEND_URL}/api/users/all`, {
+            const res = await fetch(`${BACKEND_URL}/api/auth/all`, {
                 headers: { "auth-token": token }
             });
             const data = await res.json();
@@ -119,20 +118,20 @@ export default function AdminCards() {
         } catch (e) { console.error(e); }
     };
 
-    // ✅ MEJORA: Obtener estadísticas del Meta (cartas más usadas)
     const fetchMetaStats = async () => {
         try {
             const res = await fetch(`${BACKEND_URL}/api/decks/stats/meta?format=${formato}`, {
                 headers: { "auth-token": token }
             });
             const data = await res.json();
-            setStatsMeta(data);
+            setStatsMeta(Array.isArray(data) ? data : []);
         } catch (e) { console.error(e); }
     };
 
     const handleSelectFormat = (f) => {
         setFormato(f);
         setEdicionFiltro("all");
+        setActiveTab("cards");
         setFormData({ ...initialFormState, format: f, type: f === "imperio" ? "1" : "Aliado" });
         setStep("editor");
     };
@@ -156,17 +155,41 @@ export default function AdminCards() {
         } catch (e) { alert("Error de conexión."); }
     };
 
-    if (step === "selector") {
+    // ✅ VISTA NUEVA: DASHBOARD CENTRAL (REEMPLAZA EL SELECTOR VIEJO)
+    if (step === "dashboard") {
         return (
-            <div className="min-h-screen bg-[#0B1120] flex flex-col items-center justify-center p-4">
-                <h1 className="text-4xl font-black text-white mb-10 uppercase italic">Admin Workshop</h1>
-                <div className="grid grid-cols-2 gap-8 w-full max-w-4xl">
-                    <button onClick={() => handleSelectFormat("imperio")} className="group bg-slate-900 border-2 border-orange-500/20 p-12 rounded-[3rem] text-white font-black uppercase hover:border-orange-500 transition-all shadow-2xl active:scale-95 text-2xl flex flex-col items-center gap-4">
-                        <Layers size={48} /> 🏛️ Imperio (Navegar Todo)
-                    </button>
-                    <button onClick={() => handleSelectFormat("primer_bloque")} className="group bg-slate-900 border-2 border-yellow-500/20 p-12 rounded-[3rem] text-white font-black uppercase hover:border-yellow-500 transition-all shadow-2xl active:scale-95 text-2xl flex flex-col items-center gap-4">
-                        <Star size={48} /> 📜 P. Bloque (Navegar Todo)
-                    </button>
+            <div className="min-h-screen bg-[#0B1120] p-8 md:p-16 text-white">
+                <div className="max-w-7xl mx-auto">
+                    <header className="mb-16">
+                        <h1 className="text-5xl font-black italic tracking-tighter uppercase mb-2">Warning <span className="text-orange-500">Admin</span></h1>
+                        <p className="text-slate-500 font-bold uppercase text-xs tracking-widest flex items-center gap-2"><Activity size={14} /> Dashboard Central de Operaciones</p>
+                    </header>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        <div onClick={() => handleSelectFormat("imperio")} className="bg-slate-900 border-2 border-orange-500/10 p-10 rounded-[3rem] cursor-pointer hover:border-orange-500 transition-all group shadow-2xl relative overflow-hidden">
+                            <Layers className="text-orange-500 mb-6 group-hover:scale-110 transition-transform" size={48} />
+                            <h3 className="text-2xl font-black uppercase italic">Imperio</h3>
+                            <p className="text-slate-500 text-[10px] font-black mt-2 tracking-widest uppercase">Editor de Cartas</p>
+                        </div>
+
+                        <div onClick={() => handleSelectFormat("primer_bloque")} className="bg-slate-900 border-2 border-yellow-500/10 p-10 rounded-[3rem] cursor-pointer hover:border-yellow-500 transition-all group shadow-2xl relative overflow-hidden">
+                            <Star className="text-yellow-500 mb-6 group-hover:scale-110 transition-transform" size={48} />
+                            <h3 className="text-2xl font-black uppercase italic">P. Bloque</h3>
+                            <p className="text-slate-500 text-[10px] font-black mt-2 tracking-widest uppercase">Editor de Cartas</p>
+                        </div>
+
+                        <div onClick={() => { setFormato("imperio"); setActiveTab("users"); setStep("editor"); }} className="bg-slate-900 border-2 border-purple-500/10 p-10 rounded-[3rem] cursor-pointer hover:border-purple-500 transition-all group shadow-2xl relative overflow-hidden">
+                            <Users className="text-purple-500 mb-6 group-hover:scale-110 transition-transform" size={48} />
+                            <h3 className="text-2xl font-black uppercase italic">Usuarios</h3>
+                            <p className="text-slate-500 text-[10px] font-black mt-2 tracking-widest uppercase">Comunidad</p>
+                        </div>
+
+                        <div onClick={() => { setFormato("imperio"); setActiveTab("meta"); setStep("editor"); }} className="bg-slate-900 border-2 border-blue-500/10 p-10 rounded-[3rem] cursor-pointer hover:border-blue-500 transition-all group shadow-2xl relative overflow-hidden">
+                            <BarChart3 className="text-blue-500 mb-6 group-hover:scale-110 transition-transform" size={48} />
+                            <h3 className="text-2xl font-black uppercase italic">Meta Report</h3>
+                            <p className="text-slate-500 text-[10px] font-black mt-2 tracking-widest uppercase">Estadísticas</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -176,17 +199,16 @@ export default function AdminCards() {
         <div className="min-h-screen bg-[#0B1120] text-white pb-32">
             <div className="max-w-[1600px] mx-auto p-8 flex flex-col gap-6">
 
-                {/* CABECERA Y NAVEGACIÓN DE PESTAÑAS */}
+                {/* CABECERA Y NAVEGACIÓN (MANTENIDA ÍNTEGRA) */}
                 <div className="flex flex-col gap-6 bg-slate-900 p-6 rounded-[2.5rem] border border-white/5 shadow-xl sticky top-4 z-40">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                         <div className="flex items-center gap-4">
-                            <button onClick={() => setStep("selector")} className="bg-slate-800 p-3 rounded-2xl font-bold text-xs flex items-center gap-2 hover:bg-red-600 transition-colors"><ChevronLeft size={16} /> VOLVER</button>
+                            <button onClick={() => setStep("dashboard")} className="bg-slate-800 p-3 rounded-2xl font-bold text-xs flex items-center gap-2 hover:bg-red-600 transition-colors"><ChevronLeft size={16} /> PANEL CENTRAL</button>
                             <h1 className="text-lg font-black uppercase italic tracking-tighter">
                                 {formato === "imperio" ? "🏛️" : "📜"} <span className={formato === "imperio" ? "text-orange-500" : "text-yellow-500"}>{formato.replace("_", " ")}</span>
                             </h1>
                         </div>
 
-                        {/* ✅ MEJORA: Selector de Pestañas Admin */}
                         <div className="flex bg-slate-950 p-1.5 rounded-2xl border border-white/5 gap-2">
                             <button onClick={() => setActiveTab("cards")} className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase flex items-center gap-2 transition-all ${activeTab === 'cards' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>
                                 <Layers size={14} /> Cartas
@@ -200,7 +222,6 @@ export default function AdminCards() {
                         </div>
                     </div>
 
-                    {/* BUSCADOR (Solo visible en pestaña cartas) */}
                     {activeTab === "cards" && (
                         <div className="flex flex-col md:flex-row gap-4 w-full">
                             <div className="relative flex-[2]">
@@ -223,10 +244,8 @@ export default function AdminCards() {
                     )}
                 </div>
 
-                {/* CONTENIDO SEGÚN PESTAÑA SELECCIONADA */}
                 {activeTab === "cards" && (
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                        {/* FORMULARIO ORIGINAL ÍNTEGRO */}
                         <div className="lg:col-span-1 bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 shadow-2xl h-fit sticky top-48">
                             <h2 className="text-xl font-black mb-8 uppercase text-yellow-500 italic flex items-center gap-2">
                                 {editingCard ? <Layout size={20} /> : <Plus size={20} />}
@@ -281,7 +300,6 @@ export default function AdminCards() {
                             </form>
                         </div>
 
-                        {/* LISTADO GLOBAL ORIGINAL ÍNTEGRO */}
                         <div className="lg:col-span-3">
                             {loading ? (
                                 <div className="flex flex-col items-center py-40 gap-4">
@@ -321,14 +339,13 @@ export default function AdminCards() {
                     </div>
                 )}
 
-                {/* ✅ SECCIÓN MEJORADA: GESTIÓN DE USUARIOS */}
                 {activeTab === "users" && (
                     <div className="bg-slate-900 rounded-[2.5rem] border border-white/5 p-8 shadow-2xl">
                         <h2 className="text-2xl font-black uppercase italic mb-8 text-purple-500 flex items-center gap-3">
                             <Users size={28} /> Control de Invocadores
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {usuarios.map(u => (
+                            {usuarios.length > 0 ? usuarios.map(u => (
                                 <div key={u._id} className="bg-slate-800/50 p-6 rounded-3xl border border-white/5 flex flex-col gap-4 relative overflow-hidden group">
                                     <div className="flex justify-between items-start">
                                         <div>
@@ -343,25 +360,21 @@ export default function AdminCards() {
                                         <button className="flex-1 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white py-2 rounded-xl text-[10px] font-black uppercase transition-all">
                                             Banear Usuario
                                         </button>
-                                        <button className="bg-slate-700 p-2 rounded-xl text-white">
-                                            <MessageSquare size={16} />
-                                        </button>
                                     </div>
                                 </div>
-                            ))}
+                            )) : <p className="text-slate-500">Cargando usuarios o sin datos registrados.</p>}
                         </div>
                     </div>
                 )}
 
-                {/* ✅ SECCIÓN MEJORADA: REPORTE DEL META */}
                 {activeTab === "meta" && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 bg-slate-900 rounded-[2.5rem] border border-white/5 p-8 shadow-2xl">
                             <h2 className="text-2xl font-black uppercase italic mb-8 text-orange-500 flex items-center gap-3">
-                                <BarChart3 size={28} /> Cartas más Populares (Mazo)
+                                <BarChart3 size={28} /> Cartas más Populares ({formato})
                             </h2>
                             <div className="space-y-4">
-                                {statsMeta.map((stat, idx) => (
+                                {statsMeta.length > 0 ? statsMeta.map((stat, idx) => (
                                     <div key={idx} className="flex items-center gap-4 bg-slate-800/40 p-4 rounded-2xl border border-white/5 hover:border-orange-500/30 transition-all">
                                         <span className="w-8 font-black text-slate-600 text-xl">#{idx + 1}</span>
                                         <div className="w-12 h-16 bg-slate-700 rounded-lg overflow-hidden flex-shrink-0 border border-white/10">
@@ -369,18 +382,17 @@ export default function AdminCards() {
                                         </div>
                                         <div className="flex-1">
                                             <p className="font-black text-white text-sm uppercase">{stat.name}</p>
-                                            <p className="text-[10px] text-slate-500 font-bold uppercase">{stat.type}</p>
+                                            <p className="text-[10px] text-slate-500 font-bold uppercase">{stat.format}</p>
                                         </div>
                                         <div className="text-right">
                                             <p className="text-xl font-black text-orange-500">{stat.usageCount}</p>
                                             <p className="text-[8px] text-slate-500 font-black uppercase tracking-tighter">Veces Usada</p>
                                         </div>
                                     </div>
-                                ))}
+                                )) : <p className="text-slate-500">Sin datos de meta disponibles.</p>}
                             </div>
                         </div>
 
-                        {/* RESUMEN RÁPIDO */}
                         <div className="bg-slate-900 rounded-[2.5rem] border border-white/5 p-8 shadow-2xl h-fit">
                             <h3 className="text-sm font-black uppercase text-slate-400 mb-6 tracking-widest flex items-center gap-2">
                                 <ShieldCheck size={16} /> Resumen de Salud
@@ -390,15 +402,10 @@ export default function AdminCards() {
                                     <p className="text-[10px] font-black text-slate-500 uppercase">Total Usuarios</p>
                                     <p className="text-3xl font-black text-white">{usuarios.length}</p>
                                 </div>
-                                <div className="p-4 bg-slate-800/50 rounded-2xl border-l-4 border-orange-600">
-                                    <p className="text-[10px] font-black text-slate-500 uppercase">Top Tipo Dominante</p>
-                                    <p className="text-2xl font-black text-white">Aliado</p>
-                                </div>
                             </div>
                         </div>
                     </div>
                 )}
-
             </div>
         </div>
     );
