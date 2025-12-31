@@ -47,7 +47,7 @@ export default function PBBuilder() {
     const [cardToZoom, setCardToZoom] = useState(null);
     const [guardando, setGuardando] = useState(false);
 
-    // ✅ NUEVO: Estado para Mano de Prueba
+    // ✅ ESTADO PARA MANO DE PRUEBA (Corregido)
     const [manoPrueba, setManoPrueba] = useState([]);
 
     const statsForExport = useMemo(() => {
@@ -56,25 +56,29 @@ export default function PBBuilder() {
         return { counts };
     }, [mazo]);
 
-    // ✅ NUEVO: Lógica de Curva de Oro
+    // ✅ LÓGICA DE CURVA DE ORO (Corregida para PB)
     const goldCurve = useMemo(() => {
         const curve = { 0: 0, 1: 0, 2: 0, 3: 0, "4+": 0 };
         mazo.forEach(c => {
+            // En PB el tipo es "Oro" (string)
             if (c.type !== "Oro") {
-                const cost = parseInt(c.cost) || 0;
-                if (cost >= 4) curve["4+"] += c.cantidad;
-                else curve[cost] += c.cantidad;
+                const cost = parseInt(c.cost);
+                if (!isNaN(cost)) {
+                    if (cost >= 4) curve["4+"] += c.cantidad;
+                    else curve[cost] += c.cantidad;
+                }
             }
         });
         return curve;
     }, [mazo]);
 
-    // ✅ NUEVO: Función para barajar y simular mano
+    // ✅ FUNCIÓN SIMULADOR DE MANO
     const simularMano = () => {
         let baraja = [];
         mazo.forEach(c => {
             for (let i = 0; i < c.cantidad; i++) baraja.push(c);
         });
+        // Mezclado Fisher-Yates
         for (let i = baraja.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [baraja[i], baraja[j]] = [baraja[j], baraja[i]];
@@ -287,7 +291,6 @@ export default function PBBuilder() {
                 </div>
             </div>
 
-            {/* BARRA LATERAL (GRIMORIO) */}
             <div className="hidden md:flex w-85 border-l border-white/10 flex-col h-screen bg-gradient-to-b from-slate-900 via-[#0c0e14] to-black shadow-2xl">
                 <div className="p-5 border-b border-yellow-500/30 bg-slate-900/50 backdrop-blur-md font-black text-yellow-500 uppercase tracking-widest flex justify-between items-center shadow-lg">
                     <div className="flex items-center gap-2"><Layout size={18} /><span className="italic">Grimorio PB</span></div>
@@ -306,7 +309,7 @@ export default function PBBuilder() {
                                     <div key={cost} className="flex flex-col items-center flex-1 group relative">
                                         <div style={{ height: `${height}%` }} className="w-full bg-gradient-to-t from-yellow-700 to-yellow-400 rounded-t-sm min-h-[2px] transition-all duration-500 shadow-[0_0_5px_rgba(234,179,8,0.2)]"></div>
                                         <span className="text-[9px] font-black text-slate-400 mt-1">{cost}</span>
-                                        <div className="absolute -top-6 bg-yellow-600 text-black text-[8px] px-1 rounded opacity-0 group-hover:opacity-100 transition-opacity font-bold">x{count}</div>
+                                        <div className="absolute -top-6 bg-yellow-600 text-black text-[8px] px-1 rounded opacity-0 group-hover:opacity-100 transition-opacity font-bold whitespace-nowrap">x{count}</div>
                                     </div>
                                 );
                             })}
@@ -342,10 +345,7 @@ export default function PBBuilder() {
 
             {/* DOCK MÓVIL REINTEGRADO AL 100% */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-2 pb-4 z-50 flex items-center justify-between shadow-2xl">
-                <div className="flex flex-col px-3">
-                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Total</span>
-                    <span className={`text-lg font-black ${totalCartas === 50 ? 'text-green-500' : 'text-white'}`}>{totalCartas}/50</span>
-                </div>
+                <div className="flex flex-col px-3"><span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Total</span><span className={`text-lg font-black ${totalCartas === 50 ? 'text-green-500' : 'text-white'}`}>{totalCartas}/50</span></div>
                 <div className="flex gap-2 pr-2">
                     <button onClick={simularMano} className="bg-slate-800 text-white px-3 py-2 rounded-lg font-bold text-[10px] border border-slate-700 uppercase">Mano</button>
                     <button onClick={() => setShowMobileList(true)} className="bg-slate-800 text-white px-3 py-2 rounded-lg font-bold text-[10px] border border-slate-700 uppercase">Lista</button>
@@ -354,7 +354,7 @@ export default function PBBuilder() {
                 </div>
             </div>
 
-            {/* MODAL MANO DE PRUEBA REINTEGRADO AL 100% */}
+            {/* ✅ MODAL MANO DE PRUEBA (Corregido el Cierre) */}
             {manoPrueba.length > 0 && (
                 <div className="fixed inset-0 bg-black/95 z-[250] flex flex-col items-center justify-center p-4 backdrop-blur-xl animate-fade-in">
                     <h3 className="text-xl md:text-2xl font-black text-yellow-500 uppercase italic mb-8 tracking-widest">Mano Inicial de Prueba</h3>
@@ -367,7 +367,7 @@ export default function PBBuilder() {
                     </div>
                     <div className="mt-12 flex gap-4">
                         <button onClick={simularMano} className="bg-yellow-600 text-black px-8 py-3 rounded-xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95">Mulligan</button>
-                        <button onClick={() => setMazoPrueba([])} className="bg-slate-800 text-white px-8 py-3 rounded-xl font-black uppercase text-xs tracking-widest border border-white/10 active:scale-95">Cerrar</button>
+                        <button onClick={() => setManoPrueba([])} className="bg-slate-800 text-white px-8 py-3 rounded-xl font-black uppercase text-xs tracking-widest border border-white/10 active:scale-95">Cerrar</button>
                     </div>
                 </div>
             )}
@@ -419,7 +419,7 @@ export default function PBBuilder() {
                 </div>
             )}
 
-            {/* MODAL GUARDA REINTEGRADO AL 100% */}
+            {/* MODAL GUARDAR REINTEGRADO AL 100% */}
             {modalGuardarOpen && (
                 <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setModalGuardarOpen(false)}>
                     <div className="bg-slate-800 p-6 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl text-white" onClick={e => e.stopPropagation()}>
