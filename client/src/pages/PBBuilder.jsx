@@ -47,7 +47,7 @@ export default function PBBuilder() {
     const [cardToZoom, setCardToZoom] = useState(null);
     const [guardando, setGuardando] = useState(false);
 
-    // ✅ ESTADO PARA MANO DE PRUEBA (Corregido)
+    // ✅ ESTADOS NUEVOS
     const [manoPrueba, setManoPrueba] = useState([]);
 
     const statsForExport = useMemo(() => {
@@ -56,16 +56,17 @@ export default function PBBuilder() {
         return { counts };
     }, [mazo]);
 
-    // ✅ LÓGICA DE CURVA DE ORO (Corregida para PB)
+    // ✅ LÓGICA DE CURVA DE ORO REPARADA (Normalización de tipos y costes)
     const goldCurve = useMemo(() => {
         const curve = { 0: 0, 1: 0, 2: 0, 3: 0, "4+": 0 };
         mazo.forEach(c => {
-            // En PB el tipo es "Oro" (string)
-            if (c.type !== "Oro") {
-                const cost = parseInt(c.cost);
-                if (!isNaN(cost)) {
-                    if (cost >= 4) curve["4+"] += c.cantidad;
-                    else curve[cost] += c.cantidad;
+            const tipo = String(c.type || "").toLowerCase();
+            // Excluimos Oros del conteo de curva de costes
+            if (tipo !== "oro" && tipo !== "5") {
+                const costValue = parseInt(c.cost);
+                if (!isNaN(costValue)) {
+                    if (costValue >= 4) curve["4+"] += c.cantidad;
+                    else curve[costValue] += c.cantidad;
                 }
             }
         });
@@ -78,7 +79,6 @@ export default function PBBuilder() {
         mazo.forEach(c => {
             for (let i = 0; i < c.cantidad; i++) baraja.push(c);
         });
-        // Mezclado Fisher-Yates
         for (let i = baraja.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [baraja[i], baraja[j]] = [baraja[j], baraja[i]];
@@ -343,7 +343,6 @@ export default function PBBuilder() {
                 </div>
             </div>
 
-            {/* DOCK MÓVIL REINTEGRADO AL 100% */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-2 pb-4 z-50 flex items-center justify-between shadow-2xl">
                 <div className="flex flex-col px-3"><span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Total</span><span className={`text-lg font-black ${totalCartas === 50 ? 'text-green-500' : 'text-white'}`}>{totalCartas}/50</span></div>
                 <div className="flex gap-2 pr-2">
@@ -354,10 +353,10 @@ export default function PBBuilder() {
                 </div>
             </div>
 
-            {/* ✅ MODAL MANO DE PRUEBA (Corregido el Cierre) */}
+            {/* ✅ MODAL MANO DE PRUEBA (Cierre Garantizado) */}
             {manoPrueba.length > 0 && (
                 <div className="fixed inset-0 bg-black/95 z-[250] flex flex-col items-center justify-center p-4 backdrop-blur-xl animate-fade-in">
-                    <h3 className="text-xl md:text-2xl font-black text-yellow-500 uppercase italic mb-8 tracking-widest">Mano Inicial de Prueba</h3>
+                    <h3 className="text-xl md:text-2xl font-black text-yellow-500 uppercase italic mb-8 tracking-widest text-center">Mano Inicial de Prueba</h3>
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-8 gap-3 max-w-6xl px-4">
                         {manoPrueba.map((c, i) => (
                             <div key={i} className="animate-fade-in-up" style={{ animationDelay: `${i * 80}ms` }}>
@@ -366,13 +365,12 @@ export default function PBBuilder() {
                         ))}
                     </div>
                     <div className="mt-12 flex gap-4">
-                        <button onClick={simularMano} className="bg-yellow-600 text-black px-8 py-3 rounded-xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95">Mulligan</button>
-                        <button onClick={() => setManoPrueba([])} className="bg-slate-800 text-white px-8 py-3 rounded-xl font-black uppercase text-xs tracking-widest border border-white/10 active:scale-95">Cerrar</button>
+                        <button onClick={simularMano} className="bg-yellow-600 text-black px-8 py-3 rounded-xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all">Mulligan</button>
+                        <button onClick={() => setManoPrueba([])} className="bg-slate-800 text-white px-8 py-3 rounded-xl font-black uppercase text-xs tracking-widest border border-white/10 active:scale-95 transition-all">Cerrar</button>
                     </div>
                 </div>
             )}
 
-            {/* MODAL LISTA MÓVIL REINTEGRADO AL 100% */}
             {showMobileList && (
                 <div className="md:hidden fixed inset-0 z-[60] bg-black/80 flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
                     <div className="bg-slate-900 rounded-t-3xl h-[70vh] p-5 overflow-auto border-t border-slate-700 shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -402,7 +400,6 @@ export default function PBBuilder() {
                 </div>
             )}
 
-            {/* MODAL ZOOM REINTEGRADO AL 100% */}
             {cardToZoom && (
                 <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4 transition-all duration-300" onClick={() => setCardToZoom(null)}>
                     <button onClick={() => setCardToZoom(null)} className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-2xl z-[210] transition-all"><X size={24} strokeWidth={3} /></button>
@@ -419,7 +416,6 @@ export default function PBBuilder() {
                 </div>
             )}
 
-            {/* MODAL GUARDAR REINTEGRADO AL 100% */}
             {modalGuardarOpen && (
                 <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setModalGuardarOpen(false)}>
                     <div className="bg-slate-800 p-6 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl text-white" onClick={e => e.stopPropagation()}>
