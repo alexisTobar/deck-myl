@@ -93,10 +93,11 @@ export default function PBBuilder() {
     useEffect(() => {
         if (location.state?.deckToEdit) {
             const d = location.state.deckToEdit;
+            const isCloning = location.state?.isCloning;
             if (d.format === "primer_bloque") {
-                setNombreMazo(d.name);
-                setEditingDeckId(d._id);
-                setIsPublic(d.isPublic || false);
+                setNombreMazo(isCloning ? `Copia de ${d.name}` : d.name);
+                setEditingDeckId(isCloning ? null : d._id);
+                setIsPublic(isCloning ? false : (d.isPublic || false));
                 setMazo(d.cards.map(c => ({ ...c, cantidad: c.quantity || 1, imgUrl: getImg(c) })));
             }
         }
