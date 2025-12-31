@@ -216,11 +216,11 @@ export default function Community() {
                 <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-2 md:p-4" onClick={() => setSelectedDeck(null)}>
                     <div className="bg-slate-900 w-full max-w-6xl max-h-[95vh] rounded-[2.5rem] border border-white/10 flex flex-col md:flex-row overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
 
-                        {/* Izquierda: Visualización del mazo */}
-                        <div className="flex-1 flex flex-col overflow-hidden">
+                        {/* Izquierda: Visualización del mazo (Ancho completo en móvil, flexible en web) */}
+                        <div className="flex-[3] flex flex-col overflow-hidden h-full border-b md:border-b-0 md:border-r border-white/5">
                             <div className="p-6 md:p-8 border-b border-white/5 bg-slate-900/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <div>
-                                    <h2 className="text-3xl font-black text-white uppercase italic leading-none">{selectedDeck.name}</h2>
+                                    <h2 className="text-2xl md:text-3xl font-black text-white uppercase italic leading-none">{selectedDeck.name}</h2>
                                     <p className="text-orange-500 font-black text-sm uppercase mt-2 tracking-tighter">
                                         Por: @{selectedDeck.user?.username || selectedDeck.author?.username || selectedDeck.creator?.username || "Invocador"}
                                     </p>
@@ -237,7 +237,7 @@ export default function Community() {
                                     </button>
                                 </div>
                             </div>
-                            <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-black/20 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 custom-scrollbar">
+                            <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-black/20 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 custom-scrollbar min-h-0">
                                 {selectedDeck.cards.map((c, i) => (
                                     <div key={i} className="relative group">
                                         <img src={getImg(c)} className="w-full rounded-xl border border-white/5 group-hover:scale-105 transition-transform shadow-lg" alt={c.name} />
@@ -249,13 +249,13 @@ export default function Community() {
                             </div>
                         </div>
 
-                        {/* Derecha: Panel de Comentarios */}
-                        <div className="w-full md:w-85 bg-slate-800/50 border-l border-white/5 flex flex-col h-[45vh] md:h-auto">
+                        {/* Derecha: Panel de Comentarios (Ancho fijo en web) */}
+                        <div className="flex-1 min-w-[320px] md:max-w-[400px] bg-slate-800/30 flex flex-col h-[45vh] md:h-auto overflow-hidden">
                             <div className="p-5 border-b border-white/5 font-black text-xs uppercase flex items-center gap-2 text-orange-500 bg-slate-900/30">
                                 <MessageSquare size={18} /> Conversación ({selectedDeck.comments?.length || 0})
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
+                            <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar min-h-0">
                                 {selectedDeck.comments?.map((com, idx) => (
                                     <div key={com._id || idx} className="bg-black/30 p-4 rounded-2xl border border-white/5 relative group animate-fade-in">
                                         <div className="flex justify-between items-start mb-2">
