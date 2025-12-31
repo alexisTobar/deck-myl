@@ -47,7 +47,7 @@ export default function PBBuilder() {
     const [cardToZoom, setCardToZoom] = useState(null);
     const [guardando, setGuardando] = useState(false);
 
-    // ✅ ESTADOS NUEVOS
+    // ✅ ESTADO PARA MANO DE PRUEBA
     const [manoPrueba, setManoPrueba] = useState([]);
 
     const statsForExport = useMemo(() => {
@@ -56,12 +56,12 @@ export default function PBBuilder() {
         return { counts };
     }, [mazo]);
 
-    // ✅ LÓGICA DE CURVA DE ORO REPARADA (Normalización de tipos y costes)
+    // ✅ LÓGICA DE CURVA REPARADA: Ignora Oros y asegura números visibles
     const goldCurve = useMemo(() => {
         const curve = { 0: 0, 1: 0, 2: 0, 3: 0, "4+": 0 };
         mazo.forEach(c => {
             const tipo = String(c.type || "").toLowerCase();
-            // Excluimos Oros del conteo de curva de costes
+            // Los Oros NO entran en la curva porque son el recurso
             if (tipo !== "oro" && tipo !== "5") {
                 const costValue = parseInt(c.cost);
                 if (!isNaN(costValue)) {
@@ -298,18 +298,21 @@ export default function PBBuilder() {
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar bg-transparent">
 
-                    {/* ✅ CALCULADORA DE CURVA DE ORO VISUAL */}
+                    {/* ✅ CALCULADORA DE CURVA DE ORO VISUAL REPARADA */}
                     <div className="bg-slate-900/50 p-3 rounded-2xl border border-white/5 mb-4 shadow-inner">
                         <h4 className="text-[10px] font-black text-slate-500 uppercase mb-3 text-center tracking-widest italic">Curva de Invocación</h4>
                         <div className="flex items-end justify-between px-2 h-16 gap-1">
                             {Object.entries(goldCurve).map(([cost, count]) => {
-                                const maxCount = Math.max(...Object.values(goldCurve), 1);
-                                const height = (count / maxCount) * 100;
+                                const maxInCurve = Math.max(...Object.values(goldCurve), 1);
+                                const hP = (count / maxInCurve) * 100;
                                 return (
                                     <div key={cost} className="flex flex-col items-center flex-1 group relative">
-                                        <div style={{ height: `${height}%` }} className="w-full bg-gradient-to-t from-yellow-700 to-yellow-400 rounded-t-sm min-h-[2px] transition-all duration-500 shadow-[0_0_5px_rgba(234,179,8,0.2)]"></div>
+                                        <div
+                                            style={{ height: `${Math.max(hP, 2)}%` }}
+                                            className="w-full bg-yellow-500 rounded-t-sm transition-all duration-500 shadow-[0_0_8px_rgba(234,179,8,0.4)]"
+                                        ></div>
                                         <span className="text-[9px] font-black text-slate-400 mt-1">{cost}</span>
-                                        <div className="absolute -top-6 bg-yellow-600 text-black text-[8px] px-1 rounded opacity-0 group-hover:opacity-100 transition-opacity font-bold whitespace-nowrap">x{count}</div>
+                                        <div className="absolute -top-6 bg-yellow-600 text-black text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity font-black z-10 whitespace-nowrap shadow-xl">x{count}</div>
                                     </div>
                                 );
                             })}
@@ -388,9 +391,9 @@ export default function PBBuilder() {
                                             <span className="text-sm font-medium">{c.name}</span>
                                         </div>
                                         <div className="flex items-center gap-4 bg-slate-950 p-1.5 px-4 rounded-full border border-slate-800">
-                                            <button onClick={() => handleRemove(c.slug)} className="text-red-500 font-black"><Minus size={18} /></button>
+                                            <button onClick={() => handleRemove(c.slug)} className="text-red-500 font-black active:scale-90 transition-transform"><Minus size={18} /></button>
                                             <span className="font-black text-sm w-4 text-center">{c.cantidad}</span>
-                                            <button onClick={() => handleAdd(c)} className="text-green-500 font-black"><Plus size={18} /></button>
+                                            <button onClick={() => handleAdd(c)} className="text-green-500 font-black active:scale-90 transition-transform"><Plus size={18} /></button>
                                         </div>
                                     </div>
                                 ))}
