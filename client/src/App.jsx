@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Analytics } from '@vercel/analytics/react'; // ✅ 1. Importación agregada
 import Navbar from "./components/Navbar";
 import HomePortal from "./pages/Home";           
 import ImperioHome from "./pages/ImperioHome";   
@@ -42,6 +43,9 @@ function App() {
         {/* Redirección por defecto */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
+
+      {/* ✅ 2. Componente de rastreo agregado (fuera de Routes para que vea todo) */}
+      <Analytics /> 
     </BrowserRouter>
   );
 }
