@@ -10,6 +10,7 @@ export default function Community() {
     const [loading, setLoading] = useState(true);
     const [selectedDeck, setSelectedDeck] = useState(null);
     const [newComment, setNewComment] = useState("");
+    const [showMobileComments, setShowMobileComments] = useState(false); // ✅ Nuevo estado para móvil
     const navigate = useNavigate();
 
     const [activeFormat, setActiveFormat] = useState("imperio");
@@ -131,7 +132,7 @@ export default function Community() {
     return (
         <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1120] text-slate-900 dark:text-white pb-32 font-sans overflow-x-hidden transition-colors duration-500">
 
-            {/* --- HEADER --- */}
+            {/* --- HEADER RESPONSIVO --- */}
             <div className="bg-white/70 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 sticky top-0 z-30 px-4 py-3 md:px-6 md:py-4">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="flex items-center gap-3">
@@ -151,6 +152,7 @@ export default function Community() {
             </div>
 
             <div className="max-w-7xl mx-auto px-4 mt-8 md:mt-16">
+                
                 {/* --- PODIO --- */}
                 {topDecks.length > 0 ? (
                     <div className="mb-20 md:mb-32">
@@ -167,9 +169,7 @@ export default function Community() {
                         </div>
                     </div>
                 ) : (
-                    <div className="text-center py-20 bg-white dark:bg-slate-900/40 rounded-[2.5rem] border border-slate-200 dark:border-white/5 mb-10">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 italic px-4">No hay estrategias registradas para este formato aún</p>
-                    </div>
+                    <div className="text-center py-20 bg-white dark:bg-slate-900/40 rounded-[2.5rem] border border-slate-200 dark:border-white/5 mb-10 text-xs font-black uppercase tracking-widest opacity-30 italic">La arena espera nuevos mazos...</div>
                 )}
 
                 {/* --- RECIENTES --- */}
@@ -186,48 +186,56 @@ export default function Community() {
                 </div>
             </div>
 
-            {/* --- MODAL DETALLE (ESTRUCTURA CORREGIDA PARA SCROLL) --- */}
+            {/* --- MODAL DETALLE (CORREGIDO PARA MÓVIL) --- */}
             {selectedDeck && (
-                <div className="fixed inset-0 z-[110] bg-slate-950/95 md:backdrop-blur-md flex items-end md:items-center justify-center" onClick={() => setSelectedDeck(null)}>
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-7xl h-[95vh] md:h-[90vh] rounded-t-[2.5rem] md:rounded-[2.5rem] border-x border-t md:border border-slate-200 dark:border-white/10 flex flex-col md:flex-row overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 z-[110] bg-slate-950/95 md:backdrop-blur-md flex items-end md:items-center justify-center transition-all" onClick={() => { setSelectedDeck(null); setShowMobileComments(false); }}>
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-7xl h-[95vh] md:h-auto md:max-h-[92vh] rounded-t-[2.5rem] md:rounded-[2.5rem] border-x border-t md:border border-slate-200 dark:border-white/10 flex flex-col md:flex-row overflow-hidden shadow-2xl transition-all" onClick={e => e.stopPropagation()}>
 
-                        {/* Columna Izquierda: Cartas (Scroll Independiente) */}
+                        {/* Izquierda: Cartas (Scroll Independiente) */}
                         <div className="flex-[3] flex flex-col min-h-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-white/5">
-                            {/* Cabecera Interna Fija */}
                             <div className="p-5 md:p-8 border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-900/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 flex-shrink-0">
                                 <div className="min-w-0">
                                     <h2 className="text-xl md:text-3xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter truncate">{selectedDeck.name}</h2>
-                                    <p className="text-slate-400 font-bold text-[9px] md:text-[10px] uppercase mt-1 tracking-widest">Por: @{selectedDeck.user?.username || "Invocador"}</p>
+                                    <p className="text-slate-400 font-bold text-[9px] md:text-[10px] uppercase mt-1 tracking-widest leading-none truncate">Por: @{selectedDeck.user?.username || "Invocador"}</p>
                                 </div>
                                 <div className="flex items-center gap-2 w-full md:w-auto">
+                                    {/* ✅ Botón de Comentarios para Móvil */}
+                                    <button onClick={() => setShowMobileComments(!showMobileComments)} className="md:hidden flex-1 bg-slate-200 dark:bg-slate-800 text-blue-600 p-2.5 rounded-xl font-black text-[10px] uppercase flex items-center justify-center gap-2 border border-blue-500/20 shadow-sm transition-all active:scale-95">
+                                        <MessageSquare size={16} /> Comentarios
+                                    </button>
                                     <button onClick={() => handleClone(selectedDeck)} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-black uppercase text-[10px] shadow-lg active:scale-95 transition-all"><Copy size={14} /> Clonar</button>
-                                    <button onClick={() => setSelectedDeck(null)} className="p-2.5 bg-slate-200 dark:bg-slate-800 rounded-xl text-slate-500 hover:bg-red-500 transition-colors"><X size={18} /></button>
+                                    <button onClick={() => { setSelectedDeck(null); setShowMobileComments(false); }} className="p-2.5 bg-slate-200 dark:bg-slate-800 rounded-xl text-slate-500 hover:bg-red-500 hover:text-white transition-all"><X size={18} /></button>
                                 </div>
                             </div>
                             
-                            {/* ✅ CONTENEDOR DE CARTAS CON SCROLL GARANTIZADO */}
-                            <div className="flex-1 overflow-y-auto p-4 md:p-10 bg-slate-50/50 dark:bg-black/20 custom-scrollbar">
+                            <div className="flex-1 overflow-y-auto p-4 md:p-10 bg-slate-50/50 dark:bg-black/20 custom-scrollbar overflow-x-hidden">
                                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 md:gap-6">
                                     {selectedDeck.cards.map((c, i) => (
-                                        <div key={i} className="relative group">
-                                            <img src={getImg(c)} className="w-full rounded-xl border border-slate-200 dark:border-white/5 shadow-sm transition-transform group-hover:scale-105" alt={c.name} />
-                                            <div className="absolute -bottom-1 -right-1 bg-blue-600 text-white w-6 h-6 flex items-center justify-center text-[10px] font-black rounded-lg shadow-lg border-2 border-white dark:border-slate-900">x{c.quantity}</div>
+                                        <div key={i} className="relative group animate-in fade-in zoom-in-95">
+                                            <div className="rounded-xl border border-slate-200 dark:border-white/5 shadow-sm transition-all overflow-hidden">
+                                                <img src={getImg(c)} className="w-full h-auto block" alt={c.name} />
+                                                <div className="absolute -bottom-1 -right-1 bg-blue-600 text-white w-6 h-6 flex items-center justify-center text-[10px] font-black rounded-lg shadow-lg border-2 border-white dark:border-slate-900">x{c.quantity}</div>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Columna Derecha: Comentarios (Scroll Independiente) */}
-                        <div className="flex-[1.2] md:max-w-[400px] bg-white dark:bg-slate-800/20 flex flex-col min-h-0">
-                            <div className="p-5 border-b border-slate-200 dark:border-white/5 font-black text-[10px] uppercase flex items-center gap-2 text-blue-600 bg-slate-50 dark:bg-slate-900/30 flex-shrink-0">
-                                <MessageSquare size={16} /> Conversación ({selectedDeck.comments?.length || 0})
+                        {/* ✅ Columna Derecha: Comentarios (Adaptado para Móvil como Cajón/Drawer) */}
+                        <div className={`
+                            flex-[1.2] md:max-w-[400px] bg-white dark:bg-slate-800/20 flex flex-col min-h-0 border-t md:border-t-0 md:border-l border-slate-200 dark:border-white/5 
+                            fixed md:relative bottom-0 left-0 w-full h-[65vh] md:h-auto z-[120] md:z-auto transition-transform duration-300 transform
+                            ${showMobileComments ? 'translate-y-0 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]' : 'translate-y-full md:translate-y-0'}
+                        `}>
+                            <div className="p-5 border-b border-slate-200 dark:border-white/5 font-black text-[10px] uppercase flex items-center justify-between text-blue-600 bg-slate-50 dark:bg-slate-900/30 flex-shrink-0">
+                                <div className="flex items-center gap-2"><MessageSquare size={16} /> Conversación ({selectedDeck.comments?.length || 0})</div>
+                                <button onClick={() => setShowMobileComments(false)} className="md:hidden p-1 bg-slate-200 dark:bg-slate-800 rounded-lg text-slate-500"><X size={18} /></button>
                             </div>
                             
-                            {/* Lista de Comentarios con Scroll */}
-                            <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-white dark:bg-transparent custom-scrollbar">
+                            <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-white dark:bg-transparent min-h-0 custom-scrollbar">
                                 {selectedDeck.comments?.map((com, idx) => (
-                                    <div key={com._id || idx} className="bg-slate-50 dark:bg-black/30 p-4 rounded-2xl border border-slate-200 dark:border-white/5 transition-all hover:border-blue-500/30">
+                                    <div key={com._id || idx} className="bg-slate-50 dark:bg-black/30 p-4 rounded-2xl border border-slate-200 dark:border-white/5 transition-all">
                                         <div className="flex justify-between items-start mb-1">
                                             <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest">@{com.username}</p>
                                             {isAdmin && <button onClick={() => handleDeleteComment(com._id)} className="text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={12} /></button>}
@@ -243,23 +251,22 @@ export default function Community() {
                                 )}
                             </div>
 
-                            {/* Input Fijo al Fondo */}
                             <div className="p-5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-white/5 flex-shrink-0">
                                 {token ? (
                                     <div className="flex gap-2">
                                         <input
                                             type="text"
-                                            placeholder="Escribe un comentario..."
+                                            placeholder="Comentar..."
                                             value={newComment}
                                             onChange={(e) => setNewComment(e.target.value)}
                                             onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
-                                            className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-blue-500 transition-all dark:text-white shadow-sm"
+                                            className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-[11px] outline-none focus:border-blue-500 transition-all dark:text-white shadow-sm"
                                         />
                                         <button onClick={handleAddComment} className="bg-blue-600 p-2.5 rounded-xl text-white shadow-lg active:scale-95 transition-transform"><Send size={18} /></button>
                                     </div>
                                 ) : (
                                     <div className="text-center cursor-pointer group" onClick={() => navigate("/login")}>
-                                        <p className="text-[9px] font-black text-slate-400 group-hover:text-blue-600 transition-colors uppercase italic tracking-widest">Inicia sesión para participar</p>
+                                        <p className="text-[9px] font-black text-slate-400 group-hover:text-blue-600 transition-colors uppercase italic tracking-widest">Inicia sesión para comentar</p>
                                     </div>
                                 )}
                             </div>
