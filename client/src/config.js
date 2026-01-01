@@ -1,6 +1,6 @@
 // client/src/config.js
-const BACKEND_URL = window.location.hostname === "localhost" 
-    ? "http://localhost:4000" 
-    : "https://deck-myl.onrender.com";
+
+// FORZAMOS la URL de Render para que no tenga opción de fallar.
+const BACKEND_URL = "https://deck-myl.onrender.com";
 
 export default BACKEND_URL;
