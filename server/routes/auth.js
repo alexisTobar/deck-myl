@@ -7,7 +7,7 @@ const nodemailer = require('nodemailer');
 const { OAuth2Client } = require('google-auth-library');
 const verifyToken = require('../middleware/verifyToken');
 
-const JWT_SECRET = "clave_secreta_mitos_leyendas_123";
+const JWT_SECRET = "supersecreto_deckmyl_12345";
 
 // ⚠️ ID REAL DE GOOGLE (Extraído de tus logs)
 const client = new OAuth2Client("570011480834-rs6o3vggmdovvouj8gi9gi4p0l2mnqdm.apps.googleusercontent.com");
