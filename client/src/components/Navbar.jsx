@@ -96,14 +96,14 @@ export default function Navbar() {
   return (
     <>
       {/* --- NAVBAR PRINCIPAL --- */}
-      <nav className={`sticky top-0 z-[100] w-full border-b border-white/5 bg-slate-950/80 backdrop-blur-xl transition-all duration-300 ${isBuilder ? 'py-1' : 'py-2'}`}>
+      <nav className={`sticky top-0 z-[100] w-full border-b border-white/5 bg-slate-900/20 backdrop-blur-xl transition-all duration-300 ${isBuilder ? 'py-1' : 'py-2'}`}>
         <div className="max-w-[1400px] mx-auto px-4 md:px-10 flex justify-between items-center">
           
           <Link to="/" className="group flex items-center transition-transform hover:scale-105 active:scale-95 py-1">
             <img 
-              src="https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png" 
+              src="https://raw.githubusercontent.com/alexisTobar/deck-myl-assets/refs/heads/main/forja.png" 
               alt="MitosApp Logo" 
-              className="h-12 md:h-16 lg:h-20 w-auto object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.15)]"
+              className="h-12 md:h-32 lg:h-30 w-auto object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.15)]"
             />
           </Link>
 

@@ -187,7 +187,7 @@ export default function ImperioBuilder() {
                 img.onload = () => resolve(img); img.onerror = () => resolve(null);
                 img.src = url;
             });
-            const logo = await loadImg("https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png");
+            const logo = await loadImg("https://raw.githubusercontent.com/alexisTobar/deck-myl-assets/refs/heads/main/forja.png");
             if (logo) {
                 ctx.save(); ctx.globalAlpha = 0.04;
                 ctx.drawImage(logo, canvas.width/2 - 350, canvas.height/2 - 350, 700, 700);

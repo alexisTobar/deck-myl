@@ -176,7 +176,7 @@ export default function PBBuilder() {
                 img.onload = () => resolve(img); img.onerror = () => resolve(null);
                 img.src = url;
             });
-            const logoUrl = "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png";
+            const logoUrl = "https://raw.githubusercontent.com/alexisTobar/deck-myl-assets/refs/heads/main/forja.png";
             const logo = await loadImg(logoUrl);
             if (logo) {
                 ctx.save(); ctx.globalAlpha = 0.04;

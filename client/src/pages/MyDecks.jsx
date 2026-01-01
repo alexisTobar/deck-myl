@@ -119,7 +119,7 @@ export default function MyDecks() {
                 img.src = url;
             });
 
-            const logoUrl = "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/refs/heads/main/logo.png";
+            const logoUrl = "https://raw.githubusercontent.com/alexisTobar/deck-myl-assets/refs/heads/main/forja.png";
             const logo = await loadImg(logoUrl);
 
             if (logo) {

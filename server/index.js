@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const path = require('path'); // ◄--- IMPORTANTE: Necesario para rutas de archivos
+const path = require('path');
 require('dotenv').config();
 
 // --- IMPORTAR RUTAS ---
@@ -15,11 +15,13 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // --- MIDDLEWARES ---
+// ✅ MEJORA: Se añadió localhost:5174 a la lista de orígenes permitidos
 app.use(cors({
     origin: [
-        "http://localhost:5173",      // Tu Frontend Local (Vite)
-        "http://localhost:3000",      // Por si usas Create React App
-        "https://deck-myl.vercel.app" // Tu Frontend en Producción
+        "http://localhost:5173",      // Frontend Local 1
+        "http://localhost:5174",      // ✅ Tu puerto actual según el error de consola
+        "http://localhost:3000",      
+        "https://deck-myl.vercel.app" // Producción
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -28,9 +30,7 @@ app.use(cors({
 
 app.use(express.json());
 
-// 👇👇👇 AQUÍ ESTÁ LA MAGIA PARA LAS IMÁGENES 👇👇👇
-// Esto le dice al servidor: "Cuando pidan algo que empiece con /uploads, 
-// busca el archivo en la carpeta física 'uploads' de este proyecto".
+// --- SERVIR IMÁGENES ESTÁTICAS ---
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // --- RUTAS API ---
