@@ -15,14 +15,26 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // --- MIDDLEWARES ---
+// ✅ MEJORA DEFINITIVA PARA CORS: Acepta localhost y cualquier rama de Vercel
+const allowedOrigins = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://deck-myl.vercel.app",
+    "https://deck-aon646qwz-alexis-projects-a11696ca.vercel.app"
+];
+
 app.use(cors({
-    origin: [
-        "http://localhost:5173",       // Frontend Local 1
-        "http://localhost:5174",       // Frontend Local 2
-        "http://localhost:3000",      
-        "https://deck-myl.vercel.app", // Producción Vercel
-        "https://deck-aon646qwz-alexis-projects-a11696ca.vercel.app" 
-    ],
+    origin: function (origin, callback) {
+        // Permitir peticiones sin origin (como Postman o apps móviles)
+        if (!origin) return callback(null, true);
+        
+        // Si el origin está en la lista o termina en .vercel.app, permitir
+        if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+            callback(null, true);
+        } else {
+            callback(new Error('No permitido por CORS'));
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'auth-token'] 
@@ -46,11 +58,10 @@ app.get('/', (req, res) => {
 // --- CONEXIÓN A BASE DE DATOS ---
 mongoose.set('strictQuery', false);
 
-// ✅ Verificación de seguridad para la URI
 const mongoURI = process.env.MONGO_URI;
 
 if (!mongoURI) {
-    console.error('🔴 ERROR: La variable MONGO_URI no está definida en el archivo .env');
+    console.error('🔴 ERROR: La variable MONGO_URI no está definida');
 } else {
     mongoose.connect(mongoURI)
         .then(() => console.log('🟢 Base de Datos Conectada (Atlas)'))
