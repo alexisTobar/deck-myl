@@ -9,7 +9,7 @@ const verifyToken = require('../middleware/verifyToken');
 
 const JWT_SECRET = "supersecreto_deckmyl_12345";
 
-// ⚠️ ID REAL DE GOOGLE (Extraído de tus logs)
+// ⚠️ ID REAL DE GOOGLE 
 const client = new OAuth2Client("570011480834-rs6o3vggmdovvouj8gi9gi4p0l2mnqdm.apps.googleusercontent.com");
 
 // ==========================================
@@ -50,8 +50,6 @@ router.post('/login', async (req, res) => {
         
         if (!user) return res.status(400).json({ error: "Email o contraseña incorrectos" });
 
-        // ✅ MEJORA: Solo bloquea si el usuario NO TIENE contraseña definida (ej. solo Google)
-        // Pero si ya hizo el proceso de recuperación, podrá entrar manualmente.
         if (!user.password || user.password === "") {
             return res.status(400).json({ error: "Esta cuenta no tiene contraseña manual. Usa '¿La olvidaste?' para crear una." });
         }
@@ -114,19 +112,14 @@ router.post('/google-register', async (req, res) => {
 });
 
 // ==========================================
-// 🔑 4. RECUPERACIÓN DE CONTRASEÑA (SISTEMA ABIERTO)
+// 🔑 4. RECUPERACIÓN DE CONTRASEÑA
 // ==========================================
 
-// A. Solicitar Enlace de Cambio
 router.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
     try {
         const user = await User.findOne({ email: email.toLowerCase() });
-        
         if (!user) return res.status(404).json({ msg: "El correo no está registrado" });
-
-        // ✅ MEJORA: Ya no bloqueamos a los usuarios de Google. 
-        // Cualquiera puede generar una contraseña manual ahora.
 
         const token = crypto.randomBytes(20).toString('hex');
         user.resetPasswordToken = token;
@@ -141,7 +134,6 @@ router.post('/forgot-password', async (req, res) => {
             }
         });
 
-        // URL DE PRODUCCIÓN (Vercel)
         const resetUrl = `https://deck-aon646qwz-alexis-projects-a11696ca.vercel.app/reset-password/${token}`;
 
         const mailOptions = {
@@ -151,23 +143,27 @@ router.post('/forgot-password', async (req, res) => {
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
                     <h2 style="color: #2563eb;">Acceso a ForjaDeck</h2>
-                    <p>Has solicitado establecer una nueva contraseña para tu cuenta.</p>
-                    <p>Al hacer clic en el botón, podrás crear una clave para entrar sin depender de Google:</p>
+                    <p>Has solicitado establecer una nueva contraseña.</p>
                     <a href="${resetUrl}" style="display: inline-block; background: #2563eb; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold;">Establecer Nueva Contraseña</a>
-                    <p style="color: #666; font-size: 12px; margin-top: 20px;">Este enlace expirará en 1 hora.</p>
                 </div>
             `
         };
 
-        await transporter.sendMail(mailOptions);
-        res.json({ msg: "Correo enviado con éxito" });
+        // ✅ MEJORA: Captura de error específica para Nodemailer
+        try {
+            await transporter.sendMail(mailOptions);
+            res.json({ msg: "Correo enviado con éxito" });
+        } catch (mailError) {
+            console.error("🔴 Error detallado de Nodemailer:", mailError);
+            res.status(500).json({ msg: "Error al enviar el correo", details: mailError.message });
+        }
 
     } catch (error) {
+        console.error("🔴 Error en forgot-password:", error);
         res.status(500).json({ msg: "Error al procesar la solicitud" });
     }
 });
 
-// B. Procesar el Cambio Final
 router.post('/reset-password/:token', async (req, res) => {
     const { password } = req.body;
     try {
@@ -180,13 +176,11 @@ router.post('/reset-password/:token', async (req, res) => {
 
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(password, salt);
-
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
 
         await user.save();
         res.json({ msg: "Contraseña actualizada exitosamente" });
-
     } catch (error) {
         res.status(500).json({ msg: "Error al actualizar contraseña" });
     }
@@ -213,7 +207,6 @@ router.put('/role/:id', verifyToken, async (req, res) => {
             { role: role },
             { new: true }
         ).select('-password');
-
         res.json(user);
     } catch (error) {
         res.status(500).json({ message: "Error al actualizar usuario" });
