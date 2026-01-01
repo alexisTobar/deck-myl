@@ -2,12 +2,12 @@ const router = require('express').Router();
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto'); // Para generar tokens
+const nodemailer = require('nodemailer'); // Para enviar correos
 const { OAuth2Client } = require('google-auth-library');
-const verifyToken = require('../middleware/verifyToken'); // Asegúrate de tener este middleware
+const verifyToken = require('../middleware/verifyToken');
 
 const JWT_SECRET = "clave_secreta_mitos_leyendas_123";
-
-// ⚠️ ID REAL DE GOOGLE (Extraído de tus logs)
 const client = new OAuth2Client("570011480834-rs6o3vggmdovvouj8gi9gi4p0l2mnqdm.apps.googleusercontent.com");
 
 // ==========================================
@@ -63,7 +63,7 @@ router.post('/login', async (req, res) => {
 });
 
 // ==========================================
-// 3. GOOGLE VERIFY & REGISTER (Tus rutas actuales)
+// 3. GOOGLE VERIFY & REGISTER
 // ==========================================
 router.post('/google', async (req, res) => {
     const { token } = req.body;
@@ -106,13 +106,69 @@ router.post('/google-register', async (req, res) => {
 });
 
 // ==========================================
-// 🛡️ NUEVAS RUTAS: ADMINISTRACIÓN (Dashboard)
+// 🔑 4. RECUPERACIÓN DE CONTRASEÑA (NUEVO)
 // ==========================================
+router.post('/forgot-password', async (req, res) => {
+    const { email } = req.body;
+    try {
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ msg: "Correo no registrado" });
 
-// 1. Obtener todos los usuarios registrados
+        const token = crypto.randomBytes(20).toString('hex');
+        user.resetPasswordToken = token;
+        user.resetPasswordExpires = Date.now() + 3600000;
+        await user.save();
+
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
+
+        const resetUrl = `https://deck-aon646qwz-alexis-projects-a11696ca.vercel.app/reset-password/${token}`;
+
+        const mailOptions = {
+            to: user.email,
+            from: 'ForjaDeck <noreply@forjadeck.com>',
+            subject: 'Cambio de Contraseña',
+            html: `<p>Haz clic para cambiar tu clave: <a href="${resetUrl}">${resetUrl}</a></p>`
+        };
+
+        await transporter.sendMail(mailOptions);
+        res.json({ msg: "Correo enviado" });
+    } catch (error) {
+        res.status(500).json({ msg: "Error al enviar el correo" });
+    }
+});
+
+router.post('/reset-password/:token', async (req, res) => {
+    const { password } = req.body;
+    try {
+        const user = await User.findOne({
+            resetPasswordToken: req.params.token,
+            resetPasswordExpires: { $gt: Date.now() }
+        });
+        if (!user) return res.status(400).json({ msg: "Token inválido o expirado" });
+
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+
+        await user.save();
+        res.json({ msg: "Contraseña actualizada" });
+    } catch (error) {
+        res.status(500).json({ msg: "Error al actualizar" });
+    }
+});
+
+// ==========================================
+// 🛡️ ADMINISTRACIÓN
+// ==========================================
 router.get('/all', verifyToken, async (req, res) => {
     try {
-        // Traemos todos los campos excepto el password
         const users = await User.find().select('-password').sort({ createdAt: -1 });
         res.json(users);
     } catch (error) {
@@ -120,16 +176,10 @@ router.get('/all', verifyToken, async (req, res) => {
     }
 });
 
-// 2. Cambiar rol o Banear usuario
 router.put('/role/:id', verifyToken, async (req, res) => {
     try {
-        const { role } = req.body; // Ejemplo: "admin", "user", o "banned"
-        const user = await User.findByIdAndUpdate(
-            req.params.id,
-            { role: role },
-            { new: true }
-        ).select('-password');
-
+        const { role } = req.body;
+        const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true }).select('-password');
         res.json(user);
     } catch (error) {
         res.status(500).json({ message: "Error al actualizar usuario" });
