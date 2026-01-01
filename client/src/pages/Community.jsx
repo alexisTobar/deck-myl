@@ -1,8 +1,9 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import BACKEND_URL from "../config";
-// ✅ Iconos Lucide para mantener la estética
-import { Trophy, Flame, Copy, X, Heart, ExternalLink, ShieldCheck, Star, Layout, Globe, Users, MessageSquare, Send, Trash2 } from "lucide-react";
+import { 
+    Trophy, Flame, Copy, X, Heart, Globe, MessageSquare, Send, Trash2, ArrowRight 
+} from "lucide-react";
 
 export default function Community() {
     const [decks, setDecks] = useState([]);
@@ -11,10 +12,8 @@ export default function Community() {
     const [newComment, setNewComment] = useState("");
     const navigate = useNavigate();
 
-    // Filtro activo inicial
     const [activeFormat, setActiveFormat] = useState("imperio");
 
-    // Usuario actual para el sistema de likes
     const token = localStorage.getItem("token");
     const user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null;
     const userId = user?.id || user?._id;
@@ -38,7 +37,6 @@ export default function Community() {
         }
     };
 
-    // ✅ Lógica para enviar comentarios
     const handleAddComment = async () => {
         if (!newComment.trim() || !token) return;
         try {
@@ -58,7 +56,6 @@ export default function Community() {
         }
     };
 
-    // ✅ Lógica para eliminar comentarios (Solo Admin)
     const handleDeleteComment = async (commentId) => {
         if (!isAdmin) return;
         try {
@@ -102,7 +99,6 @@ export default function Community() {
         }
     };
 
-    // ✅ LÓGICA DE CLONACIÓN
     const handleClone = (deck) => {
         const path = deck.format === 'primer_bloque' ? '/primer-bloque/builder' : '/imperio/builder';
         navigate(path, { state: { deckToEdit: deck, isCloning: true } });
@@ -127,129 +123,146 @@ export default function Community() {
     }, [filteredDecks]);
 
     if (loading) return (
-        <div className="min-h-screen bg-[#0B1120] flex items-center justify-center">
-            <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1120] flex items-center justify-center">
+            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-[#0B1120] text-white pb-32 font-sans overflow-x-hidden">
+        <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1120] text-slate-900 dark:text-white pb-32 font-sans overflow-x-hidden transition-colors duration-500">
 
             {/* --- HEADER --- */}
-            <div className="bg-slate-900/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-30 px-6 py-4 shadow-2xl">
+            <div className="bg-white/70 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 sticky top-0 z-30 px-4 py-3 md:px-6 md:py-4">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="flex items-center gap-4">
-                        <div className="p-2 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg shadow-lg">
-                            <span className="text-2xl text-white font-bold">⚔️</span>
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20">
+                            <Globe size={18} className="text-white" />
                         </div>
-                        <h1 className="text-2xl font-black text-white tracking-tighter uppercase italic">
-                            La Arena <span className="text-orange-500">Global</span>
+                        <h1 className="text-lg md:text-xl font-black tracking-tighter uppercase italic">
+                            La Arena <span className="text-blue-600">Global</span>
                         </h1>
                     </div>
 
-                    <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
-                        <button onClick={() => setActiveFormat("imperio")} className={`px-6 py-2 rounded-lg text-xs font-black transition-all ${activeFormat === "imperio" ? "bg-orange-600 text-white" : "text-slate-500 hover:text-white"}`}>🏛️ IMPERIO</button>
-                        <button onClick={() => setActiveFormat("primer_bloque")} className={`px-6 py-2 rounded-lg text-xs font-black transition-all ${activeFormat === "primer_bloque" ? "bg-yellow-600 text-black" : "text-slate-500 hover:text-white"}`}>📜 PRIMER BLOQUE</button>
+                    <div className="flex w-full md:w-auto bg-slate-100 dark:bg-black/40 p-1 rounded-2xl border border-slate-200 dark:border-white/5">
+                        <button onClick={() => setActiveFormat("imperio")} className={`flex-1 md:flex-none px-4 md:px-6 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all ${activeFormat === "imperio" ? "bg-blue-600 text-white shadow-md" : "text-slate-500 hover:text-slate-800 dark:hover:text-white"}`}>🏛️ IMPERIO</button>
+                        <button onClick={() => setActiveFormat("primer_bloque")} className={`flex-1 md:flex-none px-4 md:px-6 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all ${activeFormat === "primer_bloque" ? "bg-blue-600 text-white shadow-md" : "text-slate-500 hover:text-slate-800 dark:hover:text-white"}`}>📜 PB</button>
                     </div>
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 mt-12">
+            <div className="max-w-7xl mx-auto px-4 mt-8 md:mt-16">
                 {/* --- PODIO --- */}
                 {topDecks.length > 0 ? (
-                    <div className="mb-24">
-                        <h2 className="text-center text-3xl font-black mb-12 flex flex-col items-center justify-center gap-2 text-white uppercase italic">
-                            <Trophy size={40} className="text-yellow-500 animate-bounce" />
-                            Salón de la Fama
-                        </h2>
-                        <div className="flex flex-col md:flex-row items-center md:items-end justify-center gap-6 md:gap-8">
-                            {topDecks[1] && <PodiumCard deck={topDecks[1]} rank={2} userId={userId} onLike={handleLike} onClick={() => setSelectedDeck(topDecks[1])} getImg={getImg} className="order-2 md:order-1" />}
-                            {topDecks[0] && <PodiumCard deck={topDecks[0]} rank={1} userId={userId} onLike={handleLike} onClick={() => setSelectedDeck(topDecks[0])} getImg={getImg} className="order-1 md:order-2" isWinner />}
-                            {topDecks[2] && <PodiumCard deck={topDecks[2]} rank={3} userId={userId} onLike={handleLike} onClick={() => setSelectedDeck(topDecks[2])} getImg={getImg} className="order-3 md:order-3" />}
+                    <div className="mb-20 md:mb-32">
+                        <div className="flex flex-col items-center mb-10">
+                            <Trophy size={28} className="text-blue-600 mb-2" />
+                            <h2 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-center">Invocadores <span className="text-blue-600">Legendarios</span></h2>
+                            <div className="h-1 w-10 bg-blue-600 rounded-full mt-2"></div>
+                        </div>
+                        
+                        <div className="flex flex-col md:flex-row items-center md:items-end justify-center gap-6 md:gap-0">
+                            {topDecks[1] && <RankingPodiumItem deck={topDecks[1]} rank={2} color="bg-slate-400 dark:bg-slate-700" height="h-56 md:h-64" userId={userId} onLike={handleLike} onClick={() => setSelectedDeck(topDecks[1])} getImg={getImg} />}
+                            {topDecks[0] && <RankingPodiumItem deck={topDecks[0]} rank={1} color="bg-blue-600" height="h-64 md:h-80" userId={userId} onLike={handleLike} onClick={() => setSelectedDeck(topDecks[0])} getImg={getImg} isWinner />}
+                            {topDecks[2] && <RankingPodiumItem deck={topDecks[2]} rank={3} color="bg-orange-500 dark:bg-orange-800" height="h-48 md:h-56" userId={userId} onLike={handleLike} onClick={() => setSelectedDeck(topDecks[2])} getImg={getImg} />}
                         </div>
                     </div>
                 ) : (
-                    <div className="text-center py-20 opacity-50 bg-slate-800/20 rounded-[3rem] border border-slate-800 mb-10 uppercase font-black italic">No hay desafíos registrados aún</div>
+                    <div className="text-center py-20 bg-white dark:bg-slate-900/40 rounded-[2.5rem] border border-slate-200 dark:border-white/5 mb-10">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 italic px-4">No hay estrategias registradas para este formato aún</p>
+                    </div>
                 )}
 
                 {/* --- RECIENTES --- */}
-                <h2 className="text-2xl font-black mb-8 flex items-center gap-3 uppercase italic">
-                    <Flame className="text-orange-500" /> Estrategias Recientes
-                </h2>
+                <div className="flex items-center justify-between mb-8 border-b border-slate-200 dark:border-white/5 pb-4">
+                    <h2 className="text-lg md:text-xl font-black flex items-center gap-3 uppercase italic tracking-tighter">
+                        <Flame className="text-blue-600" size={18} /> Estrategias <span className="text-blue-600">Recientes</span>
+                    </h2>
+                </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
                     {recentDecks.map(deck => (
                         <StandardCard key={deck._id} deck={deck} userId={userId} onLike={handleLike} onClick={() => setSelectedDeck(deck)} getImg={getImg} />
                     ))}
                 </div>
             </div>
 
-            {/* --- MODAL DETALLE RESPONSIVO CORREGIDO --- */}
+            {/* --- MODAL DETALLE (ESTRUCTURA CORREGIDA PARA SCROLL) --- */}
             {selectedDeck && (
-                <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-2 md:p-4" onClick={() => setSelectedDeck(null)}>
-                    <div className="bg-slate-900 w-full max-w-6xl h-full max-h-[92vh] md:max-h-[95vh] rounded-[2rem] md:rounded-[2.5rem] border border-white/10 flex flex-col md:flex-row overflow-hidden shadow-2xl animate-scale-up" onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 z-[110] bg-slate-950/95 md:backdrop-blur-md flex items-end md:items-center justify-center" onClick={() => setSelectedDeck(null)}>
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-7xl h-[95vh] md:h-[90vh] rounded-t-[2.5rem] md:rounded-[2.5rem] border-x border-t md:border border-slate-200 dark:border-white/10 flex flex-col md:flex-row overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
 
-                        {/* Izquierda: Cartas (Scroll independiente) */}
-                        <div className="flex-[3] flex flex-col overflow-hidden h-[50%] md:h-full border-b md:border-b-0 md:border-r border-white/5">
-                            <div className="p-4 md:p-8 border-b border-white/5 bg-slate-900/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4 flex-shrink-0">
-                                <div className="min-w-0 flex-1">
-                                    <h2 className="text-xl md:text-3xl font-black text-white uppercase italic leading-none truncate">{selectedDeck.name}</h2>
-                                    <p className="text-orange-500 font-black text-[10px] md:text-sm uppercase mt-1 md:mt-2 tracking-tighter truncate">Por: @{selectedDeck.user?.username || "Invocador"}</p>
+                        {/* Columna Izquierda: Cartas (Scroll Independiente) */}
+                        <div className="flex-[3] flex flex-col min-h-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-white/5">
+                            {/* Cabecera Interna Fija */}
+                            <div className="p-5 md:p-8 border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-900/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 flex-shrink-0">
+                                <div className="min-w-0">
+                                    <h2 className="text-xl md:text-3xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter truncate">{selectedDeck.name}</h2>
+                                    <p className="text-slate-400 font-bold text-[9px] md:text-[10px] uppercase mt-1 tracking-widest">Por: @{selectedDeck.user?.username || "Invocador"}</p>
                                 </div>
-                                <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
-                                    <button onClick={() => handleClone(selectedDeck)} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 md:px-8 py-2 md:py-3 rounded-xl md:rounded-2xl font-black uppercase text-[10px] md:text-xs transition-all shadow-lg active:scale-95"><Copy size={14} /> Clonar</button>
-                                    <button onClick={() => setSelectedDeck(null)} className="p-2 md:p-3 bg-slate-800 rounded-xl md:rounded-2xl hover:bg-red-600 transition-colors text-white"><X size={20} /></button>
+                                <div className="flex items-center gap-2 w-full md:w-auto">
+                                    <button onClick={() => handleClone(selectedDeck)} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-black uppercase text-[10px] shadow-lg active:scale-95 transition-all"><Copy size={14} /> Clonar</button>
+                                    <button onClick={() => setSelectedDeck(null)} className="p-2.5 bg-slate-200 dark:bg-slate-800 rounded-xl text-slate-500 hover:bg-red-500 transition-colors"><X size={18} /></button>
                                 </div>
                             </div>
-                            <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-black/20 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 md:gap-3 custom-scrollbar">
-                                {selectedDeck.cards.map((c, i) => (
-                                    <div key={i} className="relative group">
-                                        <img src={getImg(c)} className="w-full rounded-lg md:rounded-xl border border-white/5 shadow-lg" alt={c.name} />
-                                        <div className="absolute -bottom-1 -right-1 bg-orange-600 text-white w-5 h-5 md:w-7 md:h-7 flex items-center justify-center text-[9px] md:text-[11px] font-black rounded-lg shadow-xl border border-white/20">x{c.quantity}</div>
-                                    </div>
-                                ))}
+                            
+                            {/* ✅ CONTENEDOR DE CARTAS CON SCROLL GARANTIZADO */}
+                            <div className="flex-1 overflow-y-auto p-4 md:p-10 bg-slate-50/50 dark:bg-black/20 custom-scrollbar">
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 md:gap-6">
+                                    {selectedDeck.cards.map((c, i) => (
+                                        <div key={i} className="relative group">
+                                            <img src={getImg(c)} className="w-full rounded-xl border border-slate-200 dark:border-white/5 shadow-sm transition-transform group-hover:scale-105" alt={c.name} />
+                                            <div className="absolute -bottom-1 -right-1 bg-blue-600 text-white w-6 h-6 flex items-center justify-center text-[10px] font-black rounded-lg shadow-lg border-2 border-white dark:border-slate-900">x{c.quantity}</div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
-                        {/* Derecha: Panel de Conversación (Campo de texto siempre visible) */}
-                        <div className="flex-[2] md:max-w-[400px] bg-slate-800/30 flex flex-col h-[50%] md:h-auto overflow-hidden">
-                            <div className="p-4 md:p-5 border-b border-white/5 font-black text-[10px] md:text-xs uppercase flex items-center gap-2 text-orange-500 bg-slate-900/30 flex-shrink-0">
-                                <MessageSquare size={18} /> Conversación ({selectedDeck.comments?.length || 0})
+                        {/* Columna Derecha: Comentarios (Scroll Independiente) */}
+                        <div className="flex-[1.2] md:max-w-[400px] bg-white dark:bg-slate-800/20 flex flex-col min-h-0">
+                            <div className="p-5 border-b border-slate-200 dark:border-white/5 font-black text-[10px] uppercase flex items-center gap-2 text-blue-600 bg-slate-50 dark:bg-slate-900/30 flex-shrink-0">
+                                <MessageSquare size={16} /> Conversación ({selectedDeck.comments?.length || 0})
                             </div>
-
-                            <div className="flex-1 overflow-y-auto p-4 md:p-5 space-y-3 custom-scrollbar min-h-0 bg-slate-900/10">
+                            
+                            {/* Lista de Comentarios con Scroll */}
+                            <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-white dark:bg-transparent custom-scrollbar">
                                 {selectedDeck.comments?.map((com, idx) => (
-                                    <div key={com._id || idx} className="bg-black/30 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5 relative group animate-fade-in">
+                                    <div key={com._id || idx} className="bg-slate-50 dark:bg-black/30 p-4 rounded-2xl border border-slate-200 dark:border-white/5 transition-all hover:border-blue-500/30">
                                         <div className="flex justify-between items-start mb-1">
-                                            <p className="text-[9px] md:text-[10px] font-black text-orange-400 uppercase tracking-widest">@{com.username}</p>
-                                            {isAdmin && <button onClick={() => handleDeleteComment(com._id)} className="text-slate-500 hover:text-red-500 transition-colors"><Trash2 size={12} /></button>}
+                                            <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest">@{com.username}</p>
+                                            {isAdmin && <button onClick={() => handleDeleteComment(com._id)} className="text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={12} /></button>}
                                         </div>
-                                        <p className="text-[11px] md:text-xs text-slate-200 leading-relaxed font-medium">{com.text}</p>
+                                        <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">{com.text}</p>
                                     </div>
                                 ))}
                                 {(!selectedDeck.comments || selectedDeck.comments.length === 0) && (
-                                    <div className="flex flex-col items-center justify-center h-full opacity-20"><MessageSquare size={30} className="mb-2" /><p className="text-[9px] font-black uppercase italic">Silencio en la arena...</p></div>
+                                    <div className="flex flex-col items-center justify-center h-full opacity-20 text-slate-400 py-10">
+                                        <MessageSquare size={32} className="mb-2" />
+                                        <p className="text-[10px] font-black uppercase tracking-widest italic">Silencio en la arena...</p>
+                                    </div>
                                 )}
                             </div>
 
-                            {/* Input Fijo al Fondo del Modal */}
-                            {token ? (
-                                <div className="p-3 md:p-5 bg-slate-900 border-t border-white/5 flex gap-2 flex-shrink-0">
-                                    <input
-                                        type="text"
-                                        placeholder="Comentar..."
-                                        value={newComment}
-                                        onChange={(e) => setNewComment(e.target.value)}
-                                        onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
-                                        className="flex-1 bg-slate-800 border border-white/5 rounded-lg md:rounded-xl px-3 md:px-4 py-2 md:py-2.5 text-[11px] md:text-xs outline-none focus:border-orange-500 transition-all text-white"
-                                    />
-                                    <button onClick={handleAddComment} className="bg-orange-600 p-2 md:p-2.5 rounded-lg md:rounded-xl text-white active:scale-95 transition-all shadow-lg hover:bg-orange-500"><Send size={16} md:size={18} /></button>
-                                </div>
-                            ) : (
-                                <div className="p-4 md:p-5 bg-slate-900 text-center border-t border-white/5 cursor-pointer hover:bg-slate-800 transition-colors flex-shrink-0" onClick={() => navigate("/login")}>
-                                    <p className="text-[9px] md:text-[10px] font-black text-slate-400 hover:text-orange-500 transition-colors uppercase italic tracking-widest">Inicia sesión para participar</p>
-                                </div>
-                            )}
+                            {/* Input Fijo al Fondo */}
+                            <div className="p-5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-white/5 flex-shrink-0">
+                                {token ? (
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Escribe un comentario..."
+                                            value={newComment}
+                                            onChange={(e) => setNewComment(e.target.value)}
+                                            onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
+                                            className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-blue-500 transition-all dark:text-white shadow-sm"
+                                        />
+                                        <button onClick={handleAddComment} className="bg-blue-600 p-2.5 rounded-xl text-white shadow-lg active:scale-95 transition-transform"><Send size={18} /></button>
+                                    </div>
+                                ) : (
+                                    <div className="text-center cursor-pointer group" onClick={() => navigate("/login")}>
+                                        <p className="text-[9px] font-black text-slate-400 group-hover:text-blue-600 transition-colors uppercase italic tracking-widest">Inicia sesión para participar</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -258,26 +271,57 @@ export default function Community() {
     );
 }
 
-// --- COMPONENTES DE TARJETA ---
-function PodiumCard({ deck, rank, userId, onLike, onClick, getImg, className, isWinner }) {
+// --- SUBCOMPONENTES ---
+function RankingPodiumItem({ deck, rank, color, height, userId, onLike, onClick, getImg, isWinner }) {
     const bgImage = getImg(deck.cards?.[0]);
-    const authorName = deck.user?.username || deck.author?.username || deck.creator?.username || "Invocador";
     return (
-        <div onClick={onClick} className={`relative rounded-[2.5rem] overflow-hidden border-4 shadow-2xl cursor-pointer group transition-all duration-500 hover:-translate-y-2 flex-shrink-0 ${isWinner ? 'w-full md:w-96 h-[26rem] md:h-[32rem] border-yellow-500 z-10' : 'w-full md:w-72 h-72 md:h-80 border-slate-700 opacity-90'} ${className}`}>
-            <div className="absolute inset-0 bg-slate-900">{bgImage && <img src={bgImage} className="w-full h-full object-cover opacity-40 group-hover:scale-110 transition-transform duration-1000" />}<div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/40 to-transparent"></div></div>
-            <div className={`absolute top-6 left-6 font-black text-xl md:text-2xl w-10 h-10 md:w-14 md:h-14 flex items-center justify-center rounded-xl md:rounded-2xl shadow-2xl z-20 ${isWinner ? 'bg-yellow-500 text-black' : 'bg-slate-800 text-white border border-white/10'}`}>{rank}</div>
-            <div className="absolute bottom-0 p-6 md:p-8 z-20 w-full"><h3 className="font-black text-xl md:text-2xl drop-shadow-md text-white uppercase italic truncate">{deck.name}</h3><p className="text-orange-500 text-[10px] md:text-xs mb-3 md:mb-4 font-black uppercase tracking-widest">@{authorName}</p><div className="flex items-center gap-3"><button onClick={(e) => onLike(deck._id, e)} className="bg-white/10 px-4 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl text-[11px] md:text-sm font-black flex items-center gap-2 backdrop-blur-md border border-white/10 hover:bg-white/20 transition-all"><Heart size={16} className={deck.likes?.includes(userId) ? "fill-red-500 text-red-500" : "text-white"} /> {deck.likes?.length || 0}</button><div className="bg-orange-600/20 p-2 md:p-2.5 rounded-xl md:rounded-2xl border border-orange-500/20 text-orange-500"><ExternalLink size={16} /></div></div></div>
+        <div className={`flex flex-col items-center group w-full md:w-auto ${isWinner ? 'z-20 md:scale-105' : 'z-10'}`}>
+            <div onClick={onClick} className={`relative w-[85%] md:w-52 lg:w-60 overflow-hidden rounded-t-[2.5rem] border-x-2 border-t-2 md:border-x-4 md:border-t-4 transition-all cursor-pointer shadow-2xl ${isWinner ? 'border-blue-600' : 'border-slate-200 dark:border-white/10'}`}>
+                <div className={`${height} relative bg-white dark:bg-slate-900`}>
+                    <img src={bgImage} className="w-full h-full object-cover opacity-60 dark:opacity-40 transition-transform duration-700 group-hover:scale-110" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-900 via-transparent"></div>
+                    <div className={`absolute top-4 left-6 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl md:rounded-2xl shadow-xl font-black text-sm md:text-lg border-2 ${isWinner ? 'bg-blue-600 text-white border-white/20' : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-white/10'}`}>{rank}</div>
+                    <div className="absolute bottom-3 left-0 w-full px-4 text-center">
+                        <h3 className="font-black text-sm md:text-base uppercase italic tracking-tighter truncate text-slate-900 dark:text-white leading-tight">{deck.name}</h3>
+                        <p className="text-blue-600 dark:text-blue-400 text-[8px] font-black uppercase mt-1">@{deck.user?.username || "Invocador"}</p>
+                    </div>
+                </div>
+            </div>
+            <div className={`w-[85%] md:w-52 lg:w-60 h-12 md:h-14 ${color} flex items-center justify-center shadow-inner rounded-b-2xl border-t border-white/10`}>
+               <div className="flex items-center gap-2">
+                    <Heart size={14} className={deck.likes?.includes(userId) ? "fill-red-500 text-red-500" : "text-white opacity-60"} />
+                    <span className="text-xs font-black text-white">{deck.likes?.length || 0}</span>
+               </div>
+            </div>
         </div>
     );
 }
 
 function StandardCard({ deck, userId, onLike, onClick, getImg }) {
     const bgImage = getImg(deck.cards?.[0]);
-    const authorName = deck.user?.username || deck.author?.username || deck.creator?.username || "Invocador";
     return (
-        <div onClick={onClick} className="group relative bg-slate-900 rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border border-white/5 hover:border-orange-500/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)] cursor-pointer h-64 md:h-72 flex flex-col shadow-lg">
-            <div className="h-32 md:h-40 bg-slate-800 relative overflow-hidden">{bgImage && <img src={bgImage} className="w-full h-full object-cover opacity-40 group-hover:scale-110 transition-transform duration-700" />}<div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent"></div><div className="absolute bottom-2 md:bottom-3 left-3 md:left-4 font-black truncate w-10/12 text-white uppercase italic text-[11px] md:text-sm tracking-tighter drop-shadow-md">{deck.name}</div></div>
-            <div className="p-3 md:p-5 flex-1 flex flex-col justify-between"><div className="text-[8px] md:text-[10px] text-orange-500 font-black uppercase tracking-widest">@{authorName}</div><div className="flex justify-between items-center mt-1 md:mt-2"><button onClick={(e) => onLike(deck._id, e)} className="text-[10px] md:text-xs font-black px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl bg-white/5 hover:bg-red-500/20 transition-all flex items-center gap-2 border border-white/5"><Heart size={12} md:size={14} className={deck.likes?.includes(userId) ? "fill-red-500 text-red-500" : "text-white"} /> {deck.likes?.length || 0}</button><span className="text-[8px] md:text-[9px] font-black text-slate-500 uppercase italic group-hover:text-orange-500 transition-colors">Detalles →</span></div></div>
+        <div onClick={onClick} className="group bg-white dark:bg-slate-900 rounded-[1.8rem] border border-slate-200 dark:border-white/10 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col shadow-sm">
+            <div className="h-32 md:h-40 relative overflow-hidden bg-slate-100 dark:bg-slate-800">
+                <img src={bgImage} className="w-full h-full object-cover opacity-80 dark:opacity-50 group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-900 via-transparent to-transparent"></div>
+                <div className="absolute bottom-2 px-3 w-full">
+                    <h4 className="text-[10px] md:text-xs font-black text-slate-900 dark:text-white uppercase italic tracking-tighter truncate leading-none">{deck.name}</h4>
+                </div>
+            </div>
+            <div className="p-3 md:p-4 flex flex-col gap-2 md:gap-3">
+                <div className="flex justify-between items-center">
+                    <span className="text-[8px] font-black text-blue-600 dark:text-blue-400 uppercase truncate max-w-[80px]">@{deck.user?.username || "Invocador"}</span>
+                    <div className="flex items-center gap-1">
+                        <Heart size={12} className={deck.likes?.includes(userId) ? "fill-red-500 text-red-500" : "text-slate-300"} />
+                        <span className="text-[9px] font-black text-slate-400">{deck.likes?.length || 0}</span>
+                    </div>
+                </div>
+                <div className="h-[1px] w-full bg-slate-100 dark:bg-white/5"></div>
+                <div className="flex items-center justify-between">
+                     <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Detalles</span>
+                     <ArrowRight size={12} className="text-slate-300 group-hover:text-blue-600 transition-all" />
+                </div>
+            </div>
         </div>
     );
 }

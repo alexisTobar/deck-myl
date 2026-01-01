@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { saveAs } from 'file-saver';
 import BACKEND_URL from "../config";
 // ✅ Iconos Lucide
-import { Search, Trash2, Edit3, Globe, Lock, X, Camera, FileText, LayoutGrid, ChevronDown } from "lucide-react";
+import { Search, Trash2, Edit3, Globe, Lock, X, Camera, FileText, LayoutGrid, Bell, Heart, ArrowRight, MessageSquare, Send } from "lucide-react";
 
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 
@@ -11,16 +11,16 @@ const getFormatStyles = (format) => {
     if (format === 'primer_bloque') {
         return { 
             label: '📜 Primer Bloque', 
-            badgeClass: 'bg-yellow-600/90 text-yellow-100 border-yellow-500/50',
+            badgeClass: 'bg-blue-600 text-white border-blue-400/50',
             builderPath: '/primer-bloque/builder',
-            accentColor: '#eab308'
+            accentColor: '#2563eb'
         };
     }
     return { 
         label: '🏛️ Imperio', 
-        badgeClass: 'bg-orange-600/90 text-orange-100 border-orange-500/50',
+        badgeClass: 'bg-indigo-600 text-white border-indigo-400/50',
         builderPath: '/imperio/builder',
-        accentColor: '#f97316'
+        accentColor: '#4f46e5'
     };
 };
 
@@ -34,12 +34,17 @@ export default function MyDecks() {
     const [filterFormat, setFilterFormat] = useState("all");
     const [toast, setToast] = useState({ show: false, msg: "", type: "" }); 
     const [isDownloading, setIsDownloading] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [newComment, setNewComment] = useState("");
     const navigate = useNavigate();
+
+    const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null;
+    const isAdmin = user?.role === "admin";
 
     useEffect(() => { fetchDecks(); }, []);
 
     const fetchDecks = async () => {
-        const token = localStorage.getItem("token");
         if (!token) return navigate("/login");
         try {
             const res = await fetch(`${BACKEND_URL}/api/decks/my-decks`, { headers: { "auth-token": token } });
@@ -50,8 +55,36 @@ export default function MyDecks() {
         finally { setLoading(false); }
     };
 
-    const togglePrivacy = async (deck) => {
-        const token = localStorage.getItem("token");
+    const notifications = useMemo(() => {
+        const allComments = [];
+        decks.filter(d => d.isPublic).forEach(deck => {
+            deck.comments?.forEach(comment => {
+                allComments.push({ ...comment, deckName: deck.name, deckId: deck._id, fullDeck: deck });
+            });
+        });
+        return allComments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 10);
+    }, [decks]);
+
+    const handleAddComment = async () => {
+        if (!newComment.trim() || !token) return;
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/decks/${selectedDeck._id}/comment`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "auth-token": token },
+                body: JSON.stringify({ text: newComment })
+            });
+            if (res.ok) {
+                const updatedDeck = await res.json();
+                setSelectedDeck(updatedDeck);
+                setDecks(prev => prev.map(d => d._id === updatedDeck._id ? updatedDeck : d));
+                setNewComment("");
+                showToast("Comentario enviado");
+            }
+        } catch (error) { console.error(error); }
+    };
+
+    const togglePrivacy = async (deck, e) => {
+        if (e) e.stopPropagation();
         try {
             const res = await fetch(`${BACKEND_URL}/api/decks/privacy/${deck._id}`, { method: "PUT", headers: { "auth-token": token } });
             if (res.ok) {
@@ -63,13 +96,18 @@ export default function MyDecks() {
         } catch (error) { showToast("Error", "error"); }
     };
 
-    const handleEdit = (deck) => {
+    const handleEdit = (deck, e) => {
+        if (e) e.stopPropagation();
         const styles = getFormatStyles(deck.format);
         navigate(styles.builderPath, { state: { deckToEdit: deck } });
     };
 
+    const handleDeleteClick = (deck, e) => {
+        if (e) e.stopPropagation();
+        setDeckToDelete(deck);
+    };
+
     const confirmDelete = async () => {
-        const token = localStorage.getItem("token");
         try {
             const res = await fetch(`${BACKEND_URL}/api/decks/${deckToDelete._id}`, { method: "DELETE", headers: { "auth-token": token } });
             if (res.ok) {
@@ -81,7 +119,8 @@ export default function MyDecks() {
         finally { setDeckToDelete(null); }
     };
 
-    const handleDownloadTextList = (deck) => {
+    const handleDownloadTextList = (deck, e) => {
+        if (e) e.stopPropagation();
         let textContent = `MAZO: ${deck.name.toUpperCase()}\n`;
         textContent += `FORMATO: ${getFormatStyles(deck.format).label}\n`;
         textContent += `TOTAL CARTAS: ${getDeckTotal(deck.cards)}\n`;
@@ -89,14 +128,14 @@ export default function MyDecks() {
         deck.cards.forEach(c => {
             textContent += `${c.quantity || 1}x ${c.name}\n`;
         });
-        textContent += `\n-------------------------------\n Generado por WarningDeck.cl`;
+        textContent += `\n-------------------------------\n Generado por ForjaDeck.com`;
         const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
         saveAs(blob, `Lista_${deck.name.replace(/\s+/g, '_')}.txt`);
         showToast("Lista descargada");
     };
 
-    // ✅ EXPORTACIÓN IMAGEN REPARADA PARA LA VISTA DE MIS MAZOS
-    const handleDownloadInfographic = async (deck) => {
+    const handleDownloadInfographic = async (deck, e) => {
+        if (e) e.stopPropagation();
         setIsDownloading(true);
         try {
             const canvas = document.createElement("canvas");
@@ -104,7 +143,6 @@ export default function MyDecks() {
             const cards = deck.cards;
             const cardsPerRow = 10;
             const rows = Math.ceil(cards.length / cardsPerRow);
-            
             canvas.width = 1200;
             canvas.height = 300 + (rows * 160) + 180; 
 
@@ -112,122 +150,62 @@ export default function MyDecks() {
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             const loadImg = (url) => new Promise((resolve) => {
-                const img = new Image();
-                img.crossOrigin = "anonymous";
-                img.onload = () => resolve(img);
-                img.onerror = () => resolve(null);
+                const img = new Image(); img.crossOrigin = "anonymous";
+                img.onload = () => resolve(img); img.onerror = () => resolve(null);
                 img.src = url;
             });
 
-            const logoUrl = "https://raw.githubusercontent.com/alexisTobar/deck-myl-assets/refs/heads/main/forja.png";
-            const logo = await loadImg(logoUrl);
-
+            const logo = await loadImg("https://raw.githubusercontent.com/alexisTobar/deck-myl-assets/refs/heads/main/forja.png");
             if (logo) {
-                ctx.save();
-                ctx.globalAlpha = 0.04;
+                ctx.save(); ctx.globalAlpha = 0.04;
                 ctx.drawImage(logo, canvas.width/2 - 350, canvas.height/2 - 350, 700, 700);
-                ctx.restore();
-                ctx.drawImage(logo, 50, 30, 80, 80);
+                ctx.restore(); ctx.drawImage(logo, 50, 30, 80, 80);
             }
 
-            const accentColor = getFormatStyles(deck.format).accentColor;
-            ctx.fillStyle = accentColor;
-            ctx.font = "bold 20px Arial";
+            const styles = getFormatStyles(deck.format);
+            ctx.fillStyle = styles.accentColor; ctx.font = "bold 20px Arial";
             ctx.fillText("ESTRATEGIA GUARDADA", 150, 60);
-
-            ctx.fillStyle = "white";
-            ctx.font = "italic bold 55px Arial";
+            ctx.fillStyle = "white"; ctx.font = "italic bold 55px Arial";
             ctx.fillText(deck.name.toUpperCase(), 150, 110);
 
-            const totalCards = getDeckTotal(cards);
+            const totalCardsCount = deck.cards.reduce((a, b) => a + (b.quantity || 1), 0);
             ctx.fillStyle = "#1e293b";
             if(ctx.roundRect) ctx.roundRect(950, 50, 200, 60, 15); else ctx.fillRect(950, 50, 200, 60);
-            ctx.fill();
-            ctx.fillStyle = accentColor;
-            ctx.font = "bold 28px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText(`${totalCards} CARTAS`, 1050, 90);
-            ctx.textAlign = "left";
+            ctx.fill(); ctx.fillStyle = "white"; ctx.font = "bold 28px Arial"; ctx.textAlign = "center";
+            ctx.fillText(`${totalCardsCount} CARTAS`, 1050, 90); ctx.textAlign = "left";
 
-            // Estadísticas locales para el deck seleccionado
             const counts = { Aliado: 0, Talismán: 0, Arma: 0, Tótem: 0, Oro: 0 };
             cards.forEach(c => { if (counts[c.type] !== undefined) counts[c.type] += (c.quantity || 1); });
 
-            let x = 50, y = 180;
-            const cardWidth = 105;
-            const cardHeight = 147;
-            const spacingX = 112;
-            const spacingY = 165;
-
+            let xPos = 50, yPos = 180;
             for (const card of cards) {
                 const img = await loadImg(card.imgUrl || card.imageUrl || card.img);
                 if (img) {
-                    ctx.shadowColor = "rgba(0,0,0,0.5)";
-                    ctx.shadowBlur = 10;
-                    ctx.drawImage(img, x, y, cardWidth, cardHeight);
-                    ctx.shadowBlur = 0;
-                    
-                    ctx.fillStyle = accentColor;
-                    const badgeX = x + 75;
-                    const badgeY = y + 120;
-                    if(ctx.roundRect) {
-                        ctx.beginPath();
-                        ctx.roundRect(badgeX, badgeY, 32, 28, 8);
-                        ctx.fill();
-                    } else {
-                        ctx.fillRect(badgeX, badgeY, 32, 28);
-                    }
-                    ctx.fillStyle = "black";
-                    ctx.font = "bold 16px Arial";
-                    ctx.fillText(`x${card.quantity || 1}`, badgeX + 4, badgeY + 20);
+                    ctx.drawImage(img, xPos, yPos, 105, 147);
+                    ctx.fillStyle = styles.accentColor;
+                    if(ctx.roundRect) { ctx.beginPath(); ctx.roundRect(xPos+75, yPos+120, 32, 28, 8); ctx.fill(); }
+                    else ctx.fillRect(xPos+75, yPos+120, 32, 28);
+                    ctx.fillStyle = "black"; ctx.font = "bold 16px Arial";
+                    ctx.fillText(`x${card.quantity || 1}`, xPos+79, yPos+140);
                 }
-                x += spacingX;
-                if (x > 1120) { x = 50; y += spacingY; }
+                xPos += 112; if (xPos > 1120) { xPos = 50; yPos += 165; }
             }
 
-            const footerY = canvas.height - 150;
-            let startX = 50;
-            const boxWidth = 215;
-
+            const footerY = canvas.height - 150; let startX = 50;
             ORDER_TYPES.forEach((type) => {
                 const count = counts[type] || 0;
-                const percentage = totalCards > 0 ? (count / totalCards) : 0;
-
+                const perc = totalCardsCount > 0 ? (count / totalCardsCount) : 0;
                 ctx.fillStyle = "#161b22";
-                if(ctx.roundRect) {
-                    ctx.beginPath();
-                    ctx.roundRect(startX, footerY, boxWidth, 100, 20);
-                    ctx.fill();
-                    ctx.strokeStyle = accentColor + "33";
-                    ctx.stroke();
-                }
-                ctx.fillStyle = accentColor;
-                ctx.font = "bold 12px Arial";
-                ctx.fillText(type.toUpperCase(), startX + 15, footerY + 30);
-                ctx.fillStyle = "white";
-                ctx.font = "bold 40px Arial";
-                ctx.fillText(count, startX + 15, footerY + 75);
-                ctx.fillStyle = "#334155";
-                ctx.fillRect(startX + 15, footerY + 85, boxWidth - 40, 6);
-                ctx.fillStyle = accentColor;
-                ctx.fillRect(startX + 15, footerY + 85, (boxWidth - 40) * percentage, 6);
-                startX += boxWidth + 15;
+                if(ctx.roundRect) { ctx.beginPath(); ctx.roundRect(startX, footerY, 215, 100, 20); ctx.fill(); ctx.strokeStyle = styles.accentColor + "33"; ctx.stroke(); }
+                ctx.fillStyle = styles.accentColor; ctx.font = "bold 12px Arial"; ctx.fillText(type.toUpperCase(), startX + 15, footerY + 30);
+                ctx.fillStyle = "white"; ctx.font = "bold 40px Arial"; ctx.fillText(count, startX + 15, footerY + 75);
+                ctx.fillStyle = "#334155"; ctx.fillRect(startX + 15, footerY + 85, 175, 6);
+                ctx.fillStyle = styles.accentColor; ctx.fillRect(startX + 15, footerY + 85, 175 * perc, 6);
+                startX += 230;
             });
 
-            ctx.fillStyle = "#475569";
-            ctx.font = "12px Arial";
-            ctx.fillText("GENERADO POR WARNING DECK BUILDER • 2025", 50, canvas.height - 20);
-
-            canvas.toBlob((blob) => {
-                saveAs(blob, `WD_${deck.format}_${deck.name}.png`);
-                setIsDownloading(false);
-                showToast("Imagen exportada");
-            });
-        } catch (err) {
-            console.error(err);
-            setIsDownloading(false);
-            showToast("Error al generar imagen", "error");
-        }
+            canvas.toBlob((blob) => { saveAs(blob, `Forja_${deck.name}.png`); setIsDownloading(false); showToast("Imagen exportada"); });
+        } catch (err) { console.error(err); setIsDownloading(false); showToast("Error", "error"); }
     };
 
     const showToast = (msg, type = "success") => {
@@ -242,138 +220,176 @@ export default function MyDecks() {
         let result = [...decks];
         if (searchTerm) result = result.filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase()));
         if (filterFormat !== "all") result = result.filter(d => d.format === filterFormat);
-        if (sortBy === "name") result.sort((a, b) => a.name.localeCompare(b.name));
-        else if (sortBy === "size") result.sort((a, b) => getDeckTotal(b.cards) - getDeckTotal(a.cards));
-        else result.reverse(); 
-        return result;
-    }, [decks, searchTerm, sortBy, filterFormat]);
+        return result.reverse(); 
+    }, [decks, searchTerm, filterFormat]);
 
-    if (loading) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white text-xl animate-pulse">Cargando...</div>;
+    if (loading) return <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1120] flex items-center justify-center transition-colors"><div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>;
 
     return (
-        <div className="min-h-screen bg-slate-900 font-sans text-slate-200 pb-32 md:pb-20">
-            <div className="bg-slate-800 border-b border-slate-700 sticky top-0 z-30 shadow-lg p-4">
+        <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1120] text-slate-900 dark:text-white pb-32 transition-colors duration-500 overflow-x-hidden font-sans">
+            
+            {/* --- HEADER --- */}
+            <div className="bg-white/70 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 sticky top-0 z-30 px-4 py-4">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-                    <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-red-600 uppercase italic tracking-tighter">Mis Mazos</h1>
-                    <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto bg-slate-900 p-1.5 rounded-xl border border-slate-700">
-                        <div className="relative flex-1 w-full sm:w-auto">
-                            <span className="absolute left-3 top-2.5 text-slate-500"><Search size={18} /></span>
-                            <input type="text" placeholder="Buscar..." className="bg-slate-800 text-sm text-white rounded-lg pl-10 pr-3 py-2 w-full outline-none" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                    <div className="flex items-center gap-4">
+                        <h1 className="text-xl font-black tracking-tighter uppercase italic">Mis <span className="text-blue-600">Estrategias</span></h1>
+                        
+                        {/* ✅ CAMPANA RESPONSIVA */}
+                        <div className="relative">
+                            <button onClick={() => setShowNotifications(!showNotifications)} className="p-2 bg-slate-100 dark:bg-white/5 rounded-xl transition-all relative">
+                                <Bell size={20} className={notifications.length > 0 ? "text-blue-600 animate-pulse" : "text-slate-400"} />
+                                {notifications.length > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>}
+                            </button>
+                            
+                            {showNotifications && (
+                                <div className="fixed md:absolute top-16 md:top-12 left-1/2 -translate-x-1/2 md:left-0 md:translate-x-0 w-[90%] md:w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl p-4 z-[100] animate-in fade-in zoom-in-95">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-4 flex items-center gap-2"><MessageSquare size={12}/> Actividad Reciente</h4>
+                                    <div className="space-y-2 max-h-[40vh] md:max-h-[350px] overflow-y-auto custom-scrollbar">
+                                        {notifications.map((n, i) => (
+                                            <div key={i} className="bg-slate-50 dark:bg-white/5 p-3 rounded-xl border dark:border-white/5 cursor-pointer hover:border-blue-500 transition-all" onClick={() => { setSelectedDeck(n.fullDeck); setShowNotifications(false); }}>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase truncate mb-1">Mazo: {n.deckName}</p>
+                                                <p className="text-[11px] font-medium text-slate-700 dark:text-slate-200 line-clamp-2">@{n.username}: "{n.text}"</p>
+                                            </div>
+                                        ))}
+                                        {notifications.length === 0 && <p className="text-[10px] text-center opacity-40 py-6 font-black italic">Sin actividad</p>}
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                        <select className="bg-slate-800 text-sm text-slate-300 rounded-lg px-3 py-2 outline-none w-full sm:w-auto" value={filterFormat} onChange={(e) => setFilterFormat(e.target.value)}>
-                            <option value="all">Todos</option>
-                            <option value="imperio">🏛️ Imperio</option>
-                            <option value="primer_bloque">📜 PB</option>
-                        </select>
+                    </div>
+
+                    <div className="flex w-full md:w-auto bg-slate-100 dark:bg-black/40 p-1 rounded-2xl border border-slate-200 dark:border-white/5">
+                        <div className="relative flex-1 md:w-64">
+                            <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
+                            <input type="text" placeholder="Filtrar..." className="bg-transparent text-[10px] font-bold pl-9 pr-3 py-2 w-full outline-none" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto p-6">
-                {processedDecks.length === 0 ? (
-                    <div className="text-center py-20 bg-slate-800/50 rounded-3xl border border-dashed border-slate-700">
-                        <LayoutGrid size={48} className="mx-auto text-slate-600 mb-4" />
-                        <p className="text-slate-400 font-bold uppercase">No se encontraron mazos</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {processedDecks.map((deck) => (
-                            <div key={deck._id} onClick={() => setSelectedDeck(deck)} className="group relative bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 hover:border-orange-500 transition-all cursor-pointer h-72 flex flex-col">
-                                <div className="absolute inset-0 bg-slate-900">
-                                    <div className="w-full h-full bg-cover bg-center opacity-40 group-hover:scale-110 transition-transform duration-700" style={{ backgroundImage: `url(${getCardImage(deck.cards[0])})` }}></div>
-                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent"></div>
+            {/* --- GRID DE MAZOS --- */}
+            <div className="max-w-7xl mx-auto p-6 md:p-10">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    {processedDecks.map((deck) => (
+                        <div key={deck._id} onClick={() => setSelectedDeck(deck)} className="group relative bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-white/10 hover:shadow-2xl transition-all duration-500 cursor-pointer flex flex-col">
+                            <div className="h-48 relative overflow-hidden bg-slate-100 dark:bg-slate-800">
+                                <img src={getCardImage(deck.cards[0])} className="w-full h-full object-cover opacity-80 dark:opacity-40 group-hover:scale-110 transition-transform duration-1000" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-900 via-transparent"></div>
+                                
+                                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-sm">
+                                    <button onClick={(e) => handleEdit(deck, e)} className="p-3 bg-blue-600 text-white rounded-full hover:scale-110 transition-transform shadow-lg"><Edit3 size={18}/></button>
+                                    <button onClick={(e) => togglePrivacy(deck, e)} className="p-3 bg-slate-800 text-white rounded-full hover:scale-110 transition-transform shadow-lg">{deck.isPublic ? <Globe size={18}/> : <Lock size={18}/>}</button>
+                                    <button onClick={(e) => handleDeleteClick(deck, e)} className="p-3 bg-red-600 text-white rounded-full hover:scale-110 transition-transform shadow-lg"><Trash2 size={18}/></button>
                                 </div>
-                                <div className="absolute top-3 left-3 z-20">
-                                    <span className={`text-[10px] font-black px-3 py-1 rounded-full border shadow-xl ${getFormatStyles(deck.format).badgeClass}`}>{getFormatStyles(deck.format).label}</span>
-                                </div>
-                                <div className="relative z-10 mt-auto p-5">
-                                    <h2 className="text-xl font-black text-white uppercase truncate tracking-tighter">{deck.name}</h2>
-                                    <p className="text-[10px] text-orange-400 font-bold mt-1 tracking-widest">{getDeckTotal(deck.cards)} CARTAS</p>
+
+                                <div className="absolute top-4 left-4 z-10">
+                                    <span className={`text-[8px] font-black px-3 py-1 rounded-full uppercase ${getFormatStyles(deck.format).badgeClass}`}>{getFormatStyles(deck.format).label}</span>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                )}
+                            <div className="p-6">
+                                <h2 className="text-xl font-black uppercase italic truncate group-hover:text-blue-600 transition-colors leading-none">{deck.name}</h2>
+                                <div className="flex justify-between items-center mt-5">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{deck.cards.reduce((a, b) => a + (b.quantity || 1), 0)} Cartas</span>
+                                        <div className="flex items-center gap-1 text-blue-600"><MessageSquare size={12}/> <span className="text-[10px] font-black">{deck.comments?.length || 0}</span></div>
+                                    </div>
+                                    <ArrowRight size={18} className="text-slate-300 group-hover:text-blue-600 transition-all" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
+            {/* --- MODAL DETALLE --- */}
             {selectedDeck && (
-                <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-2 md:p-4 backdrop-blur-sm" onClick={() => setSelectedDeck(null)}>
-                    <div className="bg-slate-800 w-full max-w-6xl rounded-3xl shadow-2xl border border-slate-600 flex flex-col h-[95vh] md:h-[90vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 z-[110] bg-slate-950/95 md:backdrop-blur-md flex items-end md:items-center justify-center transition-all" onClick={() => setSelectedDeck(null)}>
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-7xl h-[95vh] md:h-[90vh] rounded-t-[3rem] md:rounded-[3.5rem] border-x border-t md:border border-slate-200 dark:border-white/10 flex flex-col overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
                         
-                        <div className="p-4 md:p-6 border-b border-slate-700 flex justify-between bg-slate-900/80 items-center">
-                            <div>
-                                <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter italic leading-none">{selectedDeck.name}</h2>
-                                <div className="flex gap-2 mt-2">
-                                    <span className={`text-[9px] md:text-[10px] font-black px-2 py-1 rounded border ${getFormatStyles(selectedDeck.format).badgeClass}`}>
-                                        {getFormatStyles(selectedDeck.format).label}
-                                    </span>
-                                    <span className="text-[9px] md:text-[10px] bg-slate-700 text-slate-300 font-black px-2 py-1 rounded border border-slate-600 uppercase">
-                                        {getDeckTotal(selectedDeck.cards)} Cartas
-                                    </span>
+                        <div className="p-6 md:p-10 border-b border-slate-100 dark:border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 flex-shrink-0">
+                            <div className="min-w-0">
+                                <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter truncate leading-none">{selectedDeck.name}</h2>
+                                <div className="flex gap-2 mt-3">
+                                    <span className={`text-[10px] font-black px-3 py-1 rounded-lg uppercase ${getFormatStyles(selectedDeck.format).badgeClass}`}>{getFormatStyles(selectedDeck.format).label}</span>
+                                    <span className="text-[10px] font-black px-3 py-1 rounded-lg uppercase bg-slate-100 dark:bg-white/10 text-slate-500">Público: {selectedDeck.isPublic ? 'SÍ' : 'NO'}</span>
                                 </div>
                             </div>
-                            <button onClick={() => setSelectedDeck(null)} className="bg-slate-700 p-2 rounded-full text-slate-400 hover:text-white transition-colors"><X size={24} /></button>
+
+                            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                                <button onClick={(e) => togglePrivacy(selectedDeck, e)} className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-4 py-2.5 rounded-2xl font-black text-[10px] uppercase border dark:border-white/5">
+                                    {selectedDeck.isPublic ? <><Globe size={16} className="text-blue-600" /> Público</> : <><Lock size={16} className="text-red-500" /> Privado</>}
+                                </button>
+                                <button onClick={(e) => handleDownloadInfographic(selectedDeck, e)} className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-4 py-2.5 rounded-2xl font-black text-[10px] uppercase border dark:border-white/5">
+                                    <Camera size={16} className="text-indigo-500" /> Foto
+                                </button>
+                                <button onClick={(e) => handleDownloadTextList(selectedDeck, e)} className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-4 py-2.5 rounded-2xl font-black text-[10px] uppercase border dark:border-white/5">
+                                    <FileText size={16} className="text-emerald-500" /> Texto
+                                </button>
+                                <button onClick={(e) => handleEdit(selectedDeck, e)} className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-blue-600/20 active:scale-95 transition-all">
+                                    <Edit3 size={16} /> Forjar
+                                </button>
+                                <button onClick={() => setSelectedDeck(null)} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-2xl text-slate-400 hover:text-red-500 transition-all"><X size={24} /></button>
+                            </div>
                         </div>
-                        
-                        <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-[#0c0e14]">
-                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 md:gap-5">
-                                {selectedDeck.cards.map((c, i) => (
-                                    <div key={i} className="relative group animate-fade-in">
-                                        <div className="rounded-lg md:rounded-xl overflow-hidden border border-white/10 shadow-lg group-hover:border-orange-500/50 transition-all group-hover:scale-105">
-                                            <img src={getCardImage(c)} alt={c.name} className="w-full h-auto block" loading="lazy" />
-                                            <div className="absolute top-1 right-1 md:top-2 md:right-2 z-10">
-                                                <div className="bg-orange-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-black text-xs md:text-sm shadow-xl border border-white/20">
-                                                    {c.quantity || 1}
+
+                        <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
+                            <div className="flex-1 overflow-y-auto p-6 md:p-12 bg-slate-50/50 dark:bg-black/20 custom-scrollbar">
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4 md:gap-8">
+                                    {selectedDeck.cards.map((c, i) => (
+                                        <div key={i} className="relative group animate-in fade-in zoom-in-95">
+                                            <div className="rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-white/10 group-hover:border-blue-600 shadow-sm transition-all group-hover:scale-105">
+                                                <img src={getCardImage(c)} alt={c.name} className="w-full h-auto block" />
+                                                <div className="absolute top-1 right-1 bg-blue-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-lg flex items-center justify-center font-black text-[10px] md:text-sm border-2 border-white dark:border-slate-900">
+                                                    x{c.quantity || 1}
                                                 </div>
                                             </div>
+                                            <p className="mt-2 text-[8px] md:text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase truncate text-center italic tracking-tighter">{c.name}</p>
                                         </div>
-                                        <p className="mt-1 text-[8px] md:text-[10px] text-slate-400 uppercase font-bold truncate text-center px-1">{c.name}</p>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex-[0.6] md:max-w-[380px] bg-white dark:bg-slate-800/20 flex flex-col min-h-0 border-t md:border-t-0 md:border-l border-slate-200 dark:border-white/5">
+                                <div className="p-6 border-b border-slate-200 dark:border-white/5 font-black text-[10px] uppercase flex items-center gap-2 text-blue-600 bg-slate-50 dark:bg-slate-900/30 flex-shrink-0">
+                                    <MessageSquare size={16} /> Conversación ({selectedDeck.comments?.length || 0})
+                                </div>
+                                <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                                    {selectedDeck.comments?.map((com, idx) => (
+                                        <div key={com._id || idx} className="bg-slate-50 dark:bg-black/30 p-4 rounded-2xl border border-slate-200 dark:border-white/5">
+                                            <p className="text-[9px] font-black text-blue-600 mb-1 uppercase">@{com.username}</p>
+                                            <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">{com.text}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="p-6 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-white/5 flex-shrink-0">
+                                    <div className="flex gap-2">
+                                        <input type="text" placeholder="Responder..." value={newComment} onChange={(e) => setNewComment(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleAddComment()} className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-blue-500 transition-all dark:text-white" />
+                                        <button onClick={handleAddComment} className="bg-blue-600 p-3 rounded-xl text-white active:scale-95 transition-transform shadow-lg"><Send size={18} /></button>
                                     </div>
-                                ))}
+                                </div>
                             </div>
                         </div>
-
-                        <div className="p-4 border-t border-slate-700 bg-slate-900 grid grid-cols-2 md:grid-cols-5 gap-3">
-                            <button onClick={() => togglePrivacy(selectedDeck)} className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-black text-[10px] uppercase border border-white/5">
-                                {selectedDeck.isPublic ? <><Lock size={16} className="text-red-500" /> Privado</> : <><Globe size={16} className="text-green-500" /> Público</>}
-                            </button>
-                            
-                            <button onClick={() => handleDownloadInfographic(selectedDeck)} disabled={isDownloading} className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black text-[10px] uppercase shadow-lg transition-all">
-                                <Camera size={16} /> {isDownloading ? 'Generando...' : 'Exportar Imagen'}
-                            </button>
-
-                            <button onClick={() => handleEdit(selectedDeck)} className="flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-500 text-white py-3 rounded-xl font-black text-[10px] uppercase shadow-lg">
-                                <Edit3 size={16} /> Editar
-                            </button>
-
-                            <button onClick={() => handleDownloadTextList(selectedDeck)} className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-black text-[10px] uppercase border border-white/5 transition-all">
-                                <FileText size={16} /> Lista Texto
-                            </button>
-                            
-                            <button onClick={() => setDeckToDelete(selectedDeck)} className="flex items-center justify-center gap-2 bg-red-600/10 hover:bg-red-600 text-red-500 border border-red-600/30 py-3 rounded-xl font-black text-[10px] uppercase">
-                                <Trash2 size={16} /> Borrar
-                            </button>
-                        </div>
                     </div>
                 </div>
             )}
 
+            {/* Modal Borrar */}
             {deckToDelete && (
-                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/95 p-4 backdrop-blur-sm">
-                    <div className="bg-slate-800 p-8 rounded-3xl max-w-sm w-full text-center border border-slate-700 shadow-2xl">
-                        <div className="w-16 h-16 bg-red-600/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4"><Trash2 size={32} /></div>
-                        <h3 className="text-white text-xl font-black mb-2 uppercase italic">¿Eliminar Mazo?</h3>
-                        <p className="text-slate-400 text-sm mb-6 uppercase font-bold">Esta acción no se puede deshacer.</p>
+                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/95 p-4 backdrop-blur-md">
+                    <div className="bg-white dark:bg-slate-900 p-10 rounded-[3.5rem] max-w-sm w-full text-center border border-slate-200 dark:border-white/10 shadow-2xl">
+                        <div className="w-20 h-20 bg-red-100 dark:bg-red-500/10 text-red-500 rounded-3xl flex items-center justify-center mx-auto mb-6"><Trash2 size={40} /></div>
+                        <h3 className="text-2xl font-black mb-8 uppercase italic tracking-tighter text-slate-900 dark:text-white leading-none">¿Confirmar<br/>eliminación?</h3>
                         <div className="flex gap-4">
-                            <button onClick={() => setDeckToDelete(null)} className="flex-1 bg-slate-700 py-3 rounded-xl text-white font-black text-xs uppercase">Cancelar</button>
-                            <button onClick={confirmDelete} className="flex-1 bg-red-600 py-3 rounded-xl text-white font-black text-xs uppercase transition-all">Sí, Borrar</button>
+                            <button onClick={() => setDeckToDelete(null)} className="flex-1 py-4 rounded-2xl text-slate-500 font-black uppercase text-[10px] tracking-widest hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">No</button>
+                            <button onClick={confirmDelete} className="flex-1 bg-red-500 py-4 rounded-2xl text-white font-black uppercase text-[10px] tracking-widest shadow-lg shadow-red-500/20 active:scale-95 transition-transform">Sí, Borrar</button>
                         </div>
                     </div>
                 </div>
             )}
 
+            {/* Toasts */}
             {toast.show && (
-                <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl animate-fade-in-up flex items-center gap-3 ${toast.type === 'error' ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}`}>
+                <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl animate-fade-in-up flex items-center gap-3 border ${toast.type === 'error' ? 'bg-red-600 text-white border-red-500' : 'bg-blue-600 text-white border-blue-500'}`}>
                     {toast.msg}
                 </div>
             )}
