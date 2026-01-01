@@ -1,8 +1,8 @@
+require('dotenv').config(); // ✅ DEBE SER LA LÍNEA 1 PARA CARGAR TODO ANTES
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-require('dotenv').config();
 
 // --- IMPORTAR RUTAS ---
 const authRoutes = require('./routes/auth');
@@ -15,13 +15,13 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // --- MIDDLEWARES ---
-// ✅ MEJORA: Se añadió localhost:5174 a la lista de orígenes permitidos
 app.use(cors({
     origin: [
-        "http://localhost:5173",      // Frontend Local 1
-        "http://localhost:5174",      // ✅ Tu puerto actual según el error de consola
+        "http://localhost:5173",       // Frontend Local 1
+        "http://localhost:5174",       // Frontend Local 2
         "http://localhost:3000",      
-        "https://deck-myl.vercel.app" // Producción
+        "https://deck-myl.vercel.app", // Producción Vercel
+        "https://deck-aon646qwz-alexis-projects-a11696ca.vercel.app" 
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -45,9 +45,17 @@ app.get('/', (req, res) => {
 
 // --- CONEXIÓN A BASE DE DATOS ---
 mongoose.set('strictQuery', false);
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('🟢 Base de Datos Conectada'))
-    .catch(err => console.log('🔴 Error al conectar BD:', err));
+
+// ✅ Verificación de seguridad para la URI
+const mongoURI = process.env.MONGO_URI;
+
+if (!mongoURI) {
+    console.error('🔴 ERROR: La variable MONGO_URI no está definida en el archivo .env');
+} else {
+    mongoose.connect(mongoURI)
+        .then(() => console.log('🟢 Base de Datos Conectada (Atlas)'))
+        .catch(err => console.log('🔴 Error al conectar BD:', err));
+}
 
 // --- INICIAR SERVIDOR ---
 app.listen(PORT, () => {

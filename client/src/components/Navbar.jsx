@@ -22,16 +22,15 @@ export default function Navbar() {
   const isPB = location.pathname.includes("/primer-bloque");
   const isBuilder = location.pathname.includes("builder");
 
+  // ✅ MODIFICACIÓN: Inicia siempre en falso (Modo Claro) a menos que exista una preferencia guardada
   const [isDark, setIsDark] = useState(() => {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme) return savedTheme === "dark";
-    return isImperio || isPB;
+    return false; // Por defecto siempre claro al iniciar por primera vez
   });
 
-  useEffect(() => {
-    const shouldBeDark = isImperio || isPB;
-    setIsDark(shouldBeDark);
-  }, [location.pathname]);
+  // ✅ MODIFICACIÓN: Se elimina el useEffect que forzaba el tema oscuro según la ruta
+  // Esto permite que si el usuario elige un tema, este se mantenga en toda la navegación.
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -75,13 +74,11 @@ export default function Navbar() {
     navigate("/primer-bloque/builder", { state: { initialEdition: id } });
   };
 
-  // Estilos del Navbar Oscuro para que resalte el logo blanco
   const themeColor = "text-blue-400"; 
   const themeBtn = "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20";
 
   return (
     <>
-      {/* --- NAVBAR SUPERIOR (OSCURO PARA RESALTAR LOGO BLANCO) --- */}
       <nav className={`sticky top-0 z-[100] w-full border-b border-white/10 bg-slate-950/95 backdrop-blur-md transition-all duration-300 ${isBuilder ? 'py-1' : 'py-3'}`}>
         <div className="max-w-[1400px] mx-auto px-4 md:px-10 flex justify-between items-center">
           
@@ -89,11 +86,10 @@ export default function Navbar() {
             <img 
               src="https://raw.githubusercontent.com/alexisTobar/deck-myl-assets/refs/heads/main/forja.png" 
               alt="ForjaDeck Logo" 
-              className="h-16 md:h-20 w-auto object-contain brightness-110" // brightness para que el blanco brille más
+              className="h-16 md:h-20 w-auto object-contain brightness-110" 
             />
           </Link>
 
-          {/* MENÚ CENTRAL ESCRITORIO (ESTILO OSCURO) */}
           <div className="hidden lg:flex items-center gap-1 bg-white/5 p-1.5 rounded-2xl border border-white/10">
             <NavLink to="/" label="Portal" icon={<Home size={16} />} />
             <NavLink to="/community" label="Comunidad" icon={<Users size={16} />} />
@@ -143,7 +139,6 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* --- EL MODAL TAMBIÉN SE AJUSTA --- */}
       {showPBModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
             <div className="bg-slate-900 border border-white/10 w-full max-w-2xl rounded-[2.5rem] p-10 relative shadow-2xl overflow-hidden">
@@ -167,7 +162,6 @@ export default function Navbar() {
         </div>
       )}
 
-      {/* --- DOCK MÓVIL (ESTILO OSCURO) --- */}
       {!isBuilder && (
         <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[92%] max-w-[400px]">
           <div className="bg-slate-950/95 border border-white/10 p-2 rounded-[28px] shadow-[0_15px_40px_rgba(0,0,0,0.4)] flex justify-around items-end">
@@ -216,7 +210,7 @@ function NavLink({ to, label, icon }) {
 
 function MobileIcon({ to, icon, label, active }) {
   return (
-    <Link to={to} className="flex flex-col items-center gap-1 p-2 mb-1">
+    <Link to={to} className="flex flex-col items-center gap-1.5 p-2 mb-1">
       <div className={`transition-all ${active ? 'text-blue-400 scale-110' : 'text-slate-500'}`}>
         {icon}
       </div>

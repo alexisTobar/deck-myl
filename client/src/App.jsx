@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Analytics } from '@vercel/analytics/react'; // ✅ 1. Importación agregada
+import { Analytics } from '@vercel/analytics/react'; 
 import Navbar from "./components/Navbar";
 import HomePortal from "./pages/Home";           
 import ImperioHome from "./pages/ImperioHome";   
@@ -10,9 +10,11 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import MyDecks from "./pages/MyDecks";
 import Community from "./pages/Community";
-
-// ✅ 1. Importa el nuevo componente de Admin
 import AdminCards from "./pages/AdminCards"; 
+
+// ✅ 1. Importación de los nuevos componentes de recuperación
+import ForgotPassword from "./pages/ForgotPassword"; 
+import ResetPassword from "./pages/ResetPassword";
 
 function App() {
   return (
@@ -37,14 +39,17 @@ function App() {
         <Route path="/my-decks" element={<MyDecks />} />
         <Route path="/community" element={<Community />} />
 
-        {/* ✅ 2. Nueva Ruta para el Panel de Administrador */}
+        {/* ✅ 2. Nuevas rutas para el flujo de contraseña obligatoria */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+        {/* Panel de Administrador */}
         <Route path="/admin/cards" element={<AdminCards />} />
 
         {/* Redirección por defecto */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
 
-      {/* ✅ 2. Componente de rastreo agregado (fuera de Routes para que vea todo) */}
       <Analytics /> 
     </BrowserRouter>
   );

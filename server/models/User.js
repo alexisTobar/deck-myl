@@ -14,12 +14,20 @@ const UserSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        // ⚠️ ELIMINAMOS 'minlength: 6' AQUÍ
-        // Esto permite que la contraseña sea vacía "" para usuarios de Google
+        // Mantener sin minlength para compatibilidad con usuarios de Google
     },
     googleId: { type: String },
     age: { type: Number },
     cl: { type: String },
+    
+    // ✅ NUEVOS CAMPOS PARA RECUPERACIÓN DE CONTRASEÑA
+    resetPasswordToken: {
+        type: String
+    },
+    resetPasswordExpires: {
+        type: Date
+    },
+
     createdAt: {
         type: Date,
         default: Date.now
