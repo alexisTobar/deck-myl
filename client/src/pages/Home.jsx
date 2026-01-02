@@ -21,7 +21,9 @@ export default function HomePortal() {
     const [trendingCards, setTrendingCards] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Datos simulados para las historias (Aquí puedes luego conectar tu API)
+    // ✅ LOGO DIRECTO DE TU GITHUB
+    const VIKINGO_LOGO = "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/vikingo.png";
+
     const stories = [
         { id: 1, user: "JuegosVikingos", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_6uY6I_fD-uKjT6yT5fM9hG7mQ5Gq-9G9vA&s", label: "Nuevo Stock" },
         { id: 2, user: "ForjaDeck", img: "https://i.ytimg.com/vi/S7Q7-Cst8H8/maxresdefault.jpg", label: "Tier List" },
@@ -67,7 +69,7 @@ export default function HomePortal() {
                 </p>
             </header>
 
-            {/* --- ✅ NUEVA SECCIÓN: INSTAGRAM STORIES (Móvil y Web friendly) --- */}
+            {/* --- SECCIÓN: INSTAGRAM STORIES --- */}
             <section className="w-full max-w-7xl px-6 mb-20 overflow-x-auto no-scrollbar py-4">
                 <div className="flex gap-6 md:justify-center items-center min-w-max md:min-w-full">
                     {stories.map((story) => (
@@ -142,7 +144,7 @@ export default function HomePortal() {
                 </div>
             </section>
 
-            {/* --- ✅ NUEVA SECCIÓN: JUEGOS VIKINGOS STORE --- */}
+            {/* --- SECCIÓN: JUEGOS VIKINGOS STORE CON LOGO ACTUALIZADO --- */}
             <section className="w-full max-w-7xl px-6 mb-32">
                 <div className="relative bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[3rem] p-1 shadow-2xl overflow-hidden group">
                     <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-white/10 rounded-full blur-[80px] group-hover:scale-150 transition-transform duration-1000"></div>
@@ -166,12 +168,12 @@ export default function HomePortal() {
                                 </a>
                             </div>
                         </div>
-                        <div className="flex-1 relative w-full md:w-auto h-64 md:h-96">
-                             {/* Imagen publicitaria de la tienda */}
+                        <div className="flex-1 relative w-full md:w-auto h-64 md:h-96 flex items-center justify-center">
+                             {/* ✅ LOGO VIKINGO CARGADO DESDE GITHUB */}
                             <img 
-                                src="https://juegosvikingos.cl/wp-content/uploads/2023/12/logo-vikingo-nuevo.png" 
-                                className="w-full h-full object-contain drop-shadow-[0_20px_50px_rgba(37,99,235,0.3)] animate-float" 
-                                alt="Juegos Vikingos" 
+                                src={VIKINGO_LOGO} 
+                                className="w-full max-w-[320px] md:max-w-full h-auto object-contain drop-shadow-[0_20px_50px_rgba(37,99,235,0.4)] animate-float" 
+                                alt="Logo Juegos Vikingos" 
                             />
                         </div>
                     </div>
@@ -214,7 +216,7 @@ export default function HomePortal() {
     );
 }
 
-// COMPONENTES AUXILIARES (SE MANTIENEN IGUAL)
+// COMPONENTES AUXILIARES
 
 function FormatCard({ title, desc, img, icon, onClick, delay }) {
     return (
