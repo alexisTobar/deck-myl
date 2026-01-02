@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion"; // ✅ Para animaciones pro
+import { motion, AnimatePresence } from "framer-motion";
 import BACKEND_URL from "../config";
 import { 
     Sword, 
@@ -17,8 +17,10 @@ import {
     ExternalLink,
     PlusCircle,
     X,
-    Camera
-} from "lucide-center";
+    Camera,
+    Sparkles,
+    UserPlus
+} from "lucide-react";
 import { toast } from "sonner";
 
 export default function HomePortal() {
@@ -27,7 +29,7 @@ export default function HomePortal() {
     const [loading, setLoading] = useState(true);
     const [players, setPlayers] = useState([]);
     
-    // ✅ ESTADOS PARA EL NUEVO MODAL PRO
+    // ✅ ESTADOS PARA EL NUEVO MODAL GALÁCTICO
     const [showPlayerModal, setShowPlayerModal] = useState(false);
     const [newPlayerData, setNewPlayerData] = useState({ name: "", instagram: "", logo: "" });
 
@@ -62,7 +64,6 @@ export default function HomePortal() {
         fetchPlayers();
     }, []);
 
-    // ✅ FUNCIÓN PARA GUARDAR AL JUGADOR
     const handleSavePlayer = async (e) => {
         e.preventDefault();
         if (!newPlayerData.name || !newPlayerData.instagram) {
@@ -76,10 +77,9 @@ export default function HomePortal() {
                 body: JSON.stringify(newPlayerData)
             });
             if (res.ok) {
-                toast.success("¡Wena! Ya estai en la red de invocadores ✅");
+                toast.success("¡Invocador inyectado con éxito! ✅");
                 setShowPlayerModal(false);
                 setNewPlayerData({ name: "", instagram: "", logo: "" });
-                // Recargar lista
                 const updated = await fetch(`${BACKEND_URL}/api/community-links`);
                 const data = await updated.json();
                 setPlayers(data);
@@ -203,7 +203,7 @@ export default function HomePortal() {
                 </div>
             </section>
 
-            {/* --- ✅ RED DE INVOCADORES (INSTAGRAM LINKS) --- */}
+            {/* --- ✅ RED DE INVOCADORES --- */}
             <section className="w-full max-w-7xl px-6 mb-32">
                 <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-4">
                     <div className="text-left">
@@ -214,9 +214,10 @@ export default function HomePortal() {
                     </div>
                     <button 
                         onClick={() => setShowPlayerModal(true)}
-                        className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg hover:scale-105 transition-all"
+                        className="group relative px-6 py-3 bg-white dark:bg-white/5 border border-pink-600/30 rounded-2xl font-black text-[10px] uppercase text-pink-600 overflow-hidden transition-all hover:bg-pink-600 hover:text-white"
                     >
-                        <PlusCircle size={18} /> Aparecer aquí
+                        <span className="relative z-10 flex items-center gap-2"><PlusCircle size={18} /> Aparecer aquí</span>
+                        <div className="absolute inset-0 bg-pink-600 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                     </button>
                 </div>
 
@@ -242,77 +243,98 @@ export default function HomePortal() {
                 </div>
             </section>
 
-            {/* --- ✅ MODAL PREMIUM DE REGISTRO DE JUGADOR --- */}
+            {/* --- ✅ EL NUEVO MODAL "FORJA DE INVOCADORES" (REDISEÑADO) --- */}
             <AnimatePresence>
                 {showPlayerModal && (
                     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-                        {/* Overlay con blur */}
                         <motion.div 
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             onClick={() => setShowPlayerModal(false)}
-                            className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+                            className="absolute inset-0 bg-[#060912]/90 backdrop-blur-xl"
                         />
                         
-                        {/* El Modal */}
                         <motion.div 
-                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            initial={{ scale: 0.8, opacity: 0, y: 100 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            className="relative w-full max-w-md bg-slate-900 border border-white/10 p-8 rounded-[3rem] shadow-2xl overflow-hidden"
+                            exit={{ scale: 0.8, opacity: 0, y: 100 }}
+                            className="relative w-full max-w-lg bg-[#0f172a] border border-white/10 rounded-[3.5rem] shadow-[0_0_100px_rgba(219,39,119,0.2)] overflow-hidden"
                         >
-                            {/* Decoración Neón */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-pink-600/20 blur-[50px] -mr-16 -mt-16"></div>
-                            
-                            <div className="flex justify-between items-center mb-8 relative z-10">
-                                <h3 className="text-2xl font-black uppercase italic tracking-tighter text-white">Unirse a la <span className="text-pink-600">Red</span></h3>
-                                <button onClick={() => setShowPlayerModal(false)} className="text-slate-500 hover:text-white transition-colors">
-                                    <X size={24} />
-                                </button>
+                            {/* Header del Modal con Aura */}
+                            <div className="bg-gradient-to-b from-pink-600/20 to-transparent p-10 pb-4 text-center">
+                                <div className="w-16 h-16 bg-pink-600 rounded-2xl mx-auto mb-6 flex items-center justify-center rotate-12 shadow-[0_0_30px_rgba(219,39,119,0.5)]">
+                                    <UserPlus size={32} className="text-white -rotate-12" />
+                                </div>
+                                <h3 className="text-4xl font-black uppercase italic tracking-tighter text-white">Únete al <span className="text-pink-600 font-black">Relato</span></h3>
+                                <p className="text-slate-400 text-sm mt-2 font-bold uppercase tracking-widest">Registra tu leyenda en la red</p>
                             </div>
 
-                            <form onSubmit={handleSavePlayer} className="space-y-5 relative z-10">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Nombre o Nick</label>
-                                    <div className="relative">
-                                        <Users className="absolute left-4 top-3.5 text-slate-600" size={18} />
+                            <form onSubmit={handleSavePlayer} className="p-10 pt-6 space-y-6">
+                                {/* PREVIEW DINÁMICO */}
+                                <div className="flex justify-center mb-8">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <div className="w-24 h-24 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 animate-spin-slow">
+                                            <div className="w-full h-full rounded-full border-[4px] border-[#0f172a] overflow-hidden bg-slate-800 flex items-center justify-center">
+                                                {newPlayerData.logo ? (
+                                                    <img src={newPlayerData.logo} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <Camera className="text-slate-600" size={32} />
+                                                )}
+                                            </div>
+                                        </div>
+                                        <span className="text-[10px] font-black text-pink-500 uppercase tracking-[0.2em]">Vista Previa</span>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div className="group relative">
                                         <input 
-                                            type="text" required placeholder="Ej: InvocadorPro" 
-                                            className="w-full bg-slate-950 border border-white/5 p-3.5 pl-12 rounded-2xl text-sm font-bold text-white focus:border-pink-600 outline-none transition-all"
+                                            type="text" required 
+                                            className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold text-white outline-none focus:border-pink-600 focus:bg-white/10 transition-all placeholder:text-slate-600"
+                                            placeholder="Nombre de Gladiador / Comunidad"
                                             value={newPlayerData.name}
                                             onChange={e => setNewPlayerData({...newPlayerData, name: e.target.value})}
                                         />
+                                        <Users className="absolute right-4 top-4 text-slate-600 group-focus-within:text-pink-600 transition-colors" size={20} />
                                     </div>
-                                </div>
 
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Instagram Link</label>
-                                    <div className="relative">
-                                        <Instagram className="absolute left-4 top-3.5 text-slate-600" size={18} />
+                                    <div className="group relative">
                                         <input 
-                                            type="url" required placeholder="https://instagram.com/tu_perfil" 
-                                            className="w-full bg-slate-950 border border-white/5 p-3.5 pl-12 rounded-2xl text-sm font-bold text-white focus:border-pink-600 outline-none transition-all"
+                                            type="url" required 
+                                            className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold text-white outline-none focus:border-pink-600 focus:bg-white/10 transition-all placeholder:text-slate-600"
+                                            placeholder="Link de Instagram (URL completa)"
                                             value={newPlayerData.instagram}
                                             onChange={e => setNewPlayerData({...newPlayerData, instagram: e.target.value})}
                                         />
+                                        <Instagram className="absolute right-4 top-4 text-slate-600 group-focus-within:text-pink-600 transition-colors" size={20} />
                                     </div>
-                                </div>
 
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">URL del Logo/Foto</label>
-                                    <div className="relative">
-                                        <Camera className="absolute left-4 top-3.5 text-slate-600" size={18} />
+                                    <div className="group relative">
                                         <input 
-                                            type="text" placeholder="https://link-de-tu-foto.jpg" 
-                                            className="w-full bg-slate-950 border border-white/5 p-3.5 pl-12 rounded-2xl text-sm font-bold text-white focus:border-pink-600 outline-none transition-all"
+                                            type="text" 
+                                            className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold text-white outline-none focus:border-pink-600 focus:bg-white/10 transition-all placeholder:text-slate-600"
+                                            placeholder="URL de tu Logo o Foto (Opcional)"
                                             value={newPlayerData.logo}
                                             onChange={e => setNewPlayerData({...newPlayerData, logo: e.target.value})}
                                         />
+                                        <Camera className="absolute right-4 top-4 text-slate-600 group-focus-within:text-pink-600 transition-colors" size={20} />
                                     </div>
                                 </div>
 
-                                <button type="submit" className="w-full py-4 bg-gradient-to-r from-pink-600 to-purple-600 rounded-2xl text-sm font-black uppercase italic tracking-widest text-white shadow-xl shadow-pink-900/20 hover:scale-[1.02] active:scale-95 transition-all mt-4">
-                                    Inyectar en la Red 🚀
-                                </button>
+                                <div className="flex flex-col gap-3 pt-4">
+                                    <button 
+                                        type="submit" 
+                                        className="w-full py-5 bg-pink-600 text-white rounded-3xl text-xs font-black uppercase italic tracking-[0.2em] shadow-[0_10px_30px_rgba(219,39,119,0.4)] hover:scale-[1.03] active:scale-95 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <Sparkles size={18} /> Inyectar Leyenda
+                                    </button>
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowPlayerModal(false)}
+                                        className="w-full py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-white transition-colors"
+                                    >
+                                        Abortar Misión
+                                    </button>
+                                </div>
                             </form>
                         </motion.div>
                     </div>
@@ -346,9 +368,6 @@ export default function HomePortal() {
                             <span className="text-[13px] font-black text-slate-900 dark:text-white uppercase italic bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 text-transparent bg-clip-text border-l-2 border-blue-600 dark:border-blue-400 pl-4">Juegos Vikingos</span>
                         </div>
                     </div>
-                </div>
-                <div className="text-center mt-24 opacity-50">
-                    <p className="text-[10px] text-slate-400 dark:text-slate-600 font-black uppercase tracking-[0.5em]">© 2024 • Registro Civil de Invocadores</p>
                 </div>
             </footer>
         </div>
