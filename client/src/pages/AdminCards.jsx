@@ -126,22 +126,24 @@ export default function AdminDashboard() {
         } catch (e) { console.error(e); }
     };
 
-    // ✅ NUEVA FUNCIÓN: ELIMINAR USUARIO
+    // ✅ FUNCIÓN REPARADA: ELIMINAR USUARIO
     const handleDeleteUser = async (id) => {
-        if (!window.confirm("¿Confirmas la eliminación definitiva de este usuario?")) return;
+        if (!window.confirm("¿ESTÁS SEGURO? ELIMINARÁS AL INVOCADOR DEFINITIVAMENTE 💀")) return;
         try {
             const res = await fetch(`${BACKEND_URL}/api/auth/user/${id}`, {
                 method: "DELETE",
                 headers: { "auth-token": token }
             });
             if (res.ok) {
-                alert("Usuario eliminado ✅");
+                alert("Usuario purgado ✅");
                 fetchUsuarios();
+            } else {
+                alert("Error al eliminar. Verifica la ruta en el backend.");
             }
         } catch (e) { console.error(e); }
     };
 
-    // ✅ NUEVA FUNCIÓN: CAMBIAR ROL
+    // ✅ FUNCIÓN REPARADA: CAMBIAR ROL
     const handleRoleChange = async (id, newRole) => {
         try {
             const res = await fetch(`${BACKEND_URL}/api/auth/role/${id}`, {
@@ -198,16 +200,19 @@ export default function AdminDashboard() {
                             <h3 className="text-2xl font-black uppercase italic">Imperio</h3>
                             <p className="text-slate-500 text-[10px] font-black mt-2 tracking-widest uppercase">Editor de Cartas</p>
                         </div>
+
                         <div onClick={() => handleSelectFormat("primer_bloque")} className="bg-slate-900 border-2 border-yellow-500/10 p-10 rounded-[3rem] cursor-pointer hover:border-yellow-500 transition-all group shadow-2xl relative overflow-hidden">
                             <Star className="text-yellow-500 mb-6 group-hover:scale-110 transition-transform" size={48} />
                             <h3 className="text-2xl font-black uppercase italic">P. Bloque</h3>
                             <p className="text-slate-500 text-[10px] font-black mt-2 tracking-widest uppercase">Editor de Cartas</p>
                         </div>
+
                         <div onClick={() => { setFormato("imperio"); setActiveTab("users"); setStep("editor"); }} className="bg-slate-900 border-2 border-purple-500/10 p-10 rounded-[3rem] cursor-pointer hover:border-purple-500 transition-all group shadow-2xl relative overflow-hidden">
                             <Users className="text-purple-500 mb-6 group-hover:scale-110 transition-transform" size={48} />
                             <h3 className="text-2xl font-black uppercase italic">Usuarios</h3>
                             <p className="text-slate-500 text-[10px] font-black mt-2 tracking-widest uppercase">Comunidad</p>
                         </div>
+
                         <div onClick={() => { setFormato("imperio"); setActiveTab("meta"); setStep("editor"); }} className="bg-slate-900 border-2 border-blue-500/10 p-10 rounded-[3rem] cursor-pointer hover:border-blue-500 transition-all group shadow-2xl relative overflow-hidden">
                             <BarChart3 className="text-blue-500 mb-6 group-hover:scale-110 transition-transform" size={48} />
                             <h3 className="text-2xl font-black uppercase italic">Meta Report</h3>
@@ -232,6 +237,7 @@ export default function AdminDashboard() {
                                 {formato === "imperio" ? "🏛️" : "📜"} <span className={formato === "imperio" ? "text-orange-500" : "text-yellow-500"}>{formato.replace("_", " ")}</span>
                             </h1>
                         </div>
+
                         <div className="flex bg-slate-950 p-1.5 rounded-2xl border border-white/5 gap-2">
                             <button onClick={() => setActiveTab("cards")} className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase flex items-center gap-2 transition-all ${activeTab === 'cards' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>
                                 <Layers size={14} /> Cartas
@@ -272,7 +278,7 @@ export default function AdminDashboard() {
                         <div className="lg:col-span-1 bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 shadow-2xl h-fit sticky top-48">
                             <h2 className="text-xl font-black mb-8 uppercase text-yellow-500 italic flex items-center gap-2">
                                 {editingCard ? <Layout size={20} /> : <Plus size={20} />}
-                                {editingCard ? "Modificar" : "Nueva Carta"}
+                                {editingCard ? "Modificar Carta" : "Nueva Carta"}
                             </h2>
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div className="space-y-1">
@@ -280,8 +286,8 @@ export default function AdminDashboard() {
                                     <input type="text" className="w-full p-3 bg-slate-800 rounded-xl outline-none border border-white/5 font-bold focus:border-orange-500" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-red-500 uppercase ml-2 flex items-center gap-1"><ShieldAlert size={12} /> Restricción</label>
-                                    <select className="w-full p-3 bg-slate-950 rounded-xl border border-red-500/30 outline-none text-xs font-black text-white" value={formData.restriction} onChange={e => setFormData({ ...formData, restriction: e.target.value })}>
+                                    <label className="text-[10px] font-black text-red-500 uppercase ml-2 flex items-center gap-1"><ShieldAlert size={12} /> Restricción (DAR)</label>
+                                    <select className="w-full p-3 bg-slate-950 rounded-xl border border-red-500/30 outline-none text-xs font-black text-white cursor-pointer" value={formData.restriction} onChange={e => setFormData({ ...formData, restriction: e.target.value })}>
                                         <option value="unrestricted">Sin Restricción (3)</option>
                                         <option value="limited2">Limitada (2)</option>
                                         <option value="limited1">Única (1)</option>
@@ -289,7 +295,7 @@ export default function AdminDashboard() {
                                     </select>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase ml-2">Edición</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase ml-2">Edición Real</label>
                                     <select className="w-full p-3 bg-slate-800 rounded-xl border border-white/5 outline-none text-xs font-black" value={formData.edition} onChange={e => setFormData({ ...formData, edition: e.target.value, edition_slug: e.target.value })} required>
                                         {Object.entries(formato === "imperio" ? EDICIONES_IMPERIO : EDICIONES_PB).filter(([k]) => k !== 'all').map(([slug, label]) => (<option key={slug} value={slug}>{label}</option>))}
                                     </select>
@@ -306,7 +312,8 @@ export default function AdminDashboard() {
                                         </select>
                                     </div>
                                 </div>
-                                {/* ✅ REPARACIÓN: SECTOR RAZAS PB */}
+
+                                {/* ✅ REPARACIÓN: RAZAS PARA PRIMER BLOQUE */}
                                 {formato === "primer_bloque" && formData.type === "Aliado" && (
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-black text-slate-500 uppercase ml-2">Raza</label>
@@ -316,6 +323,7 @@ export default function AdminDashboard() {
                                         </select>
                                     </div>
                                 )}
+
                                 <div className="grid grid-cols-2 gap-3">
                                     <input type="number" placeholder="Coste" className="w-full p-3 bg-slate-800 rounded-xl border border-white/5 outline-none text-xs" value={formData.cost} onChange={e => setFormData({ ...formData, cost: parseInt(e.target.value) || 0 })} />
                                     <input type="number" placeholder="Fuerza" className="w-full p-3 bg-slate-800 rounded-xl border border-white/5 outline-none text-xs" value={formData.strength} onChange={e => setFormData({ ...formData, strength: parseInt(e.target.value) || 0 })} />
@@ -335,7 +343,7 @@ export default function AdminDashboard() {
                             {loading ? (
                                 <div className="flex flex-col items-center py-40 gap-4">
                                     <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                                    <span className="font-black text-slate-500 uppercase italic">Cargando...</span>
+                                    <span className="font-black text-slate-500 uppercase italic">Cargando Base de Datos...</span>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-6 overflow-y-auto max-h-[120vh] p-2 custom-scrollbar">
@@ -345,6 +353,13 @@ export default function AdminDashboard() {
                                             <div className="mt-2 text-center pb-2 px-1">
                                                 <p className="text-[10px] font-black truncate uppercase text-white tracking-tighter">{c.name}</p>
                                                 <p className="text-[8px] text-slate-500 font-bold uppercase">{c.edition_slug || c.edition}</p>
+                                                {c.restriction && c.restriction !== "unrestricted" && (
+                                                    <div className="mt-1 flex justify-center">
+                                                        <span className={`text-[7px] px-2 py-0.5 rounded-full font-black uppercase ${c.restriction === 'banned' ? 'bg-red-600' : c.restriction === 'limited1' ? 'bg-orange-600' : 'bg-blue-600'}`}>
+                                                            {c.restriction === 'banned' ? 'BAN' : c.restriction === 'limited1' ? 'Única' : 'Limitada'}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="absolute inset-0 bg-slate-950/90 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-all duration-300 backdrop-blur-sm">
                                                 <button onClick={() => {
@@ -369,31 +384,33 @@ export default function AdminDashboard() {
                             <Users size={28} /> Control de Invocadores
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {usuarios.map(u => (
-                                <div key={u._id} className="bg-slate-800/50 p-6 rounded-3xl border border-white/5 flex flex-col gap-4 relative">
+                            {usuarios.length > 0 ? usuarios.map(u => (
+                                <div key={u._id} className="bg-slate-800/50 p-6 rounded-3xl border border-white/5 flex flex-col gap-4 relative overflow-hidden group">
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <p className="text-lg font-black text-white">@{u.username}</p>
                                             <p className="text-xs text-slate-400 font-bold">{u.email}</p>
                                         </div>
                                         <select 
-                                            className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase outline-none ${u.role === 'admin' ? 'bg-red-600' : 'bg-slate-700'}`}
-                                            value={u.role}
+                                            value={u.role} 
                                             onChange={(e) => handleRoleChange(u._id, e.target.value)}
+                                            className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase bg-slate-700 text-white border-none cursor-pointer outline-none ${u.role === 'admin' ? 'bg-red-600' : ''}`}
                                         >
-                                            <option value="user">USER</option>
-                                            <option value="admin">ADMIN</option>
-                                            <option value="banned">BANNED</option>
+                                            <option value="user">User</option>
+                                            <option value="admin">Admin</option>
+                                            <option value="banned">Banned</option>
                                         </select>
                                     </div>
-                                    <button 
-                                        onClick={() => handleDeleteUser(u._id)}
-                                        className="flex items-center justify-center gap-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white py-3 rounded-xl text-[10px] font-black uppercase transition-all"
-                                    >
-                                        <Trash2 size={14} /> Eliminar Usuario
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => handleDeleteUser(u._id)}
+                                            className="flex-1 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <Trash2 size={14} /> Eliminar Usuario
+                                        </button>
+                                    </div>
                                 </div>
-                            ))}
+                            )) : <p className="text-slate-500 italic uppercase text-[10px]">Cargando usuarios...</p>}
                         </div>
                     </div>
                 )}
@@ -405,11 +422,11 @@ export default function AdminDashboard() {
                                 <BarChart3 size={28} /> Cartas más Populares ({formato})
                             </h2>
                             <div className="space-y-4">
-                                {statsMeta.map((stat, idx) => (
-                                    <div key={idx} className="flex items-center gap-4 bg-slate-800/40 p-4 rounded-2xl border border-white/5">
+                                {statsMeta.length > 0 ? statsMeta.map((stat, idx) => (
+                                    <div key={idx} className="flex items-center gap-4 bg-slate-800/40 p-4 rounded-2xl border border-white/5 hover:border-orange-500/30 transition-all">
                                         <span className="w-8 font-black text-slate-600 text-xl">#{idx + 1}</span>
-                                        <div className="w-12 h-16 bg-slate-700 rounded-lg overflow-hidden border border-white/10">
-                                            <img src={stat.imgUrl} className="w-full h-full object-cover" />
+                                        <div className="w-12 h-16 bg-slate-700 rounded-lg overflow-hidden flex-shrink-0 border border-white/10">
+                                            <img src={stat.imgUrl} className="w-full h-full object-cover" alt="" />
                                         </div>
                                         <div className="flex-1">
                                             <p className="font-black text-white text-sm uppercase">{stat.name}</p>
@@ -417,19 +434,22 @@ export default function AdminDashboard() {
                                         </div>
                                         <div className="text-right">
                                             <p className="text-xl font-black text-orange-500">{stat.usageCount}</p>
-                                            <p className="text-[8px] text-slate-500 font-black uppercase">Veces Usada</p>
+                                            <p className="text-[8px] text-slate-500 font-black uppercase tracking-tighter">Veces Usada</p>
                                         </div>
                                     </div>
-                                ))}
+                                )) : <p className="text-slate-500 uppercase italic text-[10px]">Sin datos de meta disponibles.</p>}
                             </div>
                         </div>
+
                         <div className="bg-slate-900 rounded-[2.5rem] border border-white/5 p-8 shadow-2xl h-fit">
                             <h3 className="text-sm font-black uppercase text-slate-400 mb-6 tracking-widest flex items-center gap-2">
-                                <ShieldCheck size={16} /> Salud Global
+                                <ShieldCheck size={16} /> Resumen de Salud
                             </h3>
-                            <div className="p-4 bg-slate-800/50 rounded-2xl border-l-4 border-blue-600">
-                                <p className="text-[10px] font-black text-slate-500 uppercase">Total Usuarios</p>
-                                <p className="text-3xl font-black text-white">{usuarios.length}</p>
+                            <div className="space-y-6">
+                                <div className="p-4 bg-slate-800/50 rounded-2xl border-l-4 border-blue-600">
+                                    <p className="text-[10px] font-black text-slate-500 uppercase">Total Usuarios</p>
+                                    <p className="text-3xl font-black text-white">{usuarios.length}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
