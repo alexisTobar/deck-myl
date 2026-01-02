@@ -10,7 +10,7 @@ export default function Community() {
     const [loading, setLoading] = useState(true);
     const [selectedDeck, setSelectedDeck] = useState(null);
     const [newComment, setNewComment] = useState("");
-    const [showMobileComments, setShowMobileComments] = useState(false); // ✅ Nuevo estado para móvil
+    const [showMobileComments, setShowMobileComments] = useState(false); 
     const navigate = useNavigate();
 
     const [activeFormat, setActiveFormat] = useState("imperio");
@@ -78,6 +78,7 @@ export default function Community() {
         if (e) e.stopPropagation();
         if (!token) return navigate("/login");
 
+        // Optimistic UI Update
         const updatedDecks = decks.map(d => {
             if (d._id === deckId) {
                 const hasLiked = d.likes?.includes(userId);
@@ -186,12 +187,11 @@ export default function Community() {
                 </div>
             </div>
 
-            {/* --- MODAL DETALLE (CORREGIDO PARA MÓVIL) --- */}
+            {/* --- MODAL DETALLE --- */}
             {selectedDeck && (
                 <div className="fixed inset-0 z-[110] bg-slate-950/95 md:backdrop-blur-md flex items-end md:items-center justify-center transition-all" onClick={() => { setSelectedDeck(null); setShowMobileComments(false); }}>
                     <div className="bg-white dark:bg-slate-900 w-full max-w-7xl h-[95vh] md:h-auto md:max-h-[92vh] rounded-t-[2.5rem] md:rounded-[2.5rem] border-x border-t md:border border-slate-200 dark:border-white/10 flex flex-col md:flex-row overflow-hidden shadow-2xl transition-all" onClick={e => e.stopPropagation()}>
 
-                        {/* Izquierda: Cartas (Scroll Independiente) */}
                         <div className="flex-[3] flex flex-col min-h-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-white/5">
                             <div className="p-5 md:p-8 border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-900/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 flex-shrink-0">
                                 <div className="min-w-0">
@@ -199,7 +199,6 @@ export default function Community() {
                                     <p className="text-slate-400 font-bold text-[9px] md:text-[10px] uppercase mt-1 tracking-widest leading-none truncate">Por: @{selectedDeck.user?.username || "Invocador"}</p>
                                 </div>
                                 <div className="flex items-center gap-2 w-full md:w-auto">
-                                    {/* ✅ Botón de Comentarios para Móvil */}
                                     <button onClick={() => setShowMobileComments(!showMobileComments)} className="md:hidden flex-1 bg-slate-200 dark:bg-slate-800 text-blue-600 p-2.5 rounded-xl font-black text-[10px] uppercase flex items-center justify-center gap-2 border border-blue-500/20 shadow-sm transition-all active:scale-95">
                                         <MessageSquare size={16} /> Comentarios
                                     </button>
@@ -222,7 +221,6 @@ export default function Community() {
                             </div>
                         </div>
 
-                        {/* ✅ Columna Derecha: Comentarios (Adaptado para Móvil como Cajón/Drawer) */}
                         <div className={`
                             flex-[1.2] md:max-w-[400px] bg-white dark:bg-slate-800/20 flex flex-col min-h-0 border-t md:border-t-0 md:border-l border-slate-200 dark:border-white/5 
                             fixed md:relative bottom-0 left-0 w-full h-[65vh] md:h-auto z-[120] md:z-auto transition-transform duration-300 transform
@@ -294,12 +292,16 @@ function RankingPodiumItem({ deck, rank, color, height, userId, onLike, onClick,
                     </div>
                 </div>
             </div>
-            <div className={`w-[85%] md:w-52 lg:w-60 h-12 md:h-14 ${color} flex items-center justify-center shadow-inner rounded-b-2xl border-t border-white/10`}>
-               <div className="flex items-center gap-2">
-                    <Heart size={14} className={deck.likes?.includes(userId) ? "fill-red-500 text-red-500" : "text-white opacity-60"} />
-                    <span className="text-xs font-black text-white">{deck.likes?.length || 0}</span>
-               </div>
-            </div>
+            {/* Botón de Like Restaurado para el Podio */}
+            <button 
+                onClick={(e) => onLike(deck._id, e)}
+                className={`w-[85%] md:w-52 lg:w-60 h-12 md:h-14 ${color} flex items-center justify-center shadow-inner rounded-b-2xl border-t border-white/10 hover:brightness-110 active:scale-95 transition-all`}
+            >
+                <div className="flex items-center gap-2">
+                    <Heart size={16} className={deck.likes?.includes(userId) ? "fill-white text-white" : "text-white/60"} />
+                    <span className="text-sm font-black text-white">{deck.likes?.length || 0}</span>
+                </div>
+            </button>
         </div>
     );
 }
@@ -318,10 +320,17 @@ function StandardCard({ deck, userId, onLike, onClick, getImg }) {
             <div className="p-3 md:p-4 flex flex-col gap-2 md:gap-3">
                 <div className="flex justify-between items-center">
                     <span className="text-[8px] font-black text-blue-600 dark:text-blue-400 uppercase truncate max-w-[80px]">@{deck.user?.username || "Invocador"}</span>
-                    <div className="flex items-center gap-1">
-                        <Heart size={12} className={deck.likes?.includes(userId) ? "fill-red-500 text-red-500" : "text-slate-300"} />
+                    {/* Botón de Like Restaurado para Tarjetas Estándar */}
+                    <button 
+                        onClick={(e) => onLike(deck._id, e)}
+                        className="flex items-center gap-1 hover:scale-110 transition-transform"
+                    >
+                        <Heart 
+                            size={14} 
+                            className={deck.likes?.includes(userId) ? "fill-red-500 text-red-500" : "text-slate-300"} 
+                        />
                         <span className="text-[9px] font-black text-slate-400">{deck.likes?.length || 0}</span>
-                    </div>
+                    </button>
                 </div>
                 <div className="h-[1px] w-full bg-slate-100 dark:bg-white/5"></div>
                 <div className="flex items-center justify-between">
