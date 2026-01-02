@@ -65,6 +65,11 @@ export default function MyDecks() {
         return allComments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 10);
     }, [decks]);
 
+    // ✅ Función para calcular el total real de cartas (sumando cantidades)
+    const getTotalCards = (cards) => {
+        return cards.reduce((acc, card) => acc + (card.quantity || 1), 0);
+    };
+
     const handleAddComment = async () => {
         if (!newComment.trim() || !token) return;
         try {
@@ -105,6 +110,7 @@ export default function MyDecks() {
         try {
             const res = await fetch(`${BACKEND_URL}/api/decks/${deckToDelete._id}`, { method: "DELETE", headers: { "auth-token": token } });
             if (res.ok) {
+                const updatedDeck = await res.json();
                 setDecks(prev => prev.filter(d => d._id !== deckToDelete._id));
                 setSelectedDeck(null);
                 showToast("Mazo eliminado");
@@ -115,7 +121,7 @@ export default function MyDecks() {
 
     const handleDownloadTextList = (deck, e) => {
         if (e) e.stopPropagation();
-        let textContent = `MAZO: ${deck.name.toUpperCase()}\nTOTAL: ${deck.cards.reduce((a, b) => a + (b.quantity || 1), 0)}\n\n`;
+        let textContent = `MAZO: ${deck.name.toUpperCase()}\nTOTAL: ${getTotalCards(deck.cards)}\n\n`;
         deck.cards.forEach(c => { textContent += `${c.quantity || 1}x ${c.name}\n`; });
         const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
         saveAs(blob, `Lista_${deck.name}.txt`);
@@ -124,7 +130,6 @@ export default function MyDecks() {
     const handleDownloadInfographic = async (deck, e) => {
         if (e) e.stopPropagation();
         setIsDownloading(true);
-        // Lógica de Canvas integrada original
         showToast("Imagen generada");
         setIsDownloading(false);
     };
@@ -162,7 +167,7 @@ export default function MyDecks() {
                                 <div className="fixed md:absolute top-20 md:top-12 left-1/2 -translate-x-1/2 md:left-0 md:translate-x-0 w-[92%] md:w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl p-4 z-[100] animate-in fade-in zoom-in-95">
                                     <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-4">Comentarios</h4>
                                     <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
-                                        {notifications.map((n, i) => (
+                                        {notifications.length === 0 ? <p className="text-[10px] text-center text-slate-400 uppercase py-4">Sin novedades</p> : notifications.map((n, i) => (
                                             <div key={i} className="bg-slate-50 dark:bg-white/5 p-3 rounded-xl border dark:border-white/5 cursor-pointer hover:border-blue-500 transition-all" onClick={() => { setSelectedDeck(n.fullDeck); setShowNotifications(false); }}>
                                                 <p className="text-[9px] font-black text-slate-400 uppercase truncate">Mazo: {n.deckName}</p>
                                                 <p className="text-[11px] font-medium text-slate-700 dark:text-slate-200 line-clamp-2">@{n.username}: {n.text}</p>
@@ -203,7 +208,8 @@ export default function MyDecks() {
                             <div className="p-4 md:p-6">
                                 <h2 className="text-sm md:text-xl font-black uppercase italic truncate group-hover:text-blue-600 transition-colors leading-none">{deck.name}</h2>
                                 <div className="flex justify-between items-center mt-3 md:mt-5">
-                                    <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">{deck.cards.length} Cartas</span>
+                                    {/* ✅ CORRECCIÓN: Ahora muestra el total real sumando quantities */}
+                                    <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">{getTotalCards(deck.cards)} Cartas</span>
                                     <div className="flex items-center gap-1 text-blue-600"><MessageSquare size={10}/> <span className="text-[8px] md:text-[10px] font-black">{deck.comments?.length || 0}</span></div>
                                 </div>
                             </div>
@@ -223,12 +229,12 @@ export default function MyDecks() {
                                 <h2 className="text-xl md:text-5xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter truncate leading-none">{selectedDeck.name}</h2>
                                 <div className="flex gap-2 mt-2">
                                     <span className={`text-[8px] md:text-[10px] font-black px-2 py-0.5 rounded-lg uppercase ${getFormatStyles(selectedDeck.format).badgeClass}`}>{getFormatStyles(selectedDeck.format).label}</span>
-                                    <span className="text-[8px] md:text-[10px] font-black px-2 py-0.5 rounded-lg uppercase bg-slate-100 dark:bg-white/10 text-slate-500">{selectedDeck.cards.length} Cartas</span>
+                                    {/* ✅ CORRECCIÓN: Ahora muestra el total real sumando quantities en el modal */}
+                                    <span className="text-[8px] md:text-[10px] font-black px-2 py-0.5 rounded-lg uppercase bg-slate-100 dark:bg-white/10 text-slate-500">{getTotalCards(selectedDeck.cards)} Cartas</span>
                                 </div>
                             </div>
 
                             <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                                {/* Botón Comentarios Móvil */}
                                 <button onClick={() => setShowMobileComments(!showMobileComments)} className="md:hidden flex-1 flex items-center justify-center gap-2 bg-blue-50 text-blue-600 p-2.5 rounded-2xl font-black text-[9px] uppercase border border-blue-200">
                                     <MessageSquare size={16} /> {selectedDeck.comments?.length || 0} Mensajes
                                 </button>
@@ -239,7 +245,6 @@ export default function MyDecks() {
 
                         {/* Área Principal */}
                         <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0 relative">
-                            {/* ✅ MAZO: Ocupa todo el ancho en móvil si los comentarios están cerrados */}
                             <div className="flex-1 overflow-y-auto p-4 md:p-12 bg-slate-50/50 dark:bg-black/20 custom-scrollbar">
                                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-3 md:gap-8">
                                     {selectedDeck.cards.map((c, i) => (
@@ -254,7 +259,6 @@ export default function MyDecks() {
                                 </div>
                             </div>
 
-                            {/* ✅ PANEL DE COMENTARIOS (Ocultable en móvil) */}
                             <div className={`
                                 flex-[0.6] md:max-w-[380px] bg-white dark:bg-slate-800/20 flex flex-col min-h-0 border-t md:border-t-0 md:border-l border-slate-200 dark:border-white/5 
                                 fixed md:relative bottom-0 left-0 w-full md:w-auto h-[60vh] md:h-auto z-[120] md:z-0 transition-transform duration-300 transform
@@ -281,7 +285,6 @@ export default function MyDecks() {
                             </div>
                         </div>
 
-                        {/* Botones de Exportación (Zona inferior solo en PC o dentro del modal) */}
                         <div className="p-4 md:p-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-white/5 grid grid-cols-2 md:grid-cols-4 gap-2 flex-shrink-0">
                             <button onClick={(e) => togglePrivacy(selectedDeck, e)} className="md:flex hidden items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl font-black text-[9px] uppercase border dark:border-white/5 transition-colors">
                                 {selectedDeck.isPublic ? <Globe size={16} className="text-blue-600" /> : <Lock size={16} className="text-red-500" />} {selectedDeck.isPublic ? 'Público' : 'Privado'}
