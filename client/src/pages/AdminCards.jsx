@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import BACKEND_URL from "../config";
-import { toast } from "sonner"; // ✅ Librería minimalista para alertas
+import Swal from "sweetalert2"; // ✅ Importamos SweetAlert2
 import {
     Plus, Layout, Save, X, ChevronLeft, Star, ShieldAlert,
     Search, Layers, Users, BarChart3, MessageSquare, Trash2, ShieldCheck, Activity
@@ -46,7 +46,6 @@ const RAZAS_PB = ["Caballero", "Héroe", "Defensor", "Eterno", "Dragón", "Oro",
 const getImg = (c) => c?.imgUrl || c?.imageUrl || c?.img || "https://via.placeholder.com/250x350?text=No+Image";
 
 export default function AdminDashboard() {
-    // ✅ MEJORA: Cambio de step a 'dashboard' como inicio
     const [step, setStep] = useState("dashboard");
     const [formato, setFormato] = useState("");
     const [edicionFiltro, setEdicionFiltro] = useState("all");
@@ -55,7 +54,6 @@ export default function AdminDashboard() {
     const [editingCard, setEditingCard] = useState(null);
     const [busquedaInterna, setBusquedaInterna] = useState("");
 
-    // ✅ TUS ESTADOS DE MEJORA MANTENIDOS
     const [activeTab, setActiveTab] = useState("cards");
     const [usuarios, setUsuarios] = useState([]);
     const [statsMeta, setStatsMeta] = useState([]);
@@ -70,6 +68,14 @@ export default function AdminDashboard() {
     const [formData, setFormData] = useState(initialFormState);
     const token = localStorage.getItem("token");
 
+    // Configuración base para SweetAlert estilo Dark
+    const swalDark = {
+        background: '#0F172A',
+        color: '#fff',
+        confirmButtonColor: '#2563eb',
+        cancelButtonColor: '#ef4444',
+    };
+
     const resetForm = () => {
         setEditingCard(null);
         setFormData({
@@ -82,7 +88,6 @@ export default function AdminDashboard() {
         });
     };
 
-    // ✅ LOGICA DE CARGA DINÁMICA
     useEffect(() => {
         if (formato && step === "editor") {
             fetchCartas();
@@ -130,27 +135,37 @@ export default function AdminDashboard() {
         } catch (e) { console.error(e); }
     };
 
-    // ✅ MEJORA: ELIMINAR USUARIO CON SONNER
+    // ✅ MEJORA: ELIMINAR USUARIO CON SWEETALERT2
     const handleDeleteUser = async (id) => {
-        if (!window.confirm("¿ESTÁS SEGURO? ELIMINARÁS AL INVOCADOR DEFINITIVAMENTE 💀")) return;
-        try {
-            const res = await fetch(`${BACKEND_URL}/api/auth/user/${id}`, {
-                method: "DELETE",
-                headers: { "auth-token": token }
-            });
-            if (res.ok) {
-                toast.success("Invocador purgado de la base de datos");
-                fetchUsuarios();
-            } else {
-                toast.error("Error al eliminar invocador");
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: "¡Eliminarás al invocador definitivamente! 💀",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, purgar',
+            cancelButtonText: 'Cancelar',
+            ...swalDark
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const res = await fetch(`${BACKEND_URL}/api/auth/user/${id}`, {
+                        method: "DELETE",
+                        headers: { "auth-token": token }
+                    });
+                    if (res.ok) {
+                        Swal.fire({ icon: 'success', title: 'Usuario purgado', ...swalDark });
+                        fetchUsuarios();
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'Verifica la ruta en el backend', ...swalDark });
+                    }
+                } catch (e) {
+                    Swal.fire({ icon: 'error', title: 'Error de conexión', ...swalDark });
+                }
             }
-        } catch (e) { 
-            console.error(e); 
-            toast.error("Error de conexión con el servidor");
-        }
+        });
     };
 
-    // ✅ MEJORA: CAMBIAR ROL CON SONNER
+    // ✅ MEJORA: CAMBIAR ROL CON SWEETALERT2
     const handleRoleChange = async (id, newRole) => {
         try {
             const res = await fetch(`${BACKEND_URL}/api/auth/role/${id}`, {
@@ -159,7 +174,15 @@ export default function AdminDashboard() {
                 body: JSON.stringify({ role: newRole })
             });
             if (res.ok) {
-                toast.success(`Rango actualizado a: ${newRole.toUpperCase()}`);
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: `Rango: ${newRole.toUpperCase()}`,
+                    showConfirmButton: false,
+                    timer: 3000,
+                    ...swalDark
+                });
                 fetchUsuarios();
             }
         } catch (e) { console.error(e); }
@@ -173,31 +196,36 @@ export default function AdminDashboard() {
         setStep("editor");
     };
 
+    // ✅ MEJORA: GUARDAR CARTA CON SWEETALERT2
     const handleSubmit = async (e) => {
         e.preventDefault();
         const method = editingCard ? "PUT" : "POST";
         const url = editingCard ? `${BACKEND_URL}/api/cards/${editingCard._id}` : `${BACKEND_URL}/api/cards`;
         const dataToSend = { ...formData, edition_slug: formData.edition, img: formData.imgUrl, imageUrl: formData.imgUrl };
         
-        const promise = fetch(url, {
-            method,
-            headers: { "Content-Type": "application/json", "auth-token": token },
-            body: JSON.stringify(dataToSend)
-        });
-
-        toast.promise(promise, {
-            loading: 'Forjando carta...',
-            success: (res) => {
-                if(!res.ok) throw new Error();
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { "Content-Type": "application/json", "auth-token": token },
+                body: JSON.stringify(dataToSend)
+            });
+            if (res.ok) {
+                Swal.fire({
+                    icon: 'success',
+                    title: editingCard ? 'Carta Actualizada' : 'Carta Inyectada',
+                    text: 'Los cambios se guardaron en la base de datos ✅',
+                    ...swalDark
+                });
                 fetchCartas();
                 resetForm();
-                return '¡Carta guardada en la base de datos! ✅';
-            },
-            error: 'No se pudo guardar la carta ❌',
-        });
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error al guardar', ...swalDark });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error de red', ...swalDark });
+        }
     };
 
-    // ✅ VISTA: DASHBOARD CENTRAL
     if (step === "dashboard") {
         return (
             <div className="min-h-screen bg-[#0B1120] p-8 md:p-16 text-white">
@@ -325,22 +353,15 @@ export default function AdminDashboard() {
                                         </select>
                                     </div>
                                 </div>
-
-                                {/* ✅ REPARACIÓN: RAZAS PARA PRIMER BLOQUE (Visible solo si es Aliado) */}
                                 {formato === "primer_bloque" && formData.type === "Aliado" && (
                                     <div className="space-y-1 animate-in slide-in-from-top-2">
                                         <label className="text-[10px] font-black text-yellow-500 uppercase ml-2">Raza PB</label>
-                                        <select 
-                                            className="w-full p-3 bg-slate-800 rounded-xl border border-white/5 outline-none text-[10px] font-black" 
-                                            value={formData.race} 
-                                            onChange={e => setFormData({ ...formData, race: e.target.value })}
-                                        >
-                                            <option value="">Seleccionar Raza</option>
+                                        <select className="w-full p-3 bg-slate-800 rounded-xl border border-white/5 outline-none text-[10px] font-black" value={formData.race} onChange={e => setFormData({ ...formData, race: e.target.value })}>
+                                            <option value="">Sin Raza</option>
                                             {RAZAS_PB.map(r => <option key={r} value={r}>{r}</option>)}
                                         </select>
                                     </div>
                                 )}
-
                                 <div className="grid grid-cols-2 gap-3">
                                     <input type="number" placeholder="Coste" className="w-full p-3 bg-slate-800 rounded-xl border border-white/5 outline-none text-xs" value={formData.cost} onChange={e => setFormData({ ...formData, cost: parseInt(e.target.value) || 0 })} />
                                     <input type="number" placeholder="Fuerza" className="w-full p-3 bg-slate-800 rounded-xl border border-white/5 outline-none text-xs" value={formData.strength} onChange={e => setFormData({ ...formData, strength: parseInt(e.target.value) || 0 })} />
