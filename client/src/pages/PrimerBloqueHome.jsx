@@ -95,7 +95,7 @@ export default function PrimerBloqueHome() {
                 </motion.div>
             </section>
 
-            {/* SECCIÓN YOUTUBE (TUS CANALES ORIGINALES) */}
+            {/* SECCIÓN YOUTUBE (MEJORADA PARA LIVE) */}
             <section className="max-w-7xl mx-auto px-6 py-32 relative z-10 border-t border-slate-200 dark:border-white/5">
                 <motion.div {...fadeInUp} className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
                     <div className="text-left">
@@ -103,15 +103,19 @@ export default function PrimerBloqueHome() {
                         <p className="text-slate-500 mt-2 font-bold uppercase tracking-widest text-xs italic">Aprende de los cronistas legendarios</p>
                     </div>
                     <div className="flex items-center gap-4 text-red-600 font-black uppercase text-sm">
-                        <Youtube size={24} /> Youtube Live
+                        <span className="flex h-3 w-3 relative">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+                        </span>
+                        <Youtube size={24} /> En Vivo / Recientes
                     </div>
                 </motion.div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <YTCard title="Elevadoh" channelId="elevadoh" />
-                    <YTCard title="Coliseo Mitero" channelId="coliseomitero" />
-                    <YTCard title="Dragon Dorado" channelId="DragonDoradoMyL" />
-                    <YTCard title="Mitos y Leyendas" channelId="myloficial" />
+                    <YTCard title="Elevadoh" channelId="elevadoh" mode="live" />
+                    <YTCard title="Coliseo Mitero" channelId="coliseomitero" mode="live" />
+                    <YTCard title="Dragon Dorado" channelId="DragonDoradoMyL" mode="uploads" />
+                    <YTCard title="Mitos y Leyendas" channelId="myloficial" mode="live" />
                 </div>
             </section>
 
@@ -187,15 +191,30 @@ function RaceRank({ name, power, color }) {
     );
 }
 
-function YTCard({ title, channelId }) {
+// ✅ YTCard ACTUALIZADO: Permite capturar "Live" o "Uploads"
+function YTCard({ title, channelId, mode = "uploads" }) {
+    // Si el modo es 'live', intentamos cargar el stream actual
+    // Si no hay stream activo, YouTube mostrará el último video o el canal
+    const embedUrl = mode === "live" 
+        ? `https://www.youtube.com/embed/live_stream?channel=${channelId}`
+        : `https://www.youtube.com/embed?listType=user_uploads&list=${channelId}`;
+
     return (
         <div className="space-y-4 group">
             <div className="flex justify-between items-center px-4">
                 <h3 className="text-sm font-black text-blue-600 uppercase tracking-widest italic">{title}</h3>
-                <span className="bg-red-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter text-white">Último Video</span>
+                <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter text-white ${mode === 'live' ? 'bg-red-600 animate-pulse' : 'bg-slate-600'}`}>
+                    {mode === 'live' ? 'Capturando Vivo...' : 'Últimos Videos'}
+                </span>
             </div>
             <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-slate-200 dark:border-white/5 shadow-2xl bg-black group-hover:border-blue-500/30 transition-all">
-                <iframe className="w-full h-full" src={`https://www.youtube.com/embed?listType=user_uploads&list=${channelId}`} frameBorder="0" allowFullScreen></iframe>
+                <iframe 
+                    className="w-full h-full" 
+                    src={embedUrl} 
+                    frameBorder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowFullScreen
+                ></iframe>
             </div>
         </div>
     );
