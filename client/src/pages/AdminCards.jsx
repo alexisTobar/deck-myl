@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import BACKEND_URL from "../config";
+import { toast } from "sonner"; // ✅ Librería minimalista para alertas
 import {
     Plus, Layout, Save, X, ChevronLeft, Star, ShieldAlert,
     Search, Layers, Users, BarChart3, MessageSquare, Trash2, ShieldCheck, Activity
@@ -40,11 +41,12 @@ const TIPOS_IMPERIO = [
 ];
 
 const TIPOS_PB = ["Aliado", "Talismán", "Arma", "Tótem", "Oro"];
-const RAZAS_PB = ["Caballero", "Héroe", "Defensor", "Eterno", "Dragón", "Olímpico", "Desafiante", "Faraón", "Faerie", "Titán", "Sombra", "Sacerdote"];
+const RAZAS_PB = ["Caballero", "Héroe", "Defensor", "Eterno", "Dragón", "Oro", "Aliado", "Talismán", "Arma", "Tótem", "Sombra", "Sacerdote", "Olímpico", "Desafiante", "Faraón", "Faerie", "Titán"];
 
 const getImg = (c) => c?.imgUrl || c?.imageUrl || c?.img || "https://via.placeholder.com/250x350?text=No+Image";
 
 export default function AdminDashboard() {
+    // ✅ MEJORA: Cambio de step a 'dashboard' como inicio
     const [step, setStep] = useState("dashboard");
     const [formato, setFormato] = useState("");
     const [edicionFiltro, setEdicionFiltro] = useState("all");
@@ -53,6 +55,7 @@ export default function AdminDashboard() {
     const [editingCard, setEditingCard] = useState(null);
     const [busquedaInterna, setBusquedaInterna] = useState("");
 
+    // ✅ TUS ESTADOS DE MEJORA MANTENIDOS
     const [activeTab, setActiveTab] = useState("cards");
     const [usuarios, setUsuarios] = useState([]);
     const [statsMeta, setStatsMeta] = useState([]);
@@ -79,6 +82,7 @@ export default function AdminDashboard() {
         });
     };
 
+    // ✅ LOGICA DE CARGA DINÁMICA
     useEffect(() => {
         if (formato && step === "editor") {
             fetchCartas();
@@ -126,7 +130,7 @@ export default function AdminDashboard() {
         } catch (e) { console.error(e); }
     };
 
-    // ✅ FUNCIÓN REPARADA: ELIMINAR USUARIO
+    // ✅ MEJORA: ELIMINAR USUARIO CON SONNER
     const handleDeleteUser = async (id) => {
         if (!window.confirm("¿ESTÁS SEGURO? ELIMINARÁS AL INVOCADOR DEFINITIVAMENTE 💀")) return;
         try {
@@ -135,15 +139,18 @@ export default function AdminDashboard() {
                 headers: { "auth-token": token }
             });
             if (res.ok) {
-                alert("Usuario purgado ✅");
+                toast.success("Invocador purgado de la base de datos");
                 fetchUsuarios();
             } else {
-                alert("Error al eliminar. Verifica la ruta en el backend.");
+                toast.error("Error al eliminar invocador");
             }
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            console.error(e); 
+            toast.error("Error de conexión con el servidor");
+        }
     };
 
-    // ✅ FUNCIÓN REPARADA: CAMBIAR ROL
+    // ✅ MEJORA: CAMBIAR ROL CON SONNER
     const handleRoleChange = async (id, newRole) => {
         try {
             const res = await fetch(`${BACKEND_URL}/api/auth/role/${id}`, {
@@ -152,7 +159,7 @@ export default function AdminDashboard() {
                 body: JSON.stringify({ role: newRole })
             });
             if (res.ok) {
-                alert("Rol actualizado ✅");
+                toast.success(`Rango actualizado a: ${newRole.toUpperCase()}`);
                 fetchUsuarios();
             }
         } catch (e) { console.error(e); }
@@ -171,20 +178,26 @@ export default function AdminDashboard() {
         const method = editingCard ? "PUT" : "POST";
         const url = editingCard ? `${BACKEND_URL}/api/cards/${editingCard._id}` : `${BACKEND_URL}/api/cards`;
         const dataToSend = { ...formData, edition_slug: formData.edition, img: formData.imgUrl, imageUrl: formData.imgUrl };
-        try {
-            const res = await fetch(url, {
-                method,
-                headers: { "Content-Type": "application/json", "auth-token": token },
-                body: JSON.stringify(dataToSend)
-            });
-            if (res.ok) {
-                alert("Operación exitosa ✅");
+        
+        const promise = fetch(url, {
+            method,
+            headers: { "Content-Type": "application/json", "auth-token": token },
+            body: JSON.stringify(dataToSend)
+        });
+
+        toast.promise(promise, {
+            loading: 'Forjando carta...',
+            success: (res) => {
+                if(!res.ok) throw new Error();
                 fetchCartas();
                 resetForm();
-            } else { alert("Error al guardar."); }
-        } catch (e) { alert("Error de conexión."); }
+                return '¡Carta guardada en la base de datos! ✅';
+            },
+            error: 'No se pudo guardar la carta ❌',
+        });
     };
 
+    // ✅ VISTA: DASHBOARD CENTRAL
     if (step === "dashboard") {
         return (
             <div className="min-h-screen bg-[#0B1120] p-8 md:p-16 text-white">
@@ -278,7 +291,7 @@ export default function AdminDashboard() {
                         <div className="lg:col-span-1 bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 shadow-2xl h-fit sticky top-48">
                             <h2 className="text-xl font-black mb-8 uppercase text-yellow-500 italic flex items-center gap-2">
                                 {editingCard ? <Layout size={20} /> : <Plus size={20} />}
-                                {editingCard ? "Modificar Carta" : "Nueva Carta"}
+                                {editingCard ? "Modificar" : "Nueva Carta"}
                             </h2>
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div className="space-y-1">
@@ -286,7 +299,7 @@ export default function AdminDashboard() {
                                     <input type="text" className="w-full p-3 bg-slate-800 rounded-xl outline-none border border-white/5 font-bold focus:border-orange-500" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-red-500 uppercase ml-2 flex items-center gap-1"><ShieldAlert size={12} /> Restricción (DAR)</label>
+                                    <label className="text-[10px] font-black text-red-500 uppercase ml-2 flex items-center gap-1"><ShieldAlert size={12} /> Restricción</label>
                                     <select className="w-full p-3 bg-slate-950 rounded-xl border border-red-500/30 outline-none text-xs font-black text-white cursor-pointer" value={formData.restriction} onChange={e => setFormData({ ...formData, restriction: e.target.value })}>
                                         <option value="unrestricted">Sin Restricción (3)</option>
                                         <option value="limited2">Limitada (2)</option>
@@ -295,7 +308,7 @@ export default function AdminDashboard() {
                                     </select>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase ml-2">Edición Real</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase ml-2">Edición</label>
                                     <select className="w-full p-3 bg-slate-800 rounded-xl border border-white/5 outline-none text-xs font-black" value={formData.edition} onChange={e => setFormData({ ...formData, edition: e.target.value, edition_slug: e.target.value })} required>
                                         {Object.entries(formato === "imperio" ? EDICIONES_IMPERIO : EDICIONES_PB).filter(([k]) => k !== 'all').map(([slug, label]) => (<option key={slug} value={slug}>{label}</option>))}
                                     </select>
@@ -313,12 +326,16 @@ export default function AdminDashboard() {
                                     </div>
                                 </div>
 
-                                {/* ✅ REPARACIÓN: RAZAS PARA PRIMER BLOQUE */}
+                                {/* ✅ REPARACIÓN: RAZAS PARA PRIMER BLOQUE (Visible solo si es Aliado) */}
                                 {formato === "primer_bloque" && formData.type === "Aliado" && (
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-slate-500 uppercase ml-2">Raza</label>
-                                        <select className="w-full p-3 bg-slate-800 rounded-xl border border-white/5 outline-none text-[10px] font-black" value={formData.race} onChange={e => setFormData({ ...formData, race: e.target.value })}>
-                                            <option value="">Sin Raza</option>
+                                    <div className="space-y-1 animate-in slide-in-from-top-2">
+                                        <label className="text-[10px] font-black text-yellow-500 uppercase ml-2">Raza PB</label>
+                                        <select 
+                                            className="w-full p-3 bg-slate-800 rounded-xl border border-white/5 outline-none text-[10px] font-black" 
+                                            value={formData.race} 
+                                            onChange={e => setFormData({ ...formData, race: e.target.value })}
+                                        >
+                                            <option value="">Seleccionar Raza</option>
                                             {RAZAS_PB.map(r => <option key={r} value={r}>{r}</option>)}
                                         </select>
                                     </div>
