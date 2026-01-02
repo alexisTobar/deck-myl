@@ -10,13 +10,25 @@ import {
     Users, 
     ArrowRight,
     Heart,
-    Star
+    Star,
+    ShoppingBag,
+    Instagram,
+    ExternalLink
 } from "lucide-react";
 
 export default function HomePortal() {
     const navigate = useNavigate();
     const [trendingCards, setTrendingCards] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // Datos simulados para las historias (Aquí puedes luego conectar tu API)
+    const stories = [
+        { id: 1, user: "JuegosVikingos", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_6uY6I_fD-uKjT6yT5fM9hG7mQ5Gq-9G9vA&s", label: "Nuevo Stock" },
+        { id: 2, user: "ForjaDeck", img: "https://i.ytimg.com/vi/S7Q7-Cst8H8/maxresdefault.jpg", label: "Tier List" },
+        { id: 3, user: "Comunidad", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6H8_R_R3G_A9u6z9f_J9G6Pz_G_G_G_G_G&s", label: "Torneo" },
+        { id: 4, user: "AlexisTobar", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G&s", label: "Dev Log" },
+        { id: 5, user: "MylOficial", img: "https://blog.myl.cl/wp-content/uploads/2023/10/banner-pb.jpg", label: "Spoiler" },
+    ];
 
     useEffect(() => {
         const fetchTrending = async () => {
@@ -36,11 +48,10 @@ export default function HomePortal() {
     }, []);
 
     return (
-        /* ✅ Fondo con gradiente sutil: Se agregaron las variantes dark: */
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-[#0A0C10] dark:via-[#0f172a] dark:to-[#0A0C10] flex flex-col items-center font-sans text-slate-900 dark:text-white selection:bg-blue-100 dark:selection:bg-blue-900/30 overflow-x-hidden transition-colors duration-500">
             
-            {/* --- HERO SECTION CON ANIMACIÓN DE ENTRADA --- */}
-            <header className="w-full max-w-7xl px-6 pt-24 pb-20 text-center animate-in fade-in slide-in-from-top-10 duration-1000">
+            {/* --- HERO SECTION --- */}
+            <header className="w-full max-w-7xl px-6 pt-24 pb-12 text-center animate-in fade-in slide-in-from-top-10 duration-1000">
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/5 dark:bg-blue-400/10 border border-blue-600/10 dark:border-blue-400/20 rounded-full mb-8 shadow-sm hover:scale-105 transition-transform cursor-default">
                     <Star size={12} className="text-blue-600 dark:text-blue-400 fill-blue-600 dark:fill-blue-400" />
                     <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-blue-600 dark:text-blue-400">Nueva Versión ForjaDeck v3.0</span>
@@ -56,7 +67,23 @@ export default function HomePortal() {
                 </p>
             </header>
 
-            {/* --- SELECTOR DE FORMATOS CON HOVER AVANZADO --- */}
+            {/* --- ✅ NUEVA SECCIÓN: INSTAGRAM STORIES (Móvil y Web friendly) --- */}
+            <section className="w-full max-w-7xl px-6 mb-20 overflow-x-auto no-scrollbar py-4">
+                <div className="flex gap-6 md:justify-center items-center min-w-max md:min-w-full">
+                    {stories.map((story) => (
+                        <div key={story.id} className="flex flex-col items-center gap-2 group cursor-pointer">
+                            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 group-hover:scale-110 transition-transform duration-300">
+                                <div className="w-full h-full rounded-full border-[3px] border-white dark:border-[#0f172a] overflow-hidden">
+                                    <img src={story.img} className="w-full h-full object-cover" alt={story.user} />
+                                </div>
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-tighter text-slate-500 dark:text-slate-400">{story.user}</span>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* --- SELECTOR DE FORMATOS --- */}
             <main className="w-full max-w-7xl px-6 grid grid-cols-1 md:grid-cols-2 gap-8 mb-32 z-10">
                 <FormatCard 
                     title="Primer Bloque" 
@@ -76,7 +103,7 @@ export default function HomePortal() {
                 />
             </main>
 
-            {/* --- ANÁLISIS DEL META CON EFECTO VIDRIO --- */}
+            {/* --- ANÁLISIS DEL META --- */}
             <section className="w-full max-w-7xl px-6 mb-32">
                 <div className="flex items-center justify-between mb-12 border-b border-slate-200 dark:border-white/10 pb-8">
                     <div className="text-left">
@@ -115,7 +142,43 @@ export default function HomePortal() {
                 </div>
             </section>
 
-            {/* --- CARACTERÍSTICAS CON HOVER DINÁMICO --- */}
+            {/* --- ✅ NUEVA SECCIÓN: JUEGOS VIKINGOS STORE --- */}
+            <section className="w-full max-w-7xl px-6 mb-32">
+                <div className="relative bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[3rem] p-1 shadow-2xl overflow-hidden group">
+                    <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-white/10 rounded-full blur-[80px] group-hover:scale-150 transition-transform duration-1000"></div>
+                    
+                    <div className="bg-white dark:bg-[#0A0C10] rounded-[2.8rem] p-8 md:p-12 flex flex-col md:flex-row items-center gap-10">
+                        <div className="flex-1 text-center md:text-left">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-500/10 rounded-full mb-6">
+                                <ShoppingBag size={14} className="text-orange-500" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-orange-500">Official Store</span>
+                            </div>
+                            <h2 className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter mb-4">Juegos <span className="text-blue-600">Vikingos</span></h2>
+                            <p className="text-slate-500 dark:text-slate-400 text-lg mb-8 max-w-lg font-medium leading-relaxed italic">
+                                Encuentra las cartas más codiciadas y los últimos lanzamientos de Mitos y Leyendas. Calidad legendaria para invocadores reales.
+                            </p>
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <a href="https://www.juegosvikingos.cl" target="_blank" rel="noreferrer" className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase italic tracking-widest flex items-center justify-center gap-3 hover:bg-blue-700 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-blue-600/30">
+                                    Visitar Tienda <ExternalLink size={18} />
+                                </a>
+                                <a href="https://www.instagram.com/juegosvikingos" target="_blank" rel="noreferrer" className="px-8 py-4 bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white rounded-2xl font-black uppercase italic tracking-widest flex items-center justify-center gap-3 hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
+                                    <Instagram size={18} /> Ver Instagram
+                                </a>
+                            </div>
+                        </div>
+                        <div className="flex-1 relative w-full md:w-auto h-64 md:h-96">
+                             {/* Imagen publicitaria de la tienda */}
+                            <img 
+                                src="https://juegosvikingos.cl/wp-content/uploads/2023/12/logo-vikingo-nuevo.png" 
+                                className="w-full h-full object-contain drop-shadow-[0_20px_50px_rgba(37,99,235,0.3)] animate-float" 
+                                alt="Juegos Vikingos" 
+                            />
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* --- CARACTERÍSTICAS --- */}
             <section className="w-full bg-white/60 dark:bg-[#0A0C10]/60 backdrop-blur-xl border-y border-slate-200 dark:border-white/10 py-24 mb-20 relative overflow-hidden">
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-200/20 dark:bg-blue-900/10 blur-[100px] rounded-full"></div>
                 <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-16 relative z-10">
@@ -125,7 +188,7 @@ export default function HomePortal() {
                 </div>
             </section>
 
-            {/* --- FOOTER TIPO LANDING PREMIUM --- */}
+            {/* --- FOOTER --- */}
             <footer className="w-full py-20 bg-white dark:bg-[#0A0C10] border-t dark:border-white/5 transition-colors duration-500">
                 <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12">
                     <div className="text-center md:text-left">
@@ -150,6 +213,8 @@ export default function HomePortal() {
         </div>
     );
 }
+
+// COMPONENTES AUXILIARES (SE MANTIENEN IGUAL)
 
 function FormatCard({ title, desc, img, icon, onClick, delay }) {
     return (
