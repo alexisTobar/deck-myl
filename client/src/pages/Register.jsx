@@ -1,16 +1,20 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { GoogleLogin } from '@react-oauth/google'; // IMPORTAR
+import { GoogleLogin } from '@react-oauth/google';
 import BACKEND_URL from "../config"; 
+import Swal from "sweetalert2"; // ✅ Importamos SweetAlert2
 
 export default function Register() {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({ username: "", email: "", password: "" });
     const [error, setError] = useState("");
 
-    // --- MANEJO GOOGLE (Redirige al Login para completar perfil si es nuevo) ---
-    // Esto es un truco inteligente: Si se registran con Google aquí, 
-    // hacemos lo mismo que en Login.
+    const swalConfig = {
+        background: '#1e293b',
+        color: '#f1f5f9',
+        confirmButtonColor: '#ea580c',
+    };
+
     const handleGoogleSuccess = async (credentialResponse) => {
         try {
             const res = await fetch(`${BACKEND_URL}/api/auth/google`, {
@@ -21,14 +25,23 @@ export default function Register() {
             const data = await res.json();
 
             if (data.isNew) {
-                // Si es nuevo, lo mandamos al Login pero con un estado para que complete perfil
-                // O simplemente le decimos que vaya al login para terminar.
-                // Para simplificar, si usan Google en registro y son nuevos,
-                // guardamos datos temporales o redirigimos.
-                alert("Cuenta de Google detectada. Por favor completa tu perfil en la pantalla de Login.");
+                Swal.fire({
+                    icon: 'info',
+                    title: '¡Buena po!',
+                    text: 'Cachamos tu cuenta de Google. Ahora completa tu perfil en el Login para terminar.',
+                    ...swalConfig
+                });
                 navigate("/login"); 
             } else {
                 localStorage.setItem('token', data.token);
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Wena!',
+                    text: 'Entrando directo al Deck-MyL.',
+                    timer: 1500,
+                    showConfirmButton: false,
+                    ...swalConfig
+                });
                 navigate("/");
             }
         } catch (error) {
@@ -50,19 +63,35 @@ export default function Register() {
             const data = await res.json();
 
             if (res.ok) {
-                alert("¡Registro exitoso! Ahora inicia sesión.");
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Bacán!',
+                    text: 'Te registraste de pana. Ahora inicia sesión.',
+                    ...swalConfig
+                });
                 navigate("/login");
             } else {
                 setError(data.error || "Error al registrarse");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Chuta, algo falló',
+                    text: data.error || 'Revisa que los datos estén bien puestos.',
+                    ...swalConfig
+                });
             }
         } catch (err) {
             setError("Error de conexión con el servidor");
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de red',
+                text: 'El servidor está durmiendo parece, intenta de nuevo.',
+                ...swalConfig
+            });
         }
     };
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-900 relative overflow-hidden font-sans">
-             {/* Reutilizamos tus fondos animados */}
              <div className="absolute w-[500px] h-[500px] bg-orange-600/20 rounded-full blur-3xl -top-20 -left-20 animate-pulse"></div>
 
             <div className="bg-slate-800/80 p-8 rounded-3xl shadow-2xl w-full max-w-md border border-slate-700 backdrop-blur-xl relative z-10">
@@ -107,7 +136,6 @@ export default function Register() {
                     <div className="h-px bg-slate-700 flex-1"></div>
                 </div>
 
-                {/* BOTÓN GOOGLE */}
                 <div className="flex justify-center mb-6">
                     <GoogleLogin
                         onSuccess={handleGoogleSuccess}

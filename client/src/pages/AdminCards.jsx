@@ -142,7 +142,7 @@ export default function AdminDashboard() {
             text: "¡Eliminarás al invocador definitivamente! 💀",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Sí, purgar',
+            confirmButtonText: 'Sí, eliminar',
             cancelButtonText: 'Cancelar',
             ...swalDark
         }).then(async (result) => {
