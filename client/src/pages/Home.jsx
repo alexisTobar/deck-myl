@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion"; // ✅ Para animaciones pro
 import BACKEND_URL from "../config";
-import Swal from "sweetalert2"; // ✅ Usaremos SweetAlert para el formulario
 import { 
     Sword, 
     ScrollText, 
@@ -15,18 +15,22 @@ import {
     ShoppingBag,
     Instagram,
     ExternalLink,
-    PlusCircle
-} from "lucide-react";
+    PlusCircle,
+    X,
+    Camera
+} from "lucide-center";
+import { toast } from "sonner";
 
 export default function HomePortal() {
     const navigate = useNavigate();
     const [trendingCards, setTrendingCards] = useState([]);
     const [loading, setLoading] = useState(true);
-    
-    // ✅ ESTADO PARA LOS JUGADORES/COMUNIDADES
     const [players, setPlayers] = useState([]);
+    
+    // ✅ ESTADOS PARA EL NUEVO MODAL PRO
+    const [showPlayerModal, setShowPlayerModal] = useState(false);
+    const [newPlayerData, setNewPlayerData] = useState({ name: "", instagram: "", logo: "" });
 
-    // ✅ LOGO DIRECTO DE TU GITHUB
     const VIKINGO_LOGO = "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/vikingo.png";
 
     useEffect(() => {
@@ -44,7 +48,6 @@ export default function HomePortal() {
             }
         };
 
-        // ✅ CARGAR JUGADORES DESDE EL BACKEND
         const fetchPlayers = async () => {
             try {
                 const res = await fetch(`${BACKEND_URL}/api/community-links`);
@@ -52,53 +55,37 @@ export default function HomePortal() {
                     const data = await res.json();
                     setPlayers(data);
                 }
-            } catch (error) {
-                console.error("Error al cargar comunidades");
-            }
+            } catch (error) { console.error(error); }
         };
 
         fetchTrending();
         fetchPlayers();
     }, []);
 
-    // ✅ FUNCIÓN PARA QUE ELLOS PONGAN SUS DATOS (SWEETALERT FORM)
-    const handleAddCommunity = async () => {
-        const { value: formValues } = await Swal.fire({
-            title: 'Únete a la Red de Invocadores',
-            background: '#0f172a',
-            color: '#fff',
-            confirmButtonColor: '#2563eb',
-            html:
-                '<input id="swal-input1" class="swal2-input" placeholder="Nombre de Usuario / Comunidad">' +
-                '<input id="swal-input2" class="swal2-input" placeholder="Link de Instagram (https://...)">' +
-                '<input id="swal-input3" class="swal2-input" placeholder="URL del Logo (Imagen)">',
-            focusConfirm: false,
-            preConfirm: () => {
-                return {
-                    name: document.getElementById('swal-input1').value,
-                    instagram: document.getElementById('swal-input2').value,
-                    logo: document.getElementById('swal-input3').value
-                }
-            }
-        });
+    // ✅ FUNCIÓN PARA GUARDAR AL JUGADOR
+    const handleSavePlayer = async (e) => {
+        e.preventDefault();
+        if (!newPlayerData.name || !newPlayerData.instagram) {
+            return toast.error("¡Ponele nombre y link po, no seai patúo! 😂");
+        }
 
-        if (formValues && formValues.name && formValues.instagram) {
-            try {
-                const res = await fetch(`${BACKEND_URL}/api/community-links`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formValues)
-                });
-                if (res.ok) {
-                    Swal.fire({ icon: 'success', title: '¡Wena! Ya estai en la lista', background: '#0f172a', color: '#fff' });
-                    // Recargar lista
-                    const updated = await fetch(`${BACKEND_URL}/api/community-links`);
-                    const data = await updated.json();
-                    setPlayers(data);
-                }
-            } catch (e) {
-                Swal.fire({ icon: 'error', title: 'Chuta, falló el envío' });
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/community-links`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newPlayerData)
+            });
+            if (res.ok) {
+                toast.success("¡Wena! Ya estai en la red de invocadores ✅");
+                setShowPlayerModal(false);
+                setNewPlayerData({ name: "", instagram: "", logo: "" });
+                // Recargar lista
+                const updated = await fetch(`${BACKEND_URL}/api/community-links`);
+                const data = await updated.json();
+                setPlayers(data);
             }
+        } catch (e) {
+            toast.error("Chuta, falló el envío al servidor.");
         }
     };
 
@@ -206,7 +193,6 @@ export default function HomePortal() {
                             </div>
                         </div>
                         <div className="flex-1 relative w-full md:w-auto h-64 md:h-96 flex items-center justify-center">
-                             {/* ✅ LOGO VIKINGO CARGADO DESDE GITHUB */}
                             <img 
                                 src={VIKINGO_LOGO} 
                                 className="w-full max-w-[320px] md:max-w-full h-auto object-contain drop-shadow-[0_20px_50px_rgba(37,99,235,0.4)] animate-float" 
@@ -217,7 +203,7 @@ export default function HomePortal() {
                 </div>
             </section>
 
-            {/* --- ✅ NUEVA SECCIÓN: RED DE INVOCADORES (INSTAGRAM LINKS) --- */}
+            {/* --- ✅ RED DE INVOCADORES (INSTAGRAM LINKS) --- */}
             <section className="w-full max-w-7xl px-6 mb-32">
                 <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-4">
                     <div className="text-left">
@@ -227,7 +213,7 @@ export default function HomePortal() {
                         <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Sigue a los mejores jugadores y comunidades</p>
                     </div>
                     <button 
-                        onClick={handleAddCommunity}
+                        onClick={() => setShowPlayerModal(true)}
                         className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg hover:scale-105 transition-all"
                     >
                         <PlusCircle size={18} /> Aparecer aquí
@@ -255,6 +241,83 @@ export default function HomePortal() {
                     )}
                 </div>
             </section>
+
+            {/* --- ✅ MODAL PREMIUM DE REGISTRO DE JUGADOR --- */}
+            <AnimatePresence>
+                {showPlayerModal && (
+                    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+                        {/* Overlay con blur */}
+                        <motion.div 
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            onClick={() => setShowPlayerModal(false)}
+                            className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+                        />
+                        
+                        {/* El Modal */}
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="relative w-full max-w-md bg-slate-900 border border-white/10 p-8 rounded-[3rem] shadow-2xl overflow-hidden"
+                        >
+                            {/* Decoración Neón */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-pink-600/20 blur-[50px] -mr-16 -mt-16"></div>
+                            
+                            <div className="flex justify-between items-center mb-8 relative z-10">
+                                <h3 className="text-2xl font-black uppercase italic tracking-tighter text-white">Unirse a la <span className="text-pink-600">Red</span></h3>
+                                <button onClick={() => setShowPlayerModal(false)} className="text-slate-500 hover:text-white transition-colors">
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleSavePlayer} className="space-y-5 relative z-10">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Nombre o Nick</label>
+                                    <div className="relative">
+                                        <Users className="absolute left-4 top-3.5 text-slate-600" size={18} />
+                                        <input 
+                                            type="text" required placeholder="Ej: InvocadorPro" 
+                                            className="w-full bg-slate-950 border border-white/5 p-3.5 pl-12 rounded-2xl text-sm font-bold text-white focus:border-pink-600 outline-none transition-all"
+                                            value={newPlayerData.name}
+                                            onChange={e => setNewPlayerData({...newPlayerData, name: e.target.value})}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Instagram Link</label>
+                                    <div className="relative">
+                                        <Instagram className="absolute left-4 top-3.5 text-slate-600" size={18} />
+                                        <input 
+                                            type="url" required placeholder="https://instagram.com/tu_perfil" 
+                                            className="w-full bg-slate-950 border border-white/5 p-3.5 pl-12 rounded-2xl text-sm font-bold text-white focus:border-pink-600 outline-none transition-all"
+                                            value={newPlayerData.instagram}
+                                            onChange={e => setNewPlayerData({...newPlayerData, instagram: e.target.value})}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">URL del Logo/Foto</label>
+                                    <div className="relative">
+                                        <Camera className="absolute left-4 top-3.5 text-slate-600" size={18} />
+                                        <input 
+                                            type="text" placeholder="https://link-de-tu-foto.jpg" 
+                                            className="w-full bg-slate-950 border border-white/5 p-3.5 pl-12 rounded-2xl text-sm font-bold text-white focus:border-pink-600 outline-none transition-all"
+                                            value={newPlayerData.logo}
+                                            onChange={e => setNewPlayerData({...newPlayerData, logo: e.target.value})}
+                                        />
+                                    </div>
+                                </div>
+
+                                <button type="submit" className="w-full py-4 bg-gradient-to-r from-pink-600 to-purple-600 rounded-2xl text-sm font-black uppercase italic tracking-widest text-white shadow-xl shadow-pink-900/20 hover:scale-[1.02] active:scale-95 transition-all mt-4">
+                                    Inyectar en la Red 🚀
+                                </button>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* --- CARACTERÍSTICAS --- */}
             <section className="w-full bg-white/60 dark:bg-[#0A0C10]/60 backdrop-blur-xl border-y border-slate-200 dark:border-white/10 py-24 mb-20 relative overflow-hidden">
