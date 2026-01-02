@@ -8,6 +8,7 @@ const authRoutes = require('./routes/auth');
 const cardRoutes = require('./routes/cards');
 const decksRoute = require('./routes/decks');
 const communityRoutes = require('./routes/communityLinks'); // ✅ Agregada la importación
+const marketplaceRoutes = require('./routes/marketplace');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -32,6 +33,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/cards', cardRoutes);
 app.use('/api/decks', decksRoute);
 app.use('/api/community-links', communityRoutes); // ✅ Agregada la ruta oficial
+app.use('/api/marketplace', marketplaceRoutes);
 
 app.get('/', (req, res) => {
     res.send('Servidor Deck-MyL funcionando correctamente 🚀');

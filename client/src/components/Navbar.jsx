@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { 
-  Home, Users, Layers, Settings, Hammer, Lock, LogOut, User, LogIn, X, Star, Moon, Sun 
+  Home, Users, Layers, Settings, Hammer, Lock, LogOut, User, LogIn, X, Star, Moon, Sun, ShoppingCart 
 } from "lucide-react";
 
 const MAIN_EDITIONS = [
@@ -94,6 +94,8 @@ export default function Navbar() {
             <NavLink to="/" label="Portal" icon={<Home size={16} />} />
             <NavLink to="/community" label="Comunidad" icon={<Users size={16} />} />
             <NavLink to="/my-decks" label="Mis Mazos" icon={<Layers size={16} />} />
+            {/* ✅ ENLACE AL MARKETPLACE AGREGADO (SOLO WEB) */}
+            <NavLink to="/marketplace" label="Mercado" icon={<ShoppingCart size={16} />} />
             
             {isLoggedIn && username === "Juegos Vikingos" && (
                 <NavLink to="/admin/cards" label="Admin" icon={<Settings size={16} />} />

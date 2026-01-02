@@ -14,7 +14,7 @@ import Register from "./pages/Register";
 import MyDecks from "./pages/MyDecks";
 import Community from "./pages/Community";
 import AdminCards from "./pages/AdminCards";
-
+import Marketplace from "./pages/Marketplace";
 function App() {
   return (
     <BrowserRouter>
@@ -46,6 +46,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/my-decks" element={<MyDecks />} />
         <Route path="/community" element={<Community />} />
+        <Route path="/marketplace" element={<Marketplace />} />
 
         {/* ✅ Nueva Ruta para el Panel de Administrador */}
         <Route path="/admin/cards" element={<AdminCards />} />
