@@ -76,7 +76,8 @@ export default function AdminDashboard() {
             format: formato,
             edition: edicionFiltro === "all" ? "" : edicionFiltro,
             edition_slug: edicionFiltro === "all" ? "" : edicionFiltro,
-            type: formato === "imperio" ? "1" : "Aliado"
+            type: formato === "imperio" ? "1" : "Aliado",
+            race: ""
         });
     };
 
@@ -128,6 +129,36 @@ export default function AdminDashboard() {
         } catch (e) { console.error(e); }
     };
 
+    // ✅ ACCIÓN: ELIMINAR USUARIO REAL
+    const handleDeleteUser = async (id) => {
+        if (!window.confirm("¿Confirmas que deseas eliminar a este usuario de la base de datos?")) return;
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/auth/user/${id}`, {
+                method: "DELETE",
+                headers: { "auth-token": token }
+            });
+            if (res.ok) {
+                setUsuarios(prev => prev.filter(u => u._id !== id));
+                alert("Usuario eliminado correctamente");
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    // ✅ ACCIÓN: CAMBIAR ROL / BANEAR
+    const handleRoleChange = async (id, newRole) => {
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/auth/role/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json", "auth-token": token },
+                body: JSON.stringify({ role: newRole })
+            });
+            if (res.ok) {
+                setUsuarios(prev => prev.map(u => u._id === id ? { ...u, role: newRole } : u));
+                alert("Rol actualizado");
+            }
+        } catch (e) { console.error(e); }
+    };
+
     const handleSelectFormat = (f) => {
         setFormato(f);
         setEdicionFiltro("all");
@@ -155,7 +186,7 @@ export default function AdminDashboard() {
         } catch (e) { alert("Error de conexión."); }
     };
 
-    // ✅ VISTA NUEVA: DASHBOARD CENTRAL (REEMPLAZA EL SELECTOR VIEJO)
+    // ✅ VISTA DASHBOARD CENTRAL
     if (step === "dashboard") {
         return (
             <div className="min-h-screen bg-[#0B1120] p-8 md:p-16 text-white">
@@ -199,7 +230,7 @@ export default function AdminDashboard() {
         <div className="min-h-screen bg-[#0B1120] text-white pb-32">
             <div className="max-w-[1600px] mx-auto p-8 flex flex-col gap-6">
 
-                {/* CABECERA Y NAVEGACIÓN (MANTENIDA ÍNTEGRA) */}
+                {/* CABECERA Y NAVEGACIÓN */}
                 <div className="flex flex-col gap-6 bg-slate-900 p-6 rounded-[2.5rem] border border-white/5 shadow-xl sticky top-4 z-40">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                         <div className="flex items-center gap-4">
@@ -283,6 +314,18 @@ export default function AdminDashboard() {
                                         </select>
                                     </div>
                                 </div>
+                                
+                                {/* ✅ REPARACIÓN: RAZAS PARA PRIMER BLOQUE */}
+                                {formato === "primer_bloque" && formData.type === "Aliado" && (
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase ml-2">Raza</label>
+                                        <select className="w-full p-3 bg-slate-800 rounded-xl border border-white/5 outline-none text-[10px] font-black" value={formData.race} onChange={e => setFormData({ ...formData, race: e.target.value })}>
+                                            <option value="">Sin Raza</option>
+                                            {RAZAS_PB.map(r => <option key={r} value={r}>{r}</option>)}
+                                        </select>
+                                    </div>
+                                )}
+
                                 {formato === "primer_bloque" && (
                                     <div className="grid grid-cols-2 gap-3">
                                         <input type="number" placeholder="Coste" className="w-full p-3 bg-slate-800 rounded-xl border border-white/5 outline-none text-xs" value={formData.cost} onChange={e => setFormData({ ...formData, cost: parseInt(e.target.value) || 0 })} />
@@ -328,7 +371,7 @@ export default function AdminDashboard() {
                                                     setFormData({ ...c, imgUrl: getImg(c), restriction: c.restriction || "unrestricted", edition: c.edition || c.edition_slug });
                                                     window.scrollTo({ top: 0, behavior: 'smooth' });
                                                 }} className="bg-blue-600 p-3 rounded-full text-white shadow-xl hover:scale-110 transition-transform">
-                                                    <Plus size={18} />
+                                                    <Layout size={18} />
                                                 </button>
                                             </div>
                                         </div>
@@ -352,13 +395,22 @@ export default function AdminDashboard() {
                                             <p className="text-lg font-black text-white">@{u.username}</p>
                                             <p className="text-xs text-slate-400 font-bold">{u.email}</p>
                                         </div>
-                                        <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${u.role === 'admin' ? 'bg-red-600 text-white' : 'bg-slate-700 text-slate-300'}`}>
-                                            {u.role}
-                                        </span>
+                                        <select 
+                                            value={u.role} 
+                                            onChange={(e) => handleRoleChange(u._id, e.target.value)}
+                                            className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase bg-slate-700 text-white border-none cursor-pointer outline-none ${u.role === 'admin' ? 'bg-red-600' : ''}`}
+                                        >
+                                            <option value="user">User</option>
+                                            <option value="admin">Admin</option>
+                                            <option value="banned">Banned</option>
+                                        </select>
                                     </div>
                                     <div className="flex gap-2">
-                                        <button className="flex-1 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white py-2 rounded-xl text-[10px] font-black uppercase transition-all">
-                                            Banear Usuario
+                                        <button 
+                                            onClick={() => handleDeleteUser(u._id)}
+                                            className="flex-1 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <Trash2 size={14} /> Eliminar Usuario
                                         </button>
                                     </div>
                                 </div>
