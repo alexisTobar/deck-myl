@@ -2,8 +2,8 @@ const router = require('express').Router();
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto'); // Para generar tokens
-const nodemailer = require('nodemailer'); // Para enviar correos
+const crypto = require('crypto'); 
+const nodemailer = require('nodemailer'); 
 const { OAuth2Client } = require('google-auth-library');
 const verifyToken = require('../middleware/verifyToken');
 
@@ -19,7 +19,9 @@ router.post('/register', async (req, res) => {
         if (!username || !email || !password) return res.status(400).json({ error: "Faltan datos" });
         if (password.length < 6) return res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
 
-        const emailExist = await User.findOne({ email });
+        // Normalizar email a minúsculas
+        const normalizedEmail = email.toLowerCase();
+        const emailExist = await User.findOne({ email: normalizedEmail });
         if (emailExist) return res.status(400).json({ error: "El email ya está registrado" });
 
         const salt = await bcrypt.genSalt(10);
@@ -27,7 +29,7 @@ router.post('/register', async (req, res) => {
 
         const newUser = new User({
             username,
-            email,
+            email: normalizedEmail,
             password: hashedPassword
         });
 
@@ -44,7 +46,9 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await User.findOne({ email });
+        const normalizedEmail = email.toLowerCase();
+        const user = await User.findOne({ email: normalizedEmail });
+        
         if (!user) return res.status(400).json({ error: "Email o contraseña incorrectos" });
         if (!user.password) return res.status(400).json({ error: "Usa el botón de Google." });
 
@@ -73,13 +77,14 @@ router.post('/google', async (req, res) => {
             audience: "570011480834-rs6o3vggmdovvouj8gi9gi4p0l2mnqdm.apps.googleusercontent.com"
         });
         const { email, sub: googleId } = ticket.getPayload();
-        let user = await User.findOne({ email });
+        const normalizedEmail = email.toLowerCase();
+        let user = await User.findOne({ email: normalizedEmail });
 
         if (user) {
             const appToken = jwt.sign({ id: user._id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
             res.json({ token: appToken, isNew: false, user });
         } else {
-            res.json({ isNew: true, email, googleId });
+            res.json({ isNew: true, email: normalizedEmail, googleId });
         }
     } catch (err) {
         res.status(500).json({ error: "Error Google" });
@@ -94,7 +99,12 @@ router.post('/google-register', async (req, res) => {
         if (userCheck) return res.status(400).json({ msg: "Nick ocupado" });
 
         const newUser = new User({
-            email, googleId, username: username.trim(), age, cl, password: ""
+            email: email.toLowerCase(), 
+            googleId, 
+            username: username.trim(), 
+            age, 
+            cl, 
+            password: ""
         });
 
         await newUser.save();
@@ -106,12 +116,13 @@ router.post('/google-register', async (req, res) => {
 });
 
 // ==========================================
-// 🔑 4. RECUPERACIÓN DE CONTRASEÑA (NUEVO)
+// 🔑 4. RECUPERACIÓN DE CONTRASEÑA
 // ==========================================
 router.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
     try {
-        const user = await User.findOne({ email });
+        const normalizedEmail = email.toLowerCase();
+        const user = await User.findOne({ email: normalizedEmail });
         if (!user) return res.status(404).json({ msg: "Correo no registrado" });
 
         const token = crypto.randomBytes(20).toString('hex');
@@ -139,6 +150,7 @@ router.post('/forgot-password', async (req, res) => {
         await transporter.sendMail(mailOptions);
         res.json({ msg: "Correo enviado" });
     } catch (error) {
+        console.log(error); // Ver error en consola de Render
         res.status(500).json({ msg: "Error al enviar el correo" });
     }
 });
