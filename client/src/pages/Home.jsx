@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BACKEND_URL from "../config";
+import Swal from "sweetalert2"; // ✅ Usaremos SweetAlert para el formulario
 import { 
     Sword, 
     ScrollText, 
@@ -13,24 +14,20 @@ import {
     Star,
     ShoppingBag,
     Instagram,
-    ExternalLink
+    ExternalLink,
+    PlusCircle
 } from "lucide-react";
 
 export default function HomePortal() {
     const navigate = useNavigate();
     const [trendingCards, setTrendingCards] = useState([]);
     const [loading, setLoading] = useState(true);
+    
+    // ✅ ESTADO PARA LOS JUGADORES/COMUNIDADES
+    const [players, setPlayers] = useState([]);
 
     // ✅ LOGO DIRECTO DE TU GITHUB
     const VIKINGO_LOGO = "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/vikingo.png";
-
-    const stories = [
-        { id: 1, user: "JuegosVikingos", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_6uY6I_fD-uKjT6yT5fM9hG7mQ5Gq-9G9vA&s", label: "Nuevo Stock" },
-        { id: 2, user: "ForjaDeck", img: "https://i.ytimg.com/vi/S7Q7-Cst8H8/maxresdefault.jpg", label: "Tier List" },
-        { id: 3, user: "Comunidad", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6H8_R_R3G_A9u6z9f_J9G6Pz_G_G_G_G_G&s", label: "Torneo" },
-        { id: 4, user: "AlexisTobar", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G&s", label: "Dev Log" },
-        { id: 5, user: "MylOficial", img: "https://blog.myl.cl/wp-content/uploads/2023/10/banner-pb.jpg", label: "Spoiler" },
-    ];
 
     useEffect(() => {
         const fetchTrending = async () => {
@@ -46,8 +43,64 @@ export default function HomePortal() {
                 setLoading(false);
             }
         };
+
+        // ✅ CARGAR JUGADORES DESDE EL BACKEND
+        const fetchPlayers = async () => {
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/community-links`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setPlayers(data);
+                }
+            } catch (error) {
+                console.error("Error al cargar comunidades");
+            }
+        };
+
         fetchTrending();
+        fetchPlayers();
     }, []);
+
+    // ✅ FUNCIÓN PARA QUE ELLOS PONGAN SUS DATOS (SWEETALERT FORM)
+    const handleAddCommunity = async () => {
+        const { value: formValues } = await Swal.fire({
+            title: 'Únete a la Red de Invocadores',
+            background: '#0f172a',
+            color: '#fff',
+            confirmButtonColor: '#2563eb',
+            html:
+                '<input id="swal-input1" class="swal2-input" placeholder="Nombre de Usuario / Comunidad">' +
+                '<input id="swal-input2" class="swal2-input" placeholder="Link de Instagram (https://...)">' +
+                '<input id="swal-input3" class="swal2-input" placeholder="URL del Logo (Imagen)">',
+            focusConfirm: false,
+            preConfirm: () => {
+                return {
+                    name: document.getElementById('swal-input1').value,
+                    instagram: document.getElementById('swal-input2').value,
+                    logo: document.getElementById('swal-input3').value
+                }
+            }
+        });
+
+        if (formValues && formValues.name && formValues.instagram) {
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/community-links`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formValues)
+                });
+                if (res.ok) {
+                    Swal.fire({ icon: 'success', title: '¡Wena! Ya estai en la lista', background: '#0f172a', color: '#fff' });
+                    // Recargar lista
+                    const updated = await fetch(`${BACKEND_URL}/api/community-links`);
+                    const data = await updated.json();
+                    setPlayers(data);
+                }
+            } catch (e) {
+                Swal.fire({ icon: 'error', title: 'Chuta, falló el envío' });
+            }
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-[#0A0C10] dark:via-[#0f172a] dark:to-[#0A0C10] flex flex-col items-center font-sans text-slate-900 dark:text-white selection:bg-blue-100 dark:selection:bg-blue-900/30 overflow-x-hidden transition-colors duration-500">
@@ -68,8 +121,6 @@ export default function HomePortal() {
                     Optimización de mazos basada en el análisis de datos masivos.
                 </p>
             </header>
-
-            
 
             {/* --- SELECTOR DE FORMATOS --- */}
             <main className="w-full max-w-7xl px-6 grid grid-cols-1 md:grid-cols-2 gap-8 mb-32 z-10">
@@ -130,7 +181,7 @@ export default function HomePortal() {
                 </div>
             </section>
 
-            {/* --- SECCIÓN: JUEGOS VIKINGOS STORE CON LOGO ACTUALIZADO --- */}
+            {/* --- SECCIÓN: JUEGOS VIKINGOS STORE --- */}
             <section className="w-full max-w-7xl px-6 mb-32">
                 <div className="relative bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[3rem] p-1 shadow-2xl overflow-hidden group">
                     <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-white/10 rounded-full blur-[80px] group-hover:scale-150 transition-transform duration-1000"></div>
@@ -163,6 +214,45 @@ export default function HomePortal() {
                             />
                         </div>
                     </div>
+                </div>
+            </section>
+
+            {/* --- ✅ NUEVA SECCIÓN: RED DE INVOCADORES (INSTAGRAM LINKS) --- */}
+            <section className="w-full max-w-7xl px-6 mb-32">
+                <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-4">
+                    <div className="text-left">
+                        <h3 className="text-3xl font-black text-slate-900 dark:text-white uppercase italic flex items-center gap-3">
+                            <Instagram className="text-pink-600" /> Red de Invocadores
+                        </h3>
+                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Sigue a los mejores jugadores y comunidades</p>
+                    </div>
+                    <button 
+                        onClick={handleAddCommunity}
+                        className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg hover:scale-105 transition-all"
+                    >
+                        <PlusCircle size={18} /> Aparecer aquí
+                    </button>
+                </div>
+
+                <div className="flex gap-8 overflow-x-auto no-scrollbar py-6">
+                    {players.length > 0 ? players.map((player, idx) => (
+                        <a 
+                            key={idx} 
+                            href={player.instagram} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="flex flex-col items-center gap-3 group min-w-[100px]"
+                        >
+                            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 group-hover:rotate-12 transition-transform duration-500 shadow-xl">
+                                <div className="w-full h-full rounded-full border-[4px] border-white dark:border-[#0f172a] overflow-hidden">
+                                    <img src={player.logo || "https://via.placeholder.com/150?text=MyL"} className="w-full h-full object-cover" alt={player.name} />
+                                </div>
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-tighter text-slate-700 dark:text-slate-300 group-hover:text-pink-500 transition-colors">@{player.name}</span>
+                        </a>
+                    )) : (
+                        <p className="text-slate-500 italic text-sm">Sé el primero en unirte a la red...</p>
+                    )}
                 </div>
             </section>
 
@@ -221,7 +311,7 @@ function FormatCard({ title, desc, img, icon, onClick, delay }) {
                 <h2 className="text-4xl font-black text-slate-900 dark:text-white mb-2 uppercase italic tracking-tighter group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{title}</h2>
                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-8 leading-relaxed">{desc}</p>
                 <div className="flex items-center gap-3 text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">
-                    Forjar Mazo <ArrowRight size={18} className="group-hover:translate-x-3 transition-transform" />
+                    Crea tu Mazo <ArrowRight size={18} className="group-hover:translate-x-3 transition-transform" />
                 </div>
             </div>
         </div>
