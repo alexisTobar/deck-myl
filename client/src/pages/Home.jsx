@@ -69,21 +69,7 @@ export default function HomePortal() {
                 </p>
             </header>
 
-            {/* --- SECCIÓN: INSTAGRAM STORIES --- */}
-            <section className="w-full max-w-7xl px-6 mb-20 overflow-x-auto no-scrollbar py-4">
-                <div className="flex gap-6 md:justify-center items-center min-w-max md:min-w-full">
-                    {stories.map((story) => (
-                        <div key={story.id} className="flex flex-col items-center gap-2 group cursor-pointer">
-                            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 group-hover:scale-110 transition-transform duration-300">
-                                <div className="w-full h-full rounded-full border-[3px] border-white dark:border-[#0f172a] overflow-hidden">
-                                    <img src={story.img} className="w-full h-full object-cover" alt={story.user} />
-                                </div>
-                            </div>
-                            <span className="text-[10px] font-black uppercase tracking-tighter text-slate-500 dark:text-slate-400">{story.user}</span>
-                        </div>
-                    ))}
-                </div>
-            </section>
+            
 
             {/* --- SELECTOR DE FORMATOS --- */}
             <main className="w-full max-w-7xl px-6 grid grid-cols-1 md:grid-cols-2 gap-8 mb-32 z-10">
