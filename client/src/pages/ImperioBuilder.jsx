@@ -4,7 +4,7 @@ import { saveAs } from 'file-saver';
 import BACKEND_URL from "../config";
 import { 
     Plus, Minus, Eye, Save, Search, X, Camera, Globe, Layout, 
-    Users, Star, Sword, ChevronDown, ShieldAlert, Filter, Sparkles
+    Users, Star, Sword, ChevronDown, ShieldAlert, Filter 
 } from "lucide-react";
 
 const TYPE_MAP = { "1": "Aliado", "2": "Talismán", "3": "Arma", "4": "Tótem", "5": "Oro" };
@@ -32,10 +32,10 @@ const EDICIONES_IMPERIO = {
 
 const TIPOS_IMPERIO = [
     { id: "1", label: "Aliado", icon: <Users size={14} />, color: "border-blue-500 text-blue-400" },
-    { id: "2", label: "Talismán", icon: <Sparkles size={14} />, color: "border-purple-500 text-purple-400" },
-    { id: "3", label: "Arma", icon: <Sword size={14} />, color: "border-red-500 text-red-400" },
+    { id: "2", label: "Talismán", icon: <Layout size={14} />, color: "border-purple-500 text-purple-400" },
+    { id: "3", label: "Arma", icon: <Layout size={14} />, color: "border-red-500 text-red-400" },
     { id: "4", label: "Tótem", icon: <Layout size={14} />, color: "border-green-500 text-green-400" },
-    { id: "5", label: "Oro", icon: <Globe size={14} />, color: "border-yellow-500 text-yellow-400" }
+    { id: "5", label: "Oro", icon: <Globe size={14} />, label: "Oro", color: "border-yellow-500 text-yellow-400" }
 ];
 
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
@@ -61,6 +61,8 @@ export default function ImperioBuilder() {
     const [showMobileList, setShowMobileList] = useState(false);
     const [cardToZoom, setCardToZoom] = useState(null);
     const [guardando, setGuardando] = useState(false);
+    
+    // ✅ ESTADO PARA MANO DE PRUEBA
     const [manoPrueba, setManoPrueba] = useState([]);
 
     const mazoAgrupado = useMemo(() => {
@@ -82,6 +84,7 @@ export default function ImperioBuilder() {
         return { counts };
     }, [mazo]);
 
+    // ✅ FUNCIÓN SIMULADOR DE MANO
     const simularMano = () => {
         let baraja = [];
         mazo.forEach(c => { for (let i = 0; i < c.cantidad; i++) baraja.push(c); });
@@ -108,39 +111,36 @@ export default function ImperioBuilder() {
         }
     }, [location.state]);
 
-    // ✅ REPARACIÓN MOTOR DE BÚSQUEDA: Ahora sí filtra correctamente
+    // ✅ EFECTO DE BÚSQUEDA CORREGIDO: Muestra cartas al filtrar por Aliado o Raza
     useEffect(() => {
         const fetchCartas = async () => {
             setLoading(true);
             try {
                 const params = new URLSearchParams();
-                params.append("format", "imperio");
-
+                params.append("format", formato);
+                
                 if (busqueda) {
                     params.append("q", busqueda);
                 } else {
                     params.append("edition", edicionSeleccionada);
                 }
-
+                
+                // Si el usuario elige una raza, forzamos que sea tipo Aliado (1) en la query
                 if (razaSeleccionada) {
-                    params.append("type", "1"); // Forzamos Aliado
+                    params.append("type", "1");
                     params.append("race", razaSeleccionada);
                 } else if (tipoSeleccionado) {
                     params.append("type", tipoSeleccionado);
                 }
 
-                const response = await fetch(`${BACKEND_URL}/api/cards/search?${params.toString()}`);
-                const data = await response.json();
+                const res = await fetch(`${BACKEND_URL}/api/cards/search?${params.toString()}`);
+                const data = await res.json();
                 setCartas(Array.isArray(data) ? data : (data.results || []));
-            } catch (e) {
-                console.error("Error fetching:", e);
-            } finally {
-                setLoading(false);
-            }
+            } catch (e) { console.error(e); } finally { setLoading(false); }
         };
         const timer = setTimeout(fetchCartas, 300);
         return () => clearTimeout(timer);
-    }, [busqueda, edicionSeleccionada, tipoSeleccionado, razaSeleccionada]);
+    }, [busqueda, edicionSeleccionada, tipoSeleccionado, razaSeleccionada, formato]);
 
     const handleAdd = (c) => {
         if (c.restriction === "banned") return alert(`🚫 ${c.name} está PROHIBIDA.`);
@@ -154,12 +154,13 @@ export default function ImperioBuilder() {
         let limit = 3;
         if (c.restriction === "limited1") limit = 1;
         if (c.restriction === "limited2") limit = 2;
-        if (copiasMismoNombre >= limit) return alert(`⚠️ Máximo ${limit} copia(s).`);
 
-        setMazo(prev => {
-            const ex = prev.find(x => x.slug === c.slug);
-            if (ex) return prev.map(x => x.slug === c.slug ? { ...x, cantidad: x.cantidad + 1 } : x);
-            return [...prev, { ...c, cantidad: 1, imgUrl: getImg(c), type: String(c.type) }];
+        if (copiasMismoNombre >= limit) return alert(`⚠️ Sólo puedes tener ${limit} copia(s) de "${c.name}" en total.`);
+
+        setMazo(prevMazo => {
+            const ex = prevMazo.find(x => x.slug === c.slug);
+            if (ex) return prevMazo.map(x => x.slug === c.slug ? { ...x, cantidad: x.cantidad + 1 } : x);
+            return [...prevMazo, { ...c, cantidad: 1, imgUrl: getImg(c), type: String(c.type) }];
         });
     };
 
@@ -173,13 +174,19 @@ export default function ImperioBuilder() {
         try {
             const url = editingDeckId ? `${BACKEND_URL}/api/decks/${editingDeckId}` : `${BACKEND_URL}/api/decks`;
             const method = editingDeckId ? "PUT" : "POST";
+            const deckData = {
+                name: nombreMazo,
+                cards: mazo.map(c => ({ ...c, quantity: c.cantidad })),
+                format: "imperio", 
+                isPublic: isPublic
+            };
             const res = await fetch(url, { 
-                method, 
-                headers: { "Content-Type": "application/json", "auth-token": token }, 
-                body: JSON.stringify({ name: nombreMazo, cards: mazo.map(c => ({...c, quantity: c.cantidad})), format: formato, isPublic }) 
+                method, headers: { "Content-Type": "application/json", "auth-token": token }, 
+                body: JSON.stringify(deckData) 
             });
             if (res.ok) navigate("/my-decks");
-        } catch (e) { alert("Error"); } finally { setGuardando(false); }
+            else { const err = await res.json(); alert(err.error || "Error al guardar"); }
+        } catch (e) { alert("Error de conexión"); } finally { setGuardando(false); }
     };
 
     const handleTakeScreenshot = async () => {
@@ -214,37 +221,40 @@ export default function ImperioBuilder() {
             ctx.fill(); ctx.fillStyle = "#f97316"; ctx.font = "bold 28px Arial"; ctx.textAlign = "center";
             ctx.fillText(`${totalC} CARTAS`, 1050, 90); ctx.textAlign = "left";
 
-            let curX = 50, curY = 180;
+            let x = 50, y = 180;
             for (const card of mazo) {
                 const img = await loadImg(card.imgUrl);
                 if (img) {
-                    ctx.drawImage(img, curX, curY, 105, 147);
+                    ctx.shadowColor = "rgba(0,0,0,0.5)"; ctx.shadowBlur = 10;
+                    ctx.drawImage(img, x, y, 105, 147); ctx.shadowBlur = 0;
                     ctx.fillStyle = "#f97316";
-                    if(ctx.roundRect) { ctx.beginPath(); ctx.roundRect(curX+75, curY+120, 32, 28, 8); ctx.fill(); }
-                    else ctx.fillRect(curX+75, curY+120, 32, 28);
+                    if(ctx.roundRect) { ctx.beginPath(); ctx.roundRect(x+75, y+120, 32, 28, 8); ctx.fill(); }
+                    else ctx.fillRect(x+75, y+120, 32, 28);
                     ctx.fillStyle = "white"; ctx.font = "bold 16px Arial";
-                    ctx.fillText(`x${card.cantidad}`, curX+79, curY+140);
+                    ctx.fillText(`x${card.cantidad}`, x+79, y+140);
                 }
-                curX += 112; if (curX > 1120) { curX = 50; curY += 165; }
+                x += 112; if (x > 1120) { x = 50; y += 165; }
             }
             const footerY = canvas.height - 150; let startX = 50;
             ORDER_TYPES.forEach((type) => {
                 const count = statsForExport.counts[type] || 0;
                 const perc = totalC > 0 ? (count / totalC) : 0;
                 ctx.fillStyle = "#1e1b18";
-                if(ctx.roundRect) { ctx.beginPath(); ctx.roundRect(startX, footerY, 215, 100, 20); ctx.fill(); }
+                if(ctx.roundRect) { ctx.beginPath(); ctx.roundRect(startX, footerY, 215, 100, 20); ctx.fill(); ctx.strokeStyle = "#f9731633"; ctx.stroke(); }
                 ctx.fillStyle = "#f97316"; ctx.font = "bold 12px Arial"; ctx.fillText(type.toUpperCase(), startX + 15, footerY + 30);
                 ctx.fillStyle = "white"; ctx.font = "bold 40px Arial"; ctx.fillText(count, startX + 15, footerY + 75);
+                ctx.fillStyle = "#332211"; ctx.fillRect(startX + 15, footerY + 85, 175, 6);
+                ctx.fillStyle = "#f97316"; ctx.fillRect(startX + 15, footerY + 85, 175 * perc, 6);
                 startX += 230;
             });
-            canvas.toBlob((blob) => { saveAs(blob, `Deck_${nombreMazo || "Imperio"}.png`); setGuardando(false); });
+            ctx.fillStyle = "#475569"; ctx.font = "12px Arial";
+            ctx.fillText("GENERADO POR WARNING DECK BUILDER • 2025", 50, canvas.height - 20);
+            canvas.toBlob((blob) => { saveAs(blob, `WD_Imp_${nombreMazo || "Deck"}.png`); setGuardando(false); });
         } catch (err) { alert('Error imagen'); setGuardando(false); }
     };
 
     return (
         <div className="h-screen flex flex-col md:flex-row font-sans bg-[#F8FAFC] dark:bg-[#0f0a07] text-slate-900 dark:text-white overflow-hidden transition-colors duration-500">
-            
-            {/* PANEL IZQUIERDO */}
             <div className="flex-1 flex flex-col h-full relative overflow-hidden">
                 <div className="bg-white dark:bg-slate-900/80 border-b border-slate-200 dark:border-orange-500/20 p-3 flex justify-between items-center px-4 shadow-sm z-20">
                     <button onClick={() => navigate("/imperio")} className="p-1.5 rounded-lg border border-slate-200 dark:border-orange-500/30 text-slate-500 dark:text-orange-500 text-xs font-bold hover:bg-slate-100 dark:hover:bg-orange-500/10 transition-all italic tracking-tighter uppercase">Volver</button>
@@ -266,17 +276,15 @@ export default function ImperioBuilder() {
                         </div>
                         <input type="text" placeholder="Búsqueda Global..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="flex-[2] p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:border-blue-500 dark:focus:border-orange-500 font-bold transition-all text-slate-900 dark:text-white" />
                     </div>
-
                     <div className="flex flex-wrap gap-2 justify-center">
                         {TIPOS_IMPERIO.map((tipo) => (
                             <button key={tipo.id} 
-                                onClick={() => { setTipoSeleccionado(tipoSeleccionado === tipo.id ? "" : tipo.id); setRazaSeleccionada(""); }} 
+                                onClick={() => { setTipoSeleccionado(tipoSeleccionado === tipo.id ? "" : tipo.id); setRazaSeleccionada(""); }}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 transition-all text-[10px] uppercase font-black ${tipoSeleccionado === tipo.id ? `border-blue-600 dark:border-orange-500 text-blue-600 dark:text-orange-500 bg-blue-50 dark:bg-slate-800 shadow-md` : 'bg-white dark:bg-transparent border-slate-200 dark:border-slate-800 text-slate-400'}`}>
                                 {tipo.icon} {tipo.label}
                             </button>
                         ))}
                     </div>
-
                     {/* ✅ RAZAS PERSISTENTES */}
                     <div className="flex flex-wrap gap-1.5 justify-center pt-2 border-t border-slate-200 dark:border-white/5">
                         <button onClick={() => setRazaSeleccionada("")} className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all border ${razaSeleccionada === "" ? 'bg-slate-800 text-white border-slate-700' : 'bg-transparent text-slate-400 border-transparent hover:text-slate-200'}`}>Todas</button>
@@ -291,14 +299,19 @@ export default function ImperioBuilder() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar pb-24 md:pb-4" ref={gridContainerRef}>
-                    {loading ? <div className="text-center mt-20 animate-pulse text-blue-600 dark:text-orange-500 font-black uppercase tracking-widest italic">Invocando...</div> : (
+                    {loading ? <div className="text-center mt-20 animate-pulse text-blue-600 dark:text-orange-500 font-black uppercase tracking-widest italic">Invocando grimorio...</div> : (
                         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                             {cartas.map(c => {
                                 const cant = mazo.find(x => x.slug === c.slug)?.cantidad || 0;
                                 return (
                                     <div key={c.slug} className="relative cursor-pointer group" onClick={() => handleAdd(c)}>
-                                        <div className={`rounded-xl overflow-hidden border-2 transition-all duration-300 transform hover:scale-105 ${cant > 0 ? 'border-blue-600 dark:border-orange-500 shadow-xl' : 'border-slate-200 dark:border-slate-800'}`}>
+                                        <div className={`rounded-xl overflow-hidden border-2 transition-all duration-300 transform hover:scale-105 ${cant > 0 ? 'border-blue-600 dark:border-orange-500 shadow-xl' : 'border-slate-200 dark:border-slate-800'} ${c.restriction === 'banned' ? 'opacity-40 grayscale' : ''}`}>
                                             <img src={getImg(c)} className="w-full h-auto transition-transform" alt={c.name} />
+                                            {c.restriction && c.restriction !== 'unrestricted' && (
+                                                <div className="absolute top-1 left-1 bg-red-600 p-1 rounded-md text-[8px] font-black uppercase text-white shadow-xl flex items-center gap-1">
+                                                    <ShieldAlert size={10}/> {c.restriction === 'banned' ? 'BAN' : c.restriction === 'limited1' ? '1' : '2'}
+                                                </div>
+                                            )}
                                             {cant > 0 && <div className="absolute inset-0 bg-blue-600/20 dark:bg-black/40 flex items-center justify-center"><div className="w-10 h-10 rounded-full bg-blue-600 dark:bg-orange-500 text-white flex items-center justify-center font-black text-xl border-2 border-white shadow-2xl">{cant}</div></div>}
                                         </div>
                                         <button onClick={(e) => { e.stopPropagation(); setCardToZoom(c); }} className="absolute top-1.5 right-1.5 bg-white/80 dark:bg-black/60 backdrop-blur-md text-slate-900 dark:text-white w-7 h-7 rounded-lg flex items-center justify-center border border-slate-200 dark:border-white/20 hover:bg-blue-600 dark:hover:bg-orange-600 hover:text-white transition-all"><Search size={14} strokeWidth={3} /></button>
@@ -310,8 +323,7 @@ export default function ImperioBuilder() {
                 </div>
             </div>
 
-            {/* PANEL DERECHO: GRIMORIO */}
-            <div className="hidden md:flex w-85 border-l border-slate-200 dark:border-white/10 flex-col h-screen bg-white dark:bg-[#0f0a07] shadow-2xl transition-colors">
+            <div className="hidden md:flex w-85 border-l border-slate-200 dark:border-white/10 flex-col h-screen bg-white dark:bg-[#0f0a07] shadow-2xl transition-colors duration-500">
                 <div className="p-5 border-b border-slate-200 dark:border-orange-500/30 bg-slate-50 dark:bg-slate-900/50 backdrop-blur-md font-black text-slate-900 dark:text-orange-500 uppercase tracking-widest flex justify-between items-center shadow-sm">
                     <div className="flex items-center gap-2"><Layout size={18}/><span className="italic">Grimorio Imperio</span></div>
                     <div className={`px-3 py-1 rounded-full text-xs font-black transition-all border ${mazo.reduce((a,b)=>a+b.cantidad,0) === 50 ? 'bg-blue-600 dark:bg-orange-500 text-white' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>{mazo.reduce((a,b)=>a+b.cantidad,0)} / 50</div>
@@ -324,7 +336,7 @@ export default function ImperioBuilder() {
                                 {mazoAgrupado[t].map(c => (
                                     <div key={c.slug} className="flex justify-between items-center text-sm py-2.5 px-4 bg-slate-50 dark:bg-white/5 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-white/5 group hover:border-blue-400 dark:hover:border-orange-500/30 transition-all duration-300 shadow-sm">
                                         <div className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onClick={() => setCardToZoom(c)}>
-                                            <div className="bg-white dark:bg-slate-800 text-blue-600 dark:text-orange-400 w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs border dark:border-0">{c.cantidad}</div>
+                                            <div className="bg-white dark:bg-slate-800 text-blue-600 dark:text-orange-400 w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs shadow-sm border dark:border-0">{c.cantidad}</div>
                                             <span className="truncate font-bold text-slate-700 dark:text-slate-200 uppercase text-[12px]">{c.name}</span>
                                         </div>
                                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
@@ -338,7 +350,7 @@ export default function ImperioBuilder() {
                     ))}
                 </div>
                 <div className="p-5 bg-white dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-200 dark:border-white/5 flex flex-col gap-3 transition-all shadow-inner">
-                    <button onClick={simularMano} className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-indigo-600 text-slate-700 dark:text-white py-3 rounded-2xl font-black text-[11px] uppercase active:scale-95 flex items-center justify-center gap-2 border border-slate-200 dark:border-white/5 shadow-sm transition-all"><Eye size={16} /> Mano de Prueba</button>
+                    <button onClick={simularMano} className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-indigo-600 text-slate-700 dark:text-white py-3 rounded-2xl font-black text-[11px] uppercase active:scale-95 flex items-center justify-center gap-2 border border-slate-200 dark:border-white/5 shadow-sm transition-all"><Eye size={16} /> Mano de Prueba</button>
                     <button onClick={handleTakeScreenshot} className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 text-slate-700 dark:text-white py-3 rounded-2xl font-black text-[11px] uppercase active:scale-95 flex items-center justify-center gap-2 border border-slate-200 dark:border-white/5 shadow-sm transition-all"><Camera size={16} /> Descargar Imagen</button>
                     <button onClick={() => setModalGuardarOpen(true)} className="w-full bg-blue-600 dark:bg-orange-600 hover:bg-blue-700 dark:hover:bg-orange-500 text-white py-3 rounded-2xl font-black text-[11px] uppercase active:scale-95 flex items-center justify-center gap-2 shadow-xl transition-all"><Save size={16} /> Guardar Mazo</button>
                 </div>
@@ -354,7 +366,7 @@ export default function ImperioBuilder() {
                 </div>
             </div>
 
-            {/* MODALES MANO PRUEBA, ZOOM Y GUARDAR */}
+            {/* ✅ MODALES (Mano, Zoom, Guardar) */}
             {manoPrueba.length > 0 && (
                 <div className="fixed inset-0 bg-slate-950/95 z-[300] flex flex-col items-center justify-center p-4 backdrop-blur-xl animate-in fade-in">
                     <h3 className="text-xl md:text-2xl font-black text-blue-500 dark:text-orange-500 uppercase italic mb-8 tracking-widest text-center">Mano Inicial</h3>
@@ -368,6 +380,39 @@ export default function ImperioBuilder() {
                     <div className="mt-12 flex gap-4">
                         <button onClick={simularMano} className="bg-blue-600 dark:bg-orange-600 text-white dark:text-black px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all">Mulligan</button>
                         <button onClick={() => setManoPrueba([])} className="bg-slate-800 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest border border-white/10 active:scale-95 transition-all">Cerrar</button>
+                    </div>
+                </div>
+            )}
+
+            {showMobileList && (
+                <div className="md:hidden fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
+                    <div className="bg-white dark:bg-slate-900 rounded-t-[3rem] h-[80vh] p-6 overflow-hidden border-t border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-black uppercase text-blue-600 dark:text-orange-500 italic tracking-tighter">Grimorio ({mazo.reduce((a,b)=>a+b.cantidad,0)}/50)</h3>
+                            <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 transition-colors hover:text-red-500"><X size={24} /></button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto custom-scrollbar">
+                            {ORDER_TYPES.map(t => mazoAgrupado[t] && (
+                                <div key={t} className="mb-6">
+                                    <h4 className="text-slate-400 dark:text-orange-600 text-[10px] font-black uppercase mb-3 tracking-widest border-b dark:border-orange-800 pb-1">{t}</h4>
+                                    <div className="space-y-3">
+                                        {mazoAgrupado[t].map(c => (
+                                            <div key={c.slug} className="flex justify-between items-center py-2">
+                                                <div className="flex items-center gap-3">
+                                                    <img src={getImg(c)} className="w-12 h-16 rounded-xl shadow-md object-cover border border-slate-100 dark:border-0" alt={c.name} />
+                                                    <span className="text-sm font-black text-slate-700 dark:text-slate-200 uppercase truncate max-w-[150px]">{c.name}</span>
+                                                </div>
+                                                <div className="flex items-center gap-4 bg-slate-100 dark:bg-slate-950 p-2 px-5 rounded-2xl">
+                                                    <button onClick={() => handleRemove(c.slug)} className="text-red-500 active:scale-90 transition-transform"><Minus size={20} strokeWidth={3}/></button>
+                                                    <span className="font-black text-slate-800 dark:text-white text-base w-4 text-center">{c.cantidad}</span>
+                                                    <button onClick={() => handleAdd(c)} className="text-green-500 active:scale-90 transition-transform"><Plus size={20} strokeWidth={3}/></button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             )}
@@ -391,7 +436,7 @@ export default function ImperioBuilder() {
             {modalGuardarOpen && (
                 <div className="fixed inset-0 bg-slate-950/90 z-[500] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in" onClick={() => setModalGuardarOpen(false)}>
                     <div className="bg-white dark:bg-slate-800 p-8 rounded-[3rem] w-full max-w-sm border border-slate-200 dark:border-slate-700 shadow-2xl" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-2xl font-black mb-8 uppercase text-blue-600 dark:text-orange-500 tracking-tighter italic text-center leading-none">Archivar<br/>Estrategia Imperio</h3>
+                        <h3 className="text-2xl font-black mb-8 uppercase text-blue-600 dark:text-orange-500 tracking-tighter italic text-center leading-none">Archivar Estrategia</h3>
                         <input value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-blue-500 dark:focus:border-orange-500 mb-4 transition-all text-slate-900 dark:text-white font-black uppercase text-sm tracking-widest" placeholder="NOMBRE DEL MAZO..." />
                         <label className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl cursor-pointer hover:bg-blue-50 dark:hover:bg-slate-950 transition-colors border border-slate-200 dark:border-slate-700">
                             <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-6 h-6 rounded-lg accent-blue-600 dark:accent-orange-600" />
