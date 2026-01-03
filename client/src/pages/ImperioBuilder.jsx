@@ -93,17 +93,16 @@ export default function ImperioBuilder() {
     useEffect(() => {
         if (location.state?.deckToEdit) {
             const d = location.state.deckToEdit;
-            if (d.format === "imperio") {
-                setNombreMazo(d.name || "");
-                setEditingDeckId(d._id);
-                setIsPublic(d.isPublic || false);
-                setMazo(d.cards.map(c => ({ 
-                    ...c, 
-                    cantidad: c.quantity || 1, 
-                    imgUrl: getImg(c),
-                    type: String(c.type)
-                })));
-            }
+            // Quitamos la restricción estricta de formato para permitir clonación entre pestañas si fuera necesario
+            setNombreMazo(location.state.isCloning ? `${d.name} (Copia)` : d.name || "");
+            setEditingDeckId(location.state.isCloning ? null : d._id);
+            setIsPublic(d.isPublic || false);
+            setMazo(d.cards.map(c => ({ 
+                ...c, 
+                cantidad: c.quantity || c.cantidad || 1, 
+                imgUrl: getImg(c),
+                type: String(c.type)
+            })));
         }
     }, [location.state]);
 
@@ -156,12 +155,38 @@ export default function ImperioBuilder() {
         try {
             const url = editingDeckId ? `${BACKEND_URL}/api/decks/${editingDeckId}` : `${BACKEND_URL}/api/decks`;
             const method = editingDeckId ? "PUT" : "POST";
+            
+            // ✅ CORRECCIÓN: Estructura de envío de cartas
+            const deckData = {
+                name: nombreMazo,
+                cards: mazo.map(c => ({
+                    ...c,
+                    quantity: c.cantidad // Aseguramos que quantity sea el campo de conteo
+                })),
+                format: "imperio", // Forzamos el formato correcto
+                isPublic: isPublic
+            };
+
             const res = await fetch(url, { 
-                method, headers: { "Content-Type": "application/json", "auth-token": token }, 
-                body: JSON.stringify({ name: nombreMazo, cards: mazo.map(c => ({...c, quantity: c.cantidad})), format: formato, isPublic: isPublic }) 
+                method, 
+                headers: { 
+                    "Content-Type": "application/json", 
+                    "auth-token": token 
+                }, 
+                body: JSON.stringify(deckData) 
             });
-            if (res.ok) navigate("/my-decks");
-        } catch (e) { alert("Error"); } finally { setGuardando(false); }
+
+            if (res.ok) {
+                navigate("/my-decks");
+            } else {
+                const err = await res.json();
+                alert(err.error || "Error al guardar");
+            }
+        } catch (e) { 
+            alert("Error de conexión con el servidor"); 
+        } finally { 
+            setGuardando(false); 
+        }
     };
 
     const handleTakeScreenshot = async () => {
@@ -314,7 +339,6 @@ export default function ImperioBuilder() {
                     ))}
                 </div>
                 <div className="p-5 bg-white dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-200 dark:border-white/5 flex flex-col gap-3 transition-all shadow-inner">
-                    {/* ✅ BOTÓN DE MANO DE PRUEBA AÑADIDO */}
                     <button onClick={simularMano} className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-indigo-600 text-slate-700 dark:text-white py-3 rounded-2xl font-black text-[11px] uppercase active:scale-95 flex items-center justify-center gap-2 border border-slate-200 dark:border-white/5 shadow-sm transition-all"><Eye size={16} /> Mano de Prueba</button>
                     <button onClick={handleTakeScreenshot} className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 text-slate-700 dark:text-white py-3 rounded-2xl font-black text-[11px] uppercase active:scale-95 flex items-center justify-center gap-2 border border-slate-200 dark:border-white/5 shadow-sm transition-all"><Camera size={16} /> Descargar Imagen</button>
                     <button onClick={() => setModalGuardarOpen(true)} className="w-full bg-blue-600 dark:bg-orange-600 hover:bg-blue-700 dark:hover:bg-orange-500 text-white py-3 rounded-2xl font-black text-[11px] uppercase active:scale-95 flex items-center justify-center gap-2 shadow-xl transition-all"><Save size={16} /> Guardar Mazo</button>
@@ -325,7 +349,6 @@ export default function ImperioBuilder() {
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-2 pb-6 z-50 flex items-center justify-between shadow-2xl transition-colors">
                 <div className="flex flex-col px-3"><span className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">TOTAL</span><span className={`text-xl font-black leading-none ${totalCartas === 50 ? 'text-green-600 dark:text-green-500' : 'text-slate-900 dark:text-white'}`}>{totalCartas}/50</span></div>
                 <div className="flex gap-2">
-                    {/* ✅ BOTÓN MANO MÓVIL */}
                     <button onClick={simularMano} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Mano</button>
                     <button onClick={() => setShowMobileList(true)} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Lista</button>
                     <button onClick={() => setModalGuardarOpen(true)} className="bg-blue-600 dark:bg-orange-600 text-white px-5 py-2 rounded-xl font-black text-xs shadow-lg flex items-center justify-center"><Save size={16} /></button>
