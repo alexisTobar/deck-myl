@@ -41,7 +41,7 @@ const TIPOS_IMPERIO = [
     { id: "5", label: "Oro" }
 ];
 
-// ✅ NUEVA CONSTANTE: RAZAS DE IMPERIO
+// ✅ RAZAS DE IMPERIO ACTUALIZADAS
 const RAZAS_IMPERIO_LIST = [
     "Caballero", "Eterno", "Héroe", "Faerie", "Dragón", "Bestia", "Guerrero", "Sacerdote", "Sombra"
 ];
@@ -332,7 +332,7 @@ export default function AdminDashboard() {
                     )}
                 </div>
 
-                {/* TAB: CARTAS (FORMULARIO MODIFICADO) */}
+                {/* TAB: CARTAS */}
                 {activeTab === "cards" && (
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                         <div className="lg:col-span-1 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-2xl h-fit sticky top-48">
@@ -373,12 +373,16 @@ export default function AdminDashboard() {
                                     </div>
                                 </div>
 
-                                {/* ✅ SELECTOR DE RAZA DINÁMICO (MANUAL) */}
-                                {( (formato === "imperio" && formData.type === "1") || (formato === "primer_bloque" && formData.type === "Aliado") ) && (
+                                {/* ✅ FORMULARIO DE RAZA DINÁMICO MEJORADO */}
+                                {( (formato === "imperio" && String(formData.type) === "1") || (formato === "primer_bloque" && formData.type === "Aliado") ) && (
                                     <div className="space-y-1 animate-in slide-in-from-top-2">
                                         <label className="text-[10px] font-black text-blue-500 dark:text-orange-500 uppercase ml-2">Raza de la Carta</label>
-                                        <select className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/5 outline-none text-[10px] font-black dark:text-white" value={formData.race} onChange={e => setFormData({ ...formData, race: e.target.value })}>
-                                            <option value="">Sin Raza</option>
+                                        <select 
+                                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/5 outline-none text-[10px] font-black dark:text-white" 
+                                            value={formData.race || ""} 
+                                            onChange={e => setFormData({ ...formData, race: e.target.value })}
+                                        >
+                                            <option value="">Sin Raza / Otros</option>
                                             {formato === "imperio" 
                                                 ? RAZAS_IMPERIO_LIST.map(r => <option key={r} value={r}>{r}</option>) 
                                                 : RAZAS_PB.map(r => <option key={r} value={r}>{r}</option>)
@@ -416,12 +420,19 @@ export default function AdminDashboard() {
                                             <div className="mt-2 text-center pb-2 px-1">
                                                 <p className="text-[10px] font-black truncate uppercase text-slate-900 dark:text-white tracking-tighter">{c.name}</p>
                                                 <p className="text-[8px] text-slate-500 font-bold uppercase">{c.edition_slug || c.edition}</p>
-                                                {c.race && <p className="text-[7px] text-blue-500 font-black uppercase tracking-widest">{c.race}</p>}
+                                                {/* ✅ VISUALIZACIÓN DE RAZA EN LA LISTA */}
+                                                {c.race && <p className="text-[7px] text-blue-500 font-black uppercase tracking-widest mt-1">{c.race}</p>}
                                             </div>
                                             <div className="absolute inset-0 bg-slate-950/90 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-all duration-300 backdrop-blur-sm">
                                                 <button onClick={() => {
                                                     setEditingCard(c);
-                                                    setFormData({ ...c, imgUrl: getImg(c), restriction: c.restriction || "unrestricted", edition: c.edition || c.edition_slug, race: c.race || "" });
+                                                    setFormData({ 
+                                                        ...c, 
+                                                        imgUrl: getImg(c), 
+                                                        restriction: c.restriction || "unrestricted", 
+                                                        edition: c.edition || c.edition_slug,
+                                                        race: c.race || "" // ✅ Carga de raza al editar
+                                                    });
                                                     window.scrollTo({ top: 0, behavior: 'smooth' });
                                                 }} className="bg-blue-600 p-3 rounded-full text-white shadow-xl hover:scale-110 transition-transform">
                                                     <Layout size={18} />
@@ -435,7 +446,7 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {/* RESTO DE TABS (USUARIOS, MARKET, META) MANTENIDOS IGUAL */}
+                {/* TAB: USUARIOS */}
                 {activeTab === "users" && (
                     <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/5 p-8 shadow-2xl">
                         <h2 className="text-2xl font-black uppercase italic mb-8 text-purple-500 flex items-center gap-3">
@@ -465,6 +476,7 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
+                {/* TAB: MARKETPLACE */}
                 {activeTab === "market" && (
                     <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/5 p-8 shadow-2xl">
                         <h2 className="text-2xl font-black uppercase italic mb-8 text-pink-500 flex items-center gap-3">
@@ -490,6 +502,7 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
+                {/* TAB: META REPORT */}
                 {activeTab === "meta" && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/5 p-8 shadow-2xl">
@@ -522,6 +535,7 @@ export default function AdminDashboard() {
     );
 }
 
+// ✅ SUBCOMPONENTES AUXILIARES
 function MenuCard({ icon, color, borderColor, hoverColor, title, sub, onClick }) {
     return (
         <div onClick={onClick} className={`bg-white dark:bg-slate-900 border-2 ${borderColor} p-10 rounded-[3rem] cursor-pointer ${hoverColor} transition-all group shadow-2xl relative overflow-hidden active:scale-95`}>
