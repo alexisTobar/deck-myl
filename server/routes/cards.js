@@ -1,74 +1,31 @@
 const router = require('express').Router();
 const Card = require('../models/Card');
-const axios = require('axios'); // ✅ Asegúrate de tenerlo instalado: npm install axios
 
-// ✅ NUEVA RUTA: SINCRONIZAR RAZAS SOLO PARA IMPERIO
-// Esta ruta busca tus cartas de imperio y les pone la raza desde la API de MyL
-router.get('/sync-imperio-races', async (req, res) => {
-    try {
-        // Buscamos solo Aliados (type 1) de Imperio en TU base de datos
-        const imperioCards = await Card.find({ format: 'imperio', type: 1 });
-        
-        let actualizadas = 0;
-        let saltadas = 0;
-
-        console.log(`Iniciando sincronización de ${imperioCards.length} cartas...`);
-
-        for (const card of imperioCards) {
-            try {
-                // Consultamos a MyL por el nombre de la carta
-                const response = await axios.get(`https://api.myl.cl/cards/search/${encodeURIComponent(card.name)}`);
-                
-                if (response.data && response.data.results) {
-                    // Buscamos la coincidencia exacta
-                    const mylCard = response.data.results.find(c => 
-                        c.name.toLowerCase().trim() === card.name.toLowerCase().trim()
-                    );
-
-                    if (mylCard && mylCard.race) {
-                        await Card.findByIdAndUpdate(card._id, { race: mylCard.race });
-                        actualizadas++;
-                    } else {
-                        saltadas++;
-                    }
-                }
-            } catch (err) {
-                console.error(`Error con: ${card.name}`);
-            }
-        }
-
-        res.json({ 
-            msg: "Sincronización de Imperio completa", 
-            procesadas: imperioCards.length, 
-            actualizadas, 
-            sin_cambios: saltadas 
-        });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// RUTA DE BÚSQUEDA AVANZADA (MANTENIDA Y OPTIMIZADA)
+// RUTA DE BÚSQUEDA AVANZADA
+// Soporta: ?q=texto & edition=slug & type=Aliado & format=primer_bloque & race=Dragón
 router.get('/search', async (req, res) => {
     try {
         const { q, edition, type, format, race } = req.query;
+
         let query = {};
 
+        // --- 0. FILTRO DE FORMATO ---
         // Por defecto imperio si no se especifica
         query.format = format || 'imperio';
 
-        // Filtro por Raza
+        // --- 1. FILTRO POR RAZA (NUEVO) ---
+        // Vital para Primer Bloque. Se busca de forma exacta (case-insensitive)
         if (race) {
             query.race = { $regex: new RegExp(`^${race}$`, "i") };
         }
 
-        // Filtro por Texto (Nombre)
+        // --- 2. Filtro por Texto (Nombre) ---
         if (q) {
             query.name = { $regex: q, $options: 'i' };
         }
 
-        // Filtro por Edición
-        if (edition && edition !== 'all') {
+        // --- 3. Filtro por Edición ---
+        if (edition) {
             if (query.format === 'primer_bloque') {
                 query.edition = edition; 
             } else {
@@ -76,7 +33,7 @@ router.get('/search', async (req, res) => {
             }
         }
 
-        // Filtro por Tipo
+        // --- 4. Filtro por Tipo (Híbrido: Número o Texto) ---
         if (type) {
             const isNumber = !isNaN(type);
             if (isNumber) {
@@ -86,11 +43,15 @@ router.get('/search', async (req, res) => {
             }
         }
 
+        // --- 5. VALIDACIÓN DE FILTROS ---
         if (!q && !edition && !type && !race) {
             return res.json([]);
         }
 
+        // Límite dinámico para no saturar la conexión
         const limit = (edition || type || race) ? 1000 : 100;
+
+        // Ejecución de la consulta
         const cards = await Card.find(query).limit(limit).lean();
 
         res.json(cards);
@@ -101,7 +62,7 @@ router.get('/search', async (req, res) => {
     }
 });
 
-// RUTAS ADMINISTRATIVAS
+// ✅ RUTAS ADMINISTRATIVAS AÑADIDAS (POST, PUT, DELETE)
 router.post('/', async (req, res) => {
     try {
         const newCard = new Card(req.body);

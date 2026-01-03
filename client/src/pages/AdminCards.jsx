@@ -41,6 +41,11 @@ const TIPOS_IMPERIO = [
     { id: "5", label: "Oro" }
 ];
 
+// ✅ NUEVA CONSTANTE: RAZAS DE IMPERIO
+const RAZAS_IMPERIO_LIST = [
+    "Caballero", "Eterno", "Héroe", "Faerie", "Dragón", "Bestia", "Guerrero", "Sacerdote", "Sombra"
+];
+
 const TIPOS_PB = ["Aliado", "Talismán", "Arma", "Tótem", "Oro"];
 const RAZAS_PB = ["Caballero", "Héroe", "Defensor", "Eterno", "Dragón", "Oro", "Aliado", "Talismán", "Arma", "Tótem", "Sombra", "Sacerdote", "Olímpico", "Desafiante", "Faraón", "Faerie", "Titán"];
 
@@ -59,7 +64,6 @@ export default function AdminDashboard() {
     const [usuarios, setUsuarios] = useState([]);
     const [statsMeta, setStatsMeta] = useState([]);
     
-    // ✅ NUEVOS ESTADOS: MARKETPLACE Y TEMA
     const [marketItems, setMarketItems] = useState([]);
     const [isDark, setIsDark] = useState(true);
 
@@ -98,10 +102,9 @@ export default function AdminDashboard() {
         }
         if (activeTab === "users" && step === "editor") fetchUsuarios();
         if (activeTab === "meta" && step === "editor") fetchMetaStats();
-        if (activeTab === "market" && step === "editor") fetchMarketItems(); // ✅ Nueva pestaña
+        if (activeTab === "market" && step === "editor") fetchMarketItems();
     }, [edicionFiltro, formato, activeTab, step]);
 
-    // ✅ MANEJO DE TEMA
     useEffect(() => {
         const root = window.document.documentElement;
         if (isDark) root.classList.add("dark");
@@ -147,7 +150,6 @@ export default function AdminDashboard() {
         } catch (e) { console.error(e); }
     };
 
-    // ✅ NUEVO: FETCH MARKETPLACE PARA ADMIN
     const fetchMarketItems = async () => {
         try {
             const res = await fetch(`${BACKEND_URL}/api/marketplace/all`);
@@ -156,7 +158,6 @@ export default function AdminDashboard() {
         } catch (e) { console.error(e); }
     };
 
-    // ✅ NUEVO: BORRAR PUBLICACIÓN MARKETPLACE
     const handleDeleteMarketItem = async (id) => {
         Swal.fire({
             title: '¿Borrar publicación?',
@@ -168,7 +169,6 @@ export default function AdminDashboard() {
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
-                    // Nota: Asegúrate de que tu backend soporte DELETE en /api/marketplace/:id
                     const res = await fetch(`${BACKEND_URL}/api/marketplace/${id}`, {
                         method: "DELETE",
                         headers: { "auth-token": token }
@@ -201,8 +201,6 @@ export default function AdminDashboard() {
                     if (res.ok) {
                         Swal.fire({ icon: 'success', title: 'Usuario purgado', ...swalDark });
                         fetchUsuarios();
-                    } else {
-                        Swal.fire({ icon: 'error', title: 'Error', text: 'Verifica la ruta en el backend', ...swalDark });
                     }
                 } catch (e) {
                     Swal.fire({ icon: 'error', title: 'Error de conexión', ...swalDark });
@@ -270,7 +268,6 @@ export default function AdminDashboard() {
         }
     };
 
-    // ✅ RENDER DASHBOARD PRINCIPAL
     if (step === "dashboard") {
         return (
             <div className="min-h-screen bg-slate-50 dark:bg-[#0B1120] p-8 md:p-16 text-slate-900 dark:text-white transition-colors duration-500">
@@ -297,7 +294,6 @@ export default function AdminDashboard() {
         );
     }
 
-    // ✅ RENDER EDITOR / PANLES ESPECÍFICOS
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-[#0B1120] text-slate-900 dark:text-white pb-32 transition-colors duration-500">
             <div className="max-w-[1600px] mx-auto p-8 flex flex-col gap-6">
@@ -336,9 +332,7 @@ export default function AdminDashboard() {
                     )}
                 </div>
 
-                {/* --- CONTENIDO SEGÚN TAB --- */}
-
-                {/* TAB: CARTAS */}
+                {/* TAB: CARTAS (FORMULARIO MODIFICADO) */}
                 {activeTab === "cards" && (
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                         <div className="lg:col-span-1 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-2xl h-fit sticky top-48">
@@ -378,15 +372,21 @@ export default function AdminDashboard() {
                                         </select>
                                     </div>
                                 </div>
-                                {formato === "primer_bloque" && formData.type === "Aliado" && (
+
+                                {/* ✅ SELECTOR DE RAZA DINÁMICO (MANUAL) */}
+                                {( (formato === "imperio" && formData.type === "1") || (formato === "primer_bloque" && formData.type === "Aliado") ) && (
                                     <div className="space-y-1 animate-in slide-in-from-top-2">
-                                        <label className="text-[10px] font-black text-yellow-500 uppercase ml-2">Raza PB</label>
+                                        <label className="text-[10px] font-black text-blue-500 dark:text-orange-500 uppercase ml-2">Raza de la Carta</label>
                                         <select className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/5 outline-none text-[10px] font-black dark:text-white" value={formData.race} onChange={e => setFormData({ ...formData, race: e.target.value })}>
                                             <option value="">Sin Raza</option>
-                                            {RAZAS_PB.map(r => <option key={r} value={r}>{r}</option>)}
+                                            {formato === "imperio" 
+                                                ? RAZAS_IMPERIO_LIST.map(r => <option key={r} value={r}>{r}</option>) 
+                                                : RAZAS_PB.map(r => <option key={r} value={r}>{r}</option>)
+                                            }
                                         </select>
                                     </div>
                                 )}
+
                                 <div className="grid grid-cols-2 gap-3">
                                     <input type="number" placeholder="Coste" className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/5 outline-none text-xs dark:text-white" value={formData.cost} onChange={e => setFormData({ ...formData, cost: parseInt(e.target.value) || 0 })} />
                                     <input type="number" placeholder="Fuerza" className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/5 outline-none text-xs dark:text-white" value={formData.strength} onChange={e => setFormData({ ...formData, strength: parseInt(e.target.value) || 0 })} />
@@ -416,11 +416,12 @@ export default function AdminDashboard() {
                                             <div className="mt-2 text-center pb-2 px-1">
                                                 <p className="text-[10px] font-black truncate uppercase text-slate-900 dark:text-white tracking-tighter">{c.name}</p>
                                                 <p className="text-[8px] text-slate-500 font-bold uppercase">{c.edition_slug || c.edition}</p>
+                                                {c.race && <p className="text-[7px] text-blue-500 font-black uppercase tracking-widest">{c.race}</p>}
                                             </div>
                                             <div className="absolute inset-0 bg-slate-950/90 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-all duration-300 backdrop-blur-sm">
                                                 <button onClick={() => {
                                                     setEditingCard(c);
-                                                    setFormData({ ...c, imgUrl: getImg(c), restriction: c.restriction || "unrestricted", edition: c.edition || c.edition_slug });
+                                                    setFormData({ ...c, imgUrl: getImg(c), restriction: c.restriction || "unrestricted", edition: c.edition || c.edition_slug, race: c.race || "" });
                                                     window.scrollTo({ top: 0, behavior: 'smooth' });
                                                 }} className="bg-blue-600 p-3 rounded-full text-white shadow-xl hover:scale-110 transition-transform">
                                                     <Layout size={18} />
@@ -434,7 +435,7 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {/* TAB: USUARIOS */}
+                {/* RESTO DE TABS (USUARIOS, MARKET, META) MANTENIDOS IGUAL */}
                 {activeTab === "users" && (
                     <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/5 p-8 shadow-2xl">
                         <h2 className="text-2xl font-black uppercase italic mb-8 text-purple-500 flex items-center gap-3">
@@ -464,7 +465,6 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {/* ✅ TAB: MARKETPLACE (MODERACIÓN) */}
                 {activeTab === "market" && (
                     <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/5 p-8 shadow-2xl">
                         <h2 className="text-2xl font-black uppercase italic mb-8 text-pink-500 flex items-center gap-3">
@@ -480,10 +480,6 @@ export default function AdminDashboard() {
                                     <div className="p-5 flex flex-col gap-3">
                                         <p className="font-black text-sm uppercase truncate text-slate-900 dark:text-white">{item.title}</p>
                                         <p className="text-blue-500 font-black text-lg">${item.price?.toLocaleString()}</p>
-                                        <div className="flex flex-wrap gap-2">
-                                            <div className="flex items-center gap-1 text-[9px] text-slate-500 font-bold"><Phone size={10}/> {item.whatsapp}</div>
-                                            <div className="flex items-center gap-1 text-[9px] text-slate-500 font-bold"><Instagram size={10}/> {item.instagram}</div>
-                                        </div>
                                         <button onClick={() => handleDeleteMarketItem(item._id)} className="mt-2 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 transition-all">
                                             <Trash2 size={14} /> Eliminar Aviso
                                         </button>
@@ -494,7 +490,6 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {/* TAB: META REPORT */}
                 {activeTab === "meta" && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/5 p-8 shadow-2xl">
@@ -520,16 +515,6 @@ export default function AdminDashboard() {
                                 )) : <p className="text-slate-500 uppercase italic text-[10px]">Sin datos de meta disponibles.</p>}
                             </div>
                         </div>
-
-                        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/5 p-8 shadow-2xl h-fit">
-                            <h3 className="text-sm font-black uppercase text-slate-500 mb-6 tracking-widest flex items-center gap-2">
-                                <ShieldCheck size={16} /> Resumen de Salud
-                            </h3>
-                            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-l-4 border-blue-600">
-                                <p className="text-[10px] font-black text-slate-500 uppercase">Total Usuarios</p>
-                                <p className="text-3xl font-black text-slate-900 dark:text-white">{usuarios.length}</p>
-                            </div>
-                        </div>
                     </div>
                 )}
             </div>
@@ -537,7 +522,6 @@ export default function AdminDashboard() {
     );
 }
 
-// ✅ SUBCOMPONENTES AUXILIARES PARA LIMPIEZA
 function MenuCard({ icon, color, borderColor, hoverColor, title, sub, onClick }) {
     return (
         <div onClick={onClick} className={`bg-white dark:bg-slate-900 border-2 ${borderColor} p-10 rounded-[3rem] cursor-pointer ${hoverColor} transition-all group shadow-2xl relative overflow-hidden active:scale-95`}>

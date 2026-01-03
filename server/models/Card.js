@@ -4,12 +4,14 @@ const GlobalCardSchema = new mongoose.Schema({
     // --- CAMPOS COMUNES ---
     slug: { type: String, unique: true }, 
     name: { type: String, required: true, index: true },
-    type: { type: String }, 
+    
+    // ✅ MEJORA: Cambiado a Mixed para que acepte tanto "1" (Imperio) como "Aliado" (PB)
+    type: { type: mongoose.Schema.Types.Mixed }, 
+    
     imgUrl: { type: String }, 
     edition: { type: String }, 
 
     // --- CAMPO DE RESTRICCIONES DAR ---
-    // ✅ AGREGADO: Esto permitirá que el Backend guarde el baneo o limitación
     restriction: { 
         type: String, 
         enum: ['unrestricted', 'limited1', 'limited2', 'banned'], 
@@ -27,6 +29,8 @@ const GlobalCardSchema = new mongoose.Schema({
         default: 'imperio',
         index: true 
     },
+    
+    // El campo race ya existe, lo mantenemos igual
     race: { type: String },     
     cost: { type: Number },     
     strength: { type: Number }, 
@@ -44,7 +48,8 @@ const GlobalCardSchema = new mongoose.Schema({
 GlobalCardSchema.index({ name: 'text' });
 GlobalCardSchema.index({ format: 1 }); 
 GlobalCardSchema.index({ main_edition: 1 }); 
-// ✅ Nuevo índice para filtrar cartas baneadas o limitadas rápido
 GlobalCardSchema.index({ restriction: 1 }); 
+// ✅ AGREGADO: Índice para filtrar por raza rápidamente ya que lo usaremos mucho
+GlobalCardSchema.index({ race: 1 }); 
 
 module.exports = mongoose.model('Card', GlobalCardSchema);
