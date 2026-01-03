@@ -4,10 +4,15 @@ import { saveAs } from 'file-saver';
 import BACKEND_URL from "../config";
 import { 
     Plus, Minus, Eye, Save, Search, X, Camera, Globe, Layout, 
-    Users, Star, Sword, ChevronDown, ShieldAlert
+    Users, Star, Sword, ChevronDown, ShieldAlert, Filter 
 } from "lucide-react";
 
 const TYPE_MAP = { "1": "Aliado", "2": "Talismán", "3": "Arma", "4": "Tótem", "5": "Oro" };
+
+// ✅ LISTA DE RAZAS PARA IMPERIO
+const RAZAS_IMPERIO = [
+    "Caballero", "Eterno", "Héroe", "Faerie", "Dragón", "Bestia", "Guerrero", "Sacerdote", "Sombra"
+];
 
 const EDICIONES_IMPERIO = { 
     "kvsm_titanes": "KVSM Titanes",
@@ -30,7 +35,7 @@ const TIPOS_IMPERIO = [
     { id: "2", label: "Talismán", icon: <Layout size={14} />, color: "border-purple-500 text-purple-400" },
     { id: "3", label: "Arma", icon: <Layout size={14} />, color: "border-red-500 text-red-400" },
     { id: "4", label: "Tótem", icon: <Layout size={14} />, color: "border-green-500 text-green-400" },
-    { id: "5", label: "Oro", icon: <Globe size={14} />, label: "Oro", color: "border-yellow-500 text-yellow-400" }
+    { id: "5", label: "Oro", icon: <Globe size={14} />, color: "border-yellow-500 text-yellow-400" }
 ];
 
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
@@ -44,6 +49,7 @@ export default function ImperioBuilder() {
     const formato = "imperio";
     const [edicionSeleccionada, setEdicionSeleccionada] = useState("kvsm_titanes");
     const [tipoSeleccionado, setTipoSeleccionado] = useState(""); 
+    const [razaSeleccionada, setRazaSeleccionada] = useState(""); // ✅ NUEVO ESTADO PARA RAZA
     const [busqueda, setBusqueda] = useState("");
     const [cartas, setCartas] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -93,7 +99,6 @@ export default function ImperioBuilder() {
     useEffect(() => {
         if (location.state?.deckToEdit) {
             const d = location.state.deckToEdit;
-            // Quitamos la restricción estricta de formato para permitir clonación entre pestañas si fuera necesario
             setNombreMazo(location.state.isCloning ? `${d.name} (Copia)` : d.name || "");
             setEditingDeckId(location.state.isCloning ? null : d._id);
             setIsPublic(d.isPublic || false);
@@ -106,6 +111,7 @@ export default function ImperioBuilder() {
         }
     }, [location.state]);
 
+    // ✅ EFECTO DE BÚSQUEDA ACTUALIZADO CON RAZA
     useEffect(() => {
         const fetchCartas = async () => {
             setLoading(true);
@@ -113,7 +119,14 @@ export default function ImperioBuilder() {
                 const params = new URLSearchParams({ format: formato });
                 if (busqueda) params.append("q", busqueda);
                 else params.append("edition", edicionSeleccionada);
+                
                 if (tipoSeleccionado) params.append("type", tipoSeleccionado);
+                
+                // Solo enviar la raza si el tipo seleccionado es Aliado (1)
+                if (tipoSeleccionado === "1" && razaSeleccionada) {
+                    params.append("race", razaSeleccionada);
+                }
+
                 const res = await fetch(`${BACKEND_URL}/api/cards/search?${params.toString()}`);
                 const data = await res.json();
                 setCartas(Array.isArray(data) ? data : (data.results || []));
@@ -121,7 +134,7 @@ export default function ImperioBuilder() {
         };
         const timer = setTimeout(fetchCartas, 300);
         return () => clearTimeout(timer);
-    }, [busqueda, edicionSeleccionada, tipoSeleccionado, formato]);
+    }, [busqueda, edicionSeleccionada, tipoSeleccionado, razaSeleccionada, formato]); // ✅ Agregada razaSeleccionada aquí
 
     const handleAdd = (c) => {
         if (c.restriction === "banned") return alert(`🚫 ${c.name} está PROHIBIDA.`);
@@ -156,14 +169,13 @@ export default function ImperioBuilder() {
             const url = editingDeckId ? `${BACKEND_URL}/api/decks/${editingDeckId}` : `${BACKEND_URL}/api/decks`;
             const method = editingDeckId ? "PUT" : "POST";
             
-            // ✅ CORRECCIÓN: Estructura de envío de cartas
             const deckData = {
                 name: nombreMazo,
                 cards: mazo.map(c => ({
                     ...c,
-                    quantity: c.cantidad // Aseguramos que quantity sea el campo de conteo
+                    quantity: c.cantidad 
                 })),
-                format: "imperio", // Forzamos el formato correcto
+                format: "imperio", 
                 isPublic: isPublic
             };
 
@@ -280,11 +292,34 @@ export default function ImperioBuilder() {
                     </div>
                     <div className="flex flex-wrap gap-2 justify-center">
                         {TIPOS_IMPERIO.map((tipo) => (
-                            <button key={tipo.id} onClick={() => setTipoSeleccionado(tipoSeleccionado === tipo.id ? "" : tipo.id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 transition-all text-[10px] uppercase font-black ${tipoSeleccionado === tipo.id ? `border-blue-600 dark:border-orange-500 text-blue-600 dark:text-orange-500 bg-blue-50 dark:bg-slate-800 shadow-md` : 'bg-white dark:bg-transparent border-slate-200 dark:border-slate-800 text-slate-400'}`}>
+                            <button key={tipo.id} 
+                                onClick={() => {
+                                    setTipoSeleccionado(tipoSeleccionado === tipo.id ? "" : tipo.id);
+                                    setRazaSeleccionada(""); // Limpiar raza al cambiar tipo
+                                }} 
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 transition-all text-[10px] uppercase font-black ${tipoSeleccionado === tipo.id ? `border-blue-600 dark:border-orange-500 text-blue-600 dark:text-orange-500 bg-blue-50 dark:bg-slate-800 shadow-md` : 'bg-white dark:bg-transparent border-slate-200 dark:border-slate-800 text-slate-400'}`}>
                                 {tipo.icon} {tipo.label}
                             </button>
                         ))}
                     </div>
+
+                    {/* ✅ SELECTOR DE RAZA DINÁMICO (SOLO PARA ALIADOS) */}
+                    {tipoSeleccionado === "1" && (
+                        <div className="flex justify-center animate-in fade-in zoom-in-95 duration-300">
+                            <div className="relative w-full max-w-xs">
+                                <Filter className="absolute left-3 top-2.5 text-blue-500 dark:text-orange-500" size={14} />
+                                <select 
+                                    value={razaSeleccionada} 
+                                    onChange={(e) => setRazaSeleccionada(e.target.value)}
+                                    className="w-full pl-9 pr-8 py-2 bg-blue-50 dark:bg-slate-900 border border-blue-200 dark:border-orange-500/30 rounded-xl text-[10px] font-black uppercase text-blue-700 dark:text-orange-400 outline-none focus:border-blue-500 appearance-none transition-all cursor-pointer"
+                                >
+                                    <option value="">-- Todas las Razas --</option>
+                                    {RAZAS_IMPERIO.map(r => <option key={r} value={r}>{r}</option>)}
+                                </select>
+                                <ChevronDown className="absolute right-3 top-2.5 text-blue-500 dark:text-orange-500 pointer-events-none" size={14} />
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar pb-24 md:pb-4" ref={gridContainerRef}>
