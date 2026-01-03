@@ -62,7 +62,6 @@ export default function ImperioBuilder() {
     const [cardToZoom, setCardToZoom] = useState(null);
     const [guardando, setGuardando] = useState(false);
     
-    // ✅ ESTADO PARA MANO DE PRUEBA
     const [manoPrueba, setManoPrueba] = useState([]);
 
     const mazoAgrupado = useMemo(() => {
@@ -84,7 +83,6 @@ export default function ImperioBuilder() {
         return { counts };
     }, [mazo]);
 
-    // ✅ FUNCIÓN SIMULADOR DE MANO
     const simularMano = () => {
         let baraja = [];
         mazo.forEach(c => { for (let i = 0; i < c.cantidad; i++) baraja.push(c); });
@@ -111,7 +109,7 @@ export default function ImperioBuilder() {
         }
     }, [location.state]);
 
-    // ✅ EFECTO DE BÚSQUEDA CORREGIDO: Muestra cartas al filtrar por Aliado o Raza
+    // ✅ EFECTO DE BÚSQUEDA REPARADO: Filtra por Edición + Raza correctamente
     useEffect(() => {
         const fetchCartas = async () => {
             setLoading(true);
@@ -119,14 +117,13 @@ export default function ImperioBuilder() {
                 const params = new URLSearchParams();
                 params.append("format", formato);
                 
-                // Siempre priorizamos la edición a menos que haya una búsqueda global por texto
                 if (busqueda) {
                     params.append("q", busqueda);
                 } else {
                     params.append("edition", edicionSeleccionada);
                 }
                 
-                // Si el usuario elige una raza, forzamos que sea tipo Aliado (1) en la query
+                // Prioridad a la Raza: Si hay raza, forzamos tipo Aliado
                 if (razaSeleccionada) {
                     params.append("type", "1");
                     params.append("race", razaSeleccionada);
@@ -179,23 +176,17 @@ export default function ImperioBuilder() {
         try {
             const url = editingDeckId ? `${BACKEND_URL}/api/decks/${editingDeckId}` : `${BACKEND_URL}/api/decks`;
             const method = editingDeckId ? "PUT" : "POST";
-            
             const deckData = {
                 name: nombreMazo,
                 cards: mazo.map(c => ({ ...c, quantity: c.cantidad })),
                 format: "imperio", 
                 isPublic: isPublic
             };
-
             const res = await fetch(url, { 
                 method, 
-                headers: { 
-                    "Content-Type": "application/json", 
-                    "auth-token": token 
-                }, 
+                headers: { "Content-Type": "application/json", "auth-token": token }, 
                 body: JSON.stringify(deckData) 
             });
-
             if (res.ok) navigate("/my-decks");
             else {
                 const err = await res.json();
@@ -268,19 +259,15 @@ export default function ImperioBuilder() {
         } catch (err) { alert('Error imagen'); setGuardando(false); }
     };
 
-    const totalCartas = mazo.reduce((acc, c) => acc + c.cantidad, 0);
-
     return (
         <div className="h-screen flex flex-col md:flex-row font-sans bg-[#F8FAFC] dark:bg-[#0f0a07] text-slate-900 dark:text-white overflow-hidden transition-colors duration-500">
             <div className="flex-1 flex flex-col h-full relative overflow-hidden">
-                {/* HEADER */}
                 <div className="bg-white dark:bg-slate-900/80 border-b border-slate-200 dark:border-orange-500/20 p-3 flex justify-between items-center px-4 shadow-sm z-20">
                     <button onClick={() => navigate("/imperio")} className="p-1.5 rounded-lg border border-slate-200 dark:border-orange-500/30 text-slate-500 dark:text-orange-500 text-xs font-bold hover:bg-slate-100 dark:hover:bg-orange-500/10 transition-all italic tracking-tighter uppercase">Volver</button>
                     <h2 className="text-xs font-black uppercase text-blue-600 dark:text-orange-500 tracking-widest leading-none italic flex items-center gap-2"><Star size={14}/> Forja Imperio</h2>
                     <div className="w-10"></div>
                 </div>
 
-                {/* FILTROS */}
                 <div className="p-4 bg-white/50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800 space-y-4 z-10 backdrop-blur-md">
                     <div className="flex flex-col md:flex-row gap-3">
                         <div className="relative flex-1">
@@ -295,14 +282,13 @@ export default function ImperioBuilder() {
                         </div>
                         <input type="text" placeholder="Búsqueda Global..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="flex-[2] p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:border-blue-500 dark:focus:border-orange-500 font-bold transition-all text-slate-900 dark:text-white" />
                     </div>
-
-                    {/* BOTONES TIPO */}
+                    
                     <div className="flex flex-wrap gap-2 justify-center">
                         {TIPOS_IMPERIO.map((tipo) => (
                             <button key={tipo.id} 
                                 onClick={() => {
                                     setTipoSeleccionado(tipoSeleccionado === tipo.id ? "" : tipo.id);
-                                    setRazaSeleccionada(""); // Limpiar raza al cambiar tipo
+                                    setRazaSeleccionada("");
                                 }} 
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 transition-all text-[10px] uppercase font-black ${tipoSeleccionado === tipo.id ? `border-blue-600 dark:border-orange-500 text-blue-600 dark:text-orange-500 bg-blue-50 dark:bg-slate-800 shadow-md` : 'bg-white dark:bg-transparent border-slate-200 dark:border-slate-800 text-slate-400'}`}>
                                 {tipo.icon} {tipo.label}
@@ -310,7 +296,6 @@ export default function ImperioBuilder() {
                         ))}
                     </div>
 
-                    {/* ✅ FILTRO DE RAZAS (TAGS) - Siempre visible o contextual */}
                     <div className="flex flex-wrap gap-1.5 justify-center pt-2 border-t border-slate-200 dark:border-white/5">
                         <button 
                             onClick={() => setRazaSeleccionada("")}
@@ -323,7 +308,7 @@ export default function ImperioBuilder() {
                                 key={raza}
                                 onClick={() => {
                                     setRazaSeleccionada(razaSeleccionada === raza ? "" : raza);
-                                    setTipoSeleccionado(""); // Al tocar raza, asumimos Aliado y limpiamos el filtro manual de tipo
+                                    setTipoSeleccionado(""); 
                                 }}
                                 className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all border ${razaSeleccionada === raza ? 'bg-blue-600 dark:bg-orange-600 text-white border-blue-500 dark:border-orange-400 shadow-lg scale-105' : 'bg-slate-100 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-orange-500'}`}
                             >
@@ -333,9 +318,8 @@ export default function ImperioBuilder() {
                     </div>
                 </div>
 
-                {/* GRID DE CARTAS */}
                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar pb-24 md:pb-4" ref={gridContainerRef}>
-                    {loading ? <div className="text-center mt-20 animate-pulse text-blue-600 dark:text-orange-500 font-black uppercase tracking-widest italic">Invocando grimorio...</div> : (
+                    {loading ? <div className="text-center mt-20 animate-pulse text-blue-600 dark:text-orange-500 font-black uppercase tracking-widest italic">Invocando...</div> : (
                         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                             {cartas.map(c => {
                                 const cant = mazo.find(x => x.slug === c.slug)?.cantidad || 0;
@@ -359,11 +343,10 @@ export default function ImperioBuilder() {
                 </div>
             </div>
 
-            {/* PANEL DERECHO: LISTA DE MAZO */}
             <div className="hidden md:flex w-85 border-l border-slate-200 dark:border-white/10 flex-col h-screen bg-white dark:bg-[#0f0a07] shadow-2xl transition-colors">
                 <div className="p-5 border-b border-slate-200 dark:border-orange-500/30 bg-slate-50 dark:bg-slate-900/50 backdrop-blur-md font-black text-slate-900 dark:text-orange-500 uppercase tracking-widest flex justify-between items-center shadow-sm">
                     <div className="flex items-center gap-2"><Layout size={18}/><span className="italic">Grimorio Imperio</span></div>
-                    <div className={`px-3 py-1 rounded-full text-xs font-black transition-all duration-500 border ${totalCartas === 50 ? 'bg-blue-600 dark:bg-orange-500/10 border-blue-600 dark:border-orange-500 text-white dark:text-yellow-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>{totalCartas} / 50</div>
+                    <div className={`px-3 py-1 rounded-full text-xs font-black transition-all border ${totalCartas === 50 ? 'bg-blue-600 dark:bg-orange-500 text-white' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>{totalCartas} / 50</div>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar bg-transparent">
                     {ORDER_TYPES.map(t => mazoAgrupado[t] && (
@@ -395,7 +378,7 @@ export default function ImperioBuilder() {
 
             {/* DOCK MÓVIL */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-2 pb-6 z-50 flex items-center justify-between shadow-2xl transition-colors">
-                <div className="flex flex-col px-3"><span className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">TOTAL</span><span className={`text-xl font-black leading-none ${totalCartas === 50 ? 'text-green-600 dark:text-green-500' : 'text-slate-900 dark:text-white'}`}>{totalCartas}/50</span></div>
+                <div className="flex flex-col px-3"><span className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">TOTAL</span><span className={`text-xl font-black leading-none ${mazo.reduce((a,b)=>a+b.cantidad,0) === 50 ? 'text-green-600 dark:text-green-500' : 'text-slate-900 dark:text-white'}`}>{mazo.reduce((a,b)=>a+b.cantidad,0)}/50</span></div>
                 <div className="flex gap-2">
                     <button onClick={simularMano} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Mano</button>
                     <button onClick={() => setShowMobileList(true)} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Lista</button>
@@ -403,7 +386,7 @@ export default function ImperioBuilder() {
                 </div>
             </div>
 
-            {/* ✅ MODAL MANO DE PRUEBA */}
+            {/* MODAL MANO DE PRUEBA */}
             {manoPrueba.length > 0 && (
                 <div className="fixed inset-0 bg-slate-950/95 z-[300] flex flex-col items-center justify-center p-4 backdrop-blur-xl animate-in fade-in">
                     <h3 className="text-xl md:text-2xl font-black text-blue-500 dark:text-orange-500 uppercase italic mb-8 tracking-widest text-center">Mano Inicial</h3>
@@ -426,7 +409,7 @@ export default function ImperioBuilder() {
                 <div className="md:hidden fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
                     <div className="bg-white dark:bg-slate-900 rounded-t-[3rem] h-[80vh] p-6 overflow-hidden border-t border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-black uppercase text-blue-600 dark:text-orange-500 italic tracking-tighter">Grimorio Imperio ({totalCartas}/50)</h3>
+                            <h3 className="text-xl font-black uppercase text-blue-600 dark:text-orange-500 italic tracking-tighter">Grimorio Imperio ({mazo.reduce((a,b)=>a+b.cantidad,0)}/50)</h3>
                             <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 transition-colors hover:text-red-500"><X size={24} /></button>
                         </div>
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
