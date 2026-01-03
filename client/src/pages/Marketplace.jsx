@@ -4,8 +4,8 @@ import BACKEND_URL from "../config";
 import { 
     ShoppingBag, Plus, X, Camera, MessageCircle, 
     Instagram, Search, Filter, ArrowRight, ShieldCheck, 
-    Image as ImageIcon, Wallet, Phone, AlertCircle, Sword // ✅ Agregado Sword aquí
-} from "lucide-react"; // ✅ Asegúrate que diga lucide-react y no lucide-center
+    Image as ImageIcon, Wallet, Phone, AlertCircle, Sword 
+} from "lucide-react"; 
 import { toast } from "sonner";
 
 export default function Marketplace() {
@@ -13,6 +13,9 @@ export default function Marketplace() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("all");
     const [showModal, setShowModal] = useState(false);
+    
+    // ✅ ESTADO PARA EL ZOOM DE IMAGEN
+    const [selectedImage, setSelectedImage] = useState(null);
 
     const [formData, setFormData] = useState({
         title: "", price: "", format: "imperio", 
@@ -69,7 +72,7 @@ export default function Marketplace() {
         try {
             const res = await fetch(`${BACKEND_URL}/api/marketplace/publish`, {
                 method: "POST",
-                headers: { "auth-token": token }, // ✅ El token es vital aquí
+                headers: { "auth-token": token },
                 body: data 
             });
 
@@ -92,24 +95,27 @@ export default function Marketplace() {
     const filteredItems = items.filter(i => filter === "all" || i.format === filter);
 
     return (
-        <div className="min-h-screen bg-[#060912] text-white pb-32 font-sans selection:bg-blue-500/30">
-            <div className="w-full bg-slate-900/40 backdrop-blur-2xl border-b border-white/5 py-16 px-6 text-center relative overflow-hidden">
+        <div className="min-h-screen bg-slate-50 dark:bg-[#060912] text-slate-900 dark:text-white pb-32 font-sans transition-colors duration-500 selection:bg-blue-500/30">
+            
+            {/* --- HEADER --- */}
+            <div className="w-full bg-white dark:bg-slate-900/40 backdrop-blur-2xl border-b border-slate-200 dark:border-white/5 py-16 px-6 text-center relative overflow-hidden">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-blue-600/10 blur-[150px] rounded-full"></div>
                 <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                    <h1 className="text-6xl md:text-8xl font-black italic tracking-tighter uppercase mb-4 relative z-10">
+                    <h1 className="text-6xl md:text-8xl font-black italic tracking-tighter uppercase mb-4 relative z-10 text-slate-900 dark:text-white">
                         Market<span className="text-blue-500">Place</span>
                     </h1>
-                    <div className="flex items-center justify-center gap-2 text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px] md:text-xs">
+                    <div className="flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px] md:text-xs">
                         <ShieldCheck size={14} className="text-blue-500" /> Comercio Seguro de Invocadores
                     </div>
                 </motion.div>
             </div>
 
             <div className="max-w-7xl mx-auto px-6 mt-12">
+                {/* --- FILTROS Y BOTÓN --- */}
                 <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-16">
-                    <div className="flex bg-slate-900/80 p-1.5 rounded-[2rem] border border-white/5 w-full md:w-auto shadow-xl">
+                    <div className="flex bg-white dark:bg-slate-900/80 p-1.5 rounded-[2rem] border border-slate-200 dark:border-white/5 w-full md:w-auto shadow-xl">
                         {["all", "imperio", "primer_bloque"].map(f => (
-                            <button key={f} onClick={() => setFilter(f)} className={`flex-1 px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>
+                            <button key={f} onClick={() => setFilter(f)} className={`flex-1 px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-blue-600 dark:hover:text-white'}`}>
                                 {f === "all" ? "🌐 Todos" : f === "imperio" ? "🏛️ Imperio" : "📜 PB"}
                             </button>
                         ))}
@@ -120,75 +126,77 @@ export default function Marketplace() {
                     </button>
                 </div>
 
+                {/* --- LISTADO --- */}
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                        {[1,2,3,4,5,6].map(n => <div key={n} className="h-[450px] bg-slate-900/50 animate-pulse rounded-[3rem] border border-white/5"></div>)}
+                        {[1,2,3,4,5,6].map(n => <div key={n} className="h-[450px] bg-slate-200 dark:bg-slate-900/50 animate-pulse rounded-[3rem] border border-slate-300 dark:border-white/5"></div>)}
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                        {filteredItems.map(item => <MarketCard key={item._id} item={item} />)}
+                        {filteredItems.map(item => <MarketCard key={item._id} item={item} onZoom={setSelectedImage} />)}
                     </div>
                 )}
             </div>
 
+            {/* --- MODAL PUBLICAR --- */}
             <AnimatePresence>
                 {showModal && (
                     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                        <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onClick={() => !uploading && setShowModal(false)} className="absolute inset-0 bg-[#02040a]/95 backdrop-blur-md" />
-                        <motion.div initial={{scale:0.9, opacity:0, y: 50}} animate={{scale:1, opacity:1, y: 0}} exit={{scale:0.9, opacity:0, y: 50}} className="relative w-full max-w-3xl bg-[#0f172a] border border-white/10 rounded-[3.5rem] p-8 md:p-12 shadow-2xl max-h-[95vh] overflow-y-auto custom-scrollbar">
+                        <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onClick={() => !uploading && setShowModal(false)} className="absolute inset-0 bg-slate-900/60 dark:bg-[#02040a]/95 backdrop-blur-md" />
+                        <motion.div initial={{scale:0.9, opacity:0, y: 50}} animate={{scale:1, opacity:1, y: 0}} exit={{scale:0.9, opacity:0, y: 50}} className="relative w-full max-w-3xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/10 rounded-[3.5rem] p-8 md:p-12 shadow-2xl max-h-[95vh] overflow-y-auto custom-scrollbar">
                             <div className="flex justify-between items-start mb-10">
-                                <div><h2 className="text-4xl font-black uppercase italic tracking-tighter text-white">Publicar <span className="text-blue-500">Mazo</span></h2></div>
-                                <button onClick={() => setShowModal(false)} className="p-3 bg-slate-800 rounded-2xl text-slate-400 hover:text-white transition-colors"><X size={24} /></button>
+                                <div><h2 className="text-4xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">Publicar <span className="text-blue-500">Mazo</span></h2></div>
+                                <button onClick={() => setShowModal(false)} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-2xl text-slate-500 hover:text-blue-600 transition-colors"><X size={24} /></button>
                             </div>
 
-                            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8 text-slate-900 dark:text-white">
                                 <div className="md:col-span-2 space-y-2">
                                     <label className="text-[10px] font-black uppercase text-blue-500 tracking-widest ml-4">Nombre de la Base</label>
                                     <div className="relative">
-                                        <Sword className="absolute left-5 top-4.5 text-slate-600" size={20} />
-                                        <input type="text" required className="w-full bg-black/40 border border-white/5 p-5 pl-14 rounded-3xl outline-none focus:border-blue-600 font-bold text-white" placeholder="Ej: Base Defensor Chileno 2026" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+                                        <Sword className="absolute left-5 top-4.5 text-slate-400" size={20} />
+                                        <input type="text" required className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 p-5 pl-14 rounded-3xl outline-none focus:border-blue-600 font-bold transition-all" placeholder="Ej: Base Defensor Chileno 2026" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-4">Precio (CLP)</label>
                                     <div className="relative">
-                                        <Wallet className="absolute left-5 top-4.5 text-slate-600" size={20} />
-                                        <input type="number" required className="w-full bg-black/40 border border-white/5 p-5 pl-14 rounded-3xl outline-none" placeholder="45000" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
+                                        <Wallet className="absolute left-5 top-4.5 text-slate-400" size={20} />
+                                        <input type="number" required className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 p-5 pl-14 rounded-3xl outline-none focus:border-blue-600 font-bold" placeholder="45000" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-4">Formato</label>
                                     <div className="relative">
-                                        <Filter className="absolute left-5 top-4.5 text-slate-600" size={20} />
-                                        <select className="w-full bg-black/40 border border-white/5 p-5 pl-14 rounded-3xl outline-none" value={formData.format} onChange={e => setFormData({...formData, format: e.target.value})}>
+                                        <Filter className="absolute left-5 top-4.5 text-slate-400" size={20} />
+                                        <select className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 p-5 pl-14 rounded-3xl outline-none focus:border-blue-600 font-bold" value={formData.format} onChange={e => setFormData({...formData, format: e.target.value})}>
                                             <option value="imperio">Imperio</option>
                                             <option value="primer_bloque">Primer Bloque</option>
                                         </select>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-green-500 tracking-widest ml-4">WhatsApp (Sin +)</label>
+                                    <label className="text-[10px] font-black uppercase text-green-600 tracking-widest ml-4">WhatsApp (Sin +)</label>
                                     <div className="relative">
-                                        <Phone className="absolute left-5 top-4.5 text-slate-600" size={20} />
-                                        <input type="text" required className="w-full bg-black/40 border border-white/5 p-5 pl-14 rounded-3xl outline-none" placeholder="56912345678" value={formData.whatsapp} onChange={e => setFormData({...formData, whatsapp: e.target.value})} />
+                                        <Phone className="absolute left-5 top-4.5 text-slate-400" size={20} />
+                                        <input type="text" required className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 p-5 pl-14 rounded-3xl outline-none focus:border-green-600 font-bold" placeholder="56912345678" value={formData.whatsapp} onChange={e => setFormData({...formData, whatsapp: e.target.value})} />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-pink-500 tracking-widest ml-4">Instagram User</label>
+                                    <label className="text-[10px] font-black uppercase text-pink-600 tracking-widest ml-4">Instagram User</label>
                                     <div className="relative">
-                                        <Instagram className="absolute left-5 top-4.5 text-slate-600" size={20} />
-                                        <input type="text" required className="w-full bg-black/40 border border-white/5 p-5 pl-14 rounded-3xl outline-none" placeholder="@tu_usuario" value={formData.instagram} onChange={e => setFormData({...formData, instagram: e.target.value})} />
+                                        <Instagram className="absolute left-5 top-4.5 text-slate-400" size={20} />
+                                        <input type="text" required className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 p-5 pl-14 rounded-3xl outline-none focus:border-pink-600 font-bold" placeholder="@tu_usuario" value={formData.instagram} onChange={e => setFormData({...formData, instagram: e.target.value})} />
                                     </div>
                                 </div>
                                 <div className="md:col-span-2 space-y-2">
                                     <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-4">Fotos Reales (Máximo 3)</label>
                                     <div className="grid grid-cols-4 gap-4">
-                                        <label className="aspect-square border-2 border-dashed border-white/10 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer hover:border-blue-500/50 transition-all group">
-                                            <Camera className="text-slate-600 group-hover:text-blue-500" size={32} />
+                                        <label className="aspect-square border-2 border-dashed border-slate-300 dark:border-white/10 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer hover:border-blue-500/50 transition-all group">
+                                            <Camera className="text-slate-400 group-hover:text-blue-500" size={32} />
                                             <input type="file" multiple accept="image/*" className="hidden" onChange={handleFileChange} />
                                         </label>
                                         {previews.map((src, i) => (
-                                            <div key={i} className="aspect-square rounded-[2rem] overflow-hidden border border-white/10 relative">
+                                            <div key={i} className="aspect-square rounded-[2rem] overflow-hidden border border-slate-200 dark:border-white/10 relative">
                                                 <img src={src} className="w-full h-full object-cover" alt="Preview" />
                                             </div>
                                         ))}
@@ -204,27 +212,64 @@ export default function Marketplace() {
                     </div>
                 )}
             </AnimatePresence>
+
+            {/* ✅ MODAL DE ZOOM (LIGHTBOX) */}
+            <AnimatePresence>
+                {selectedImage && (
+                    <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 md:p-12">
+                        <motion.div 
+                            initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} 
+                            onClick={() => setSelectedImage(null)} 
+                            className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl" 
+                        />
+                        <motion.button 
+                            onClick={() => setSelectedImage(null)}
+                            className="absolute top-8 right-8 text-white hover:text-blue-400 z-[510] bg-white/10 p-4 rounded-full backdrop-blur-md"
+                        >
+                            <X size={32} />
+                        </motion.button>
+                        <motion.div 
+                            initial={{scale:0.8, opacity:0}} animate={{scale:1, opacity:1}} exit={{scale:0.8, opacity:0}}
+                            className="relative max-w-full max-h-full z-[505] rounded-3xl overflow-hidden shadow-2xl border border-white/10"
+                        >
+                            <img src={selectedImage} className="w-auto h-auto max-w-screen max-h-[85vh] object-contain" alt="Zoom" />
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
 
-function MarketCard({ item }) {
+function MarketCard({ item, onZoom }) {
     const message = `¡Hola! Vi tu mazo "${item.title}" en ForjaDeck Marketplace por $${item.price.toLocaleString()}. ¿Aún lo tienes disponible?`;
     const waLink = `https://wa.me/${item.whatsapp}?text=${encodeURIComponent(message)}`;
+    
     return (
-        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-slate-900/50 backdrop-blur-sm rounded-[3rem] border border-white/5 overflow-hidden group hover:border-blue-500/30 transition-all duration-500 shadow-2xl">
-            <div className="h-72 relative overflow-hidden">
+        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-[3rem] border border-slate-200 dark:border-white/5 overflow-hidden group hover:border-blue-500/30 transition-all duration-500 shadow-2xl">
+            {/* ✅ CLICK EN IMAGEN PARA ZOOM */}
+            <div className="h-72 relative overflow-hidden cursor-zoom-in" onClick={() => onZoom(item.images[0])}>
                 <img src={item.images[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={item.title} />
-                <div className="absolute top-6 left-6 px-5 py-2 bg-blue-600/90 backdrop-blur-md rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-xl border border-white/10">{item.format === 'imperio' ? '🏛️ Imperio' : '📜 PB'}</div>
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                    <Search className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={40} strokeWidth={3} />
+                </div>
+                <div className="absolute top-6 left-6 px-5 py-2 bg-blue-600/90 backdrop-blur-md rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-xl border border-white/10 text-white">{item.format === 'imperio' ? '🏛️ Imperio' : '📜 PB'}</div>
                 {item.verifiedSeller && <div className="absolute top-6 right-6 bg-green-500 p-2 rounded-2xl shadow-lg border border-white/20"><ShieldCheck size={20} className="text-white" /></div>}
             </div>
+            
             <div className="p-10">
-                <h3 className="text-2xl font-black uppercase italic tracking-tighter mb-1 truncate text-white">{item.title}</h3>
+                <h3 className="text-2xl font-black uppercase italic tracking-tighter mb-1 truncate text-slate-900 dark:text-white">{item.title}</h3>
                 <p className="text-[10px] font-black uppercase text-blue-500 mb-4">@{item.seller?.username}</p>
-                <div className="flex items-baseline gap-2 mb-8"><span className="text-4xl font-black text-white">${item.price.toLocaleString()}</span></div>
+                <div className="flex items-baseline gap-2 mb-8">
+                    <span className="text-4xl font-black text-slate-900 dark:text-white">${item.price.toLocaleString()}</span>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
-                    <a href={waLink} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 py-4 rounded-2xl font-black text-[10px] uppercase transition-all shadow-lg active:scale-95"><MessageCircle size={18} fill="currentColor" /> WhatsApp</a>
-                    <a href={`https://instagram.com/${item.instagram.replace('@','')}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-pink-600 hover:bg-pink-500 py-4 rounded-2xl font-black text-[10px] uppercase transition-all shadow-lg active:scale-95"><Instagram size={18} /> Instagram</a>
+                    <a href={waLink} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 py-4 rounded-2xl font-black text-[10px] uppercase transition-all shadow-lg active:scale-95 text-white">
+                        <MessageCircle size={18} fill="currentColor" /> WhatsApp
+                    </a>
+                    <a href={`https://instagram.com/${item.instagram.replace('@','')}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-pink-600 hover:bg-pink-500 py-4 rounded-2xl font-black text-[10px] uppercase transition-all shadow-lg active:scale-95 text-white">
+                        <Instagram size={18} /> Instagram
+                    </a>
                 </div>
             </div>
         </motion.div>
