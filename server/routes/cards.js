@@ -13,8 +13,8 @@ router.get('/search', async (req, res) => {
         // Por defecto imperio si no se especifica
         query.format = format || 'imperio';
 
-        // --- 1. FILTRO POR RAZA (NUEVO) ---
-        // Vital para Primer Bloque. Se busca de forma exacta (case-insensitive)
+        // --- 1. FILTRO POR RAZA ---
+        // Vital para Primer Bloque e Imperio. Case-insensitive
         if (race) {
             query.race = { $regex: new RegExp(`^${race}$`, "i") };
         }
@@ -25,7 +25,7 @@ router.get('/search', async (req, res) => {
         }
 
         // --- 3. Filtro por Edición ---
-        if (edition) {
+        if (edition && edition !== 'all') {
             if (query.format === 'primer_bloque') {
                 query.edition = edition; 
             } else {
@@ -33,11 +33,16 @@ router.get('/search', async (req, res) => {
             }
         }
 
-        // --- 4. Filtro por Tipo (Híbrido: Número o Texto) ---
+        // --- 4. Filtro por Tipo (Híbrido: Reparado para MongoDB) ---
         if (type) {
             const isNumber = !isNaN(type);
             if (isNumber) {
-                query.type = parseInt(type);
+                // ✅ REPARACIÓN: Buscamos tanto el String "1" como el Número 1
+                // Esto soluciona que Imperio no muestre nada al filtrar
+                query.$or = [
+                    { type: type.toString() },
+                    { type: parseInt(type) }
+                ];
             } else {
                 query.type = type;
             }
@@ -62,7 +67,7 @@ router.get('/search', async (req, res) => {
     }
 });
 
-// ✅ RUTAS ADMINISTRATIVAS AÑADIDAS (POST, PUT, DELETE)
+// ✅ RUTAS ADMINISTRATIVAS MANTENIDAS (POST, PUT, DELETE)
 router.post('/', async (req, res) => {
     try {
         const newCard = new Card(req.body);
