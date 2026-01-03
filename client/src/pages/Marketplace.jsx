@@ -247,7 +247,7 @@ function MarketCard({ item, onZoom }) {
     
     return (
         <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-[3rem] border border-slate-200 dark:border-white/5 overflow-hidden group hover:border-blue-500/30 transition-all duration-500 shadow-2xl">
-            {/* ✅ CLICK EN IMAGEN PARA ZOOM */}
+            {/* CLICK EN IMAGEN PARA ZOOM */}
             <div className="h-72 relative overflow-hidden cursor-zoom-in" onClick={() => onZoom(item.images[0])}>
                 <img src={item.images[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={item.title} />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
@@ -259,15 +259,30 @@ function MarketCard({ item, onZoom }) {
             
             <div className="p-10">
                 <h3 className="text-2xl font-black uppercase italic tracking-tighter mb-1 truncate text-slate-900 dark:text-white">{item.title}</h3>
-                <p className="text-[10px] font-black uppercase text-blue-500 mb-4">@{item.seller?.username}</p>
+                <div className="flex items-center gap-2 mb-4">
+                    <span className="text-[10px] font-black uppercase text-blue-500">@{item.seller?.username}</span>
+                </div>
+                
                 <div className="flex items-baseline gap-2 mb-8">
                     <span className="text-4xl font-black text-slate-900 dark:text-white">${item.price.toLocaleString()}</span>
                 </div>
+
+                {/* ✅ BOTONES DE CONTACTO MINIMALISTAS (BORDE NEÓN) */}
                 <div className="grid grid-cols-2 gap-4">
-                    <a href={waLink} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 py-4 rounded-2xl font-black text-[10px] uppercase transition-all shadow-lg active:scale-95 text-white">
-                        <MessageCircle size={18} fill="currentColor" /> WhatsApp
+                    <a 
+                        href={waLink} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="flex items-center justify-center gap-2 border-2 border-green-500 text-green-600 dark:text-green-500 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-green-500 hover:text-white active:scale-95"
+                    >
+                        <MessageCircle size={18} /> WhatsApp
                     </a>
-                    <a href={`https://instagram.com/${item.instagram.replace('@','')}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-pink-600 hover:bg-pink-500 py-4 rounded-2xl font-black text-[10px] uppercase transition-all shadow-lg active:scale-95 text-white">
+                    <a 
+                        href={`https://instagram.com/${item.instagram.replace('@','')}`} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="flex items-center justify-center gap-2 border-2 border-pink-500 text-pink-600 dark:text-pink-500 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-pink-500 hover:text-white active:scale-95"
+                    >
                         <Instagram size={18} /> Instagram
                     </a>
                 </div>
