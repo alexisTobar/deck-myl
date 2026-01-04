@@ -5,10 +5,21 @@ const multer = require('multer');
 const { storage } = require('../config/cloudinary');
 const upload = multer({ storage });
 
-// ✅ RUTA PARA PUBLICAR (Sube hasta 3 fotos a Cloudinary)
+// ✅ RUTA PARA PUBLICAR REPARADA (Sube hasta 3 fotos a Cloudinary + Nuevos Campos)
 router.post('/publish', verifyToken, upload.array('images', 3), async (req, res) => {
     try {
-        const { title, format, price, description, whatsapp, instagram } = req.body;
+        // ✅ MEJORA: Extraemos los nuevos campos del cuerpo de la petición
+        const { 
+            title, 
+            format, 
+            price, 
+            description, 
+            whatsapp, 
+            instagram,
+            location, 
+            deliveryPoint, 
+            condition 
+        } = req.body;
         
         // req.files contiene las fotos ya subidas a Cloudinary por Multer
         const imageUrls = req.files.map(file => file.path);
@@ -21,18 +32,22 @@ router.post('/publish', verifyToken, upload.array('images', 3), async (req, res)
             description,
             images: imageUrls,
             whatsapp,
-            instagram
+            instagram,
+            // ✅ ASIGNACIÓN DE NUEVOS CAMPOS A LA BASE DE DATOS
+            location: location || "", 
+            deliveryPoint: deliveryPoint || "",
+            condition: condition || "Usado"
         });
 
         await newSale.save();
         res.json({ msg: "Mazo inyectado al mercado con éxito!", mazo: newSale });
     } catch (error) {
-        console.error(error);
+        console.error("Error al publicar:", error);
         res.status(500).json({ error: "Error al publicar el mazo" });
     }
 });
 
-// ✅ RUTA PARA VER TODO EL MERCADO
+// ✅ RUTA PARA VER TODO EL MERCADO (Incluye active: true)
 router.get('/all', async (req, res) => {
     try {
         const items = await Marketplace.find({ active: true })
@@ -44,7 +59,7 @@ router.get('/all', async (req, res) => {
     }
 });
 
-// ✅ NUEVA RUTA: BORRAR PUBLICACIÓN (Necesaria para que el Dashboard funcione)
+// ✅ NUEVA RUTA: BORRAR PUBLICACIÓN (Funcionando para el Dashboard)
 router.delete('/:id', verifyToken, async (req, res) => {
     try {
         const item = await Marketplace.findById(req.params.id);
