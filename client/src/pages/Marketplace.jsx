@@ -110,12 +110,12 @@ export default function Marketplace() {
                 </motion.div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 mt-12">
+            <div className="max-w-7xl mx-auto px-4 md:px-6 mt-12">
                 {/* --- FILTROS Y BOTÓN --- */}
                 <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-16">
                     <div className="flex bg-white dark:bg-slate-900/80 p-1.5 rounded-[2rem] border border-slate-200 dark:border-white/5 w-full md:w-auto shadow-xl">
                         {["all", "imperio", "primer_bloque"].map(f => (
-                            <button key={f} onClick={() => setFilter(f)} className={`flex-1 px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-blue-600 dark:hover:text-white'}`}>
+                            <button key={f} onClick={() => setFilter(f)} className={`flex-1 px-4 md:px-8 py-3 rounded-[1.5rem] text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-blue-600 dark:hover:text-white'}`}>
                                 {f === "all" ? "🌐 Todos" : f === "imperio" ? "🏛️ Imperio" : "📜 PB"}
                             </button>
                         ))}
@@ -126,13 +126,13 @@ export default function Marketplace() {
                     </button>
                 </div>
 
-                {/* --- LISTADO --- */}
+                {/* --- LISTADO MEJORADO: 2 COLUMNAS EN MÓVIL --- */}
                 {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                        {[1,2,3,4,5,6].map(n => <div key={n} className="h-[450px] bg-slate-200 dark:bg-slate-900/50 animate-pulse rounded-[3rem] border border-slate-300 dark:border-white/5"></div>)}
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-10">
+                        {[1,2,3,4,5,6].map(n => <div key={n} className="h-[300px] md:h-[450px] bg-slate-200 dark:bg-slate-900/50 animate-pulse rounded-[2rem] md:rounded-[3rem] border border-slate-300 dark:border-white/5"></div>)}
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-10">
                         {filteredItems.map(item => <MarketCard key={item._id} item={item} onZoom={setSelectedImage} />)}
                     </div>
                 )}
@@ -242,47 +242,52 @@ export default function Marketplace() {
 }
 
 function MarketCard({ item, onZoom }) {
-    const message = `¡Hola! Vi tu mazo "${item.title}" en ForjaDeck Marketplace por $${item.price.toLocaleString()}. ¿Aún lo tienes disponible?`;
+    // ✅ CAMBIO A FORMATO CHILENO (Puntos de miles)
+    const formattedPrice = new Intl.NumberFormat('es-CL').format(item.price);
+    
+    const message = `¡Hola! Vi tu mazo "${item.title}" en ForjaDeck Marketplace por $${formattedPrice}. ¿Aún lo tienes disponible?`;
     const waLink = `https://wa.me/${item.whatsapp}?text=${encodeURIComponent(message)}`;
     
     return (
-        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-[3rem] border border-slate-200 dark:border-white/5 overflow-hidden group hover:border-blue-500/30 transition-all duration-500 shadow-2xl">
-            {/* CLICK EN IMAGEN PARA ZOOM */}
-            <div className="h-72 relative overflow-hidden cursor-zoom-in" onClick={() => onZoom(item.images[0])}>
+        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-[2rem] md:rounded-[3rem] border border-slate-200 dark:border-white/5 overflow-hidden group hover:border-blue-500/30 transition-all duration-500 shadow-2xl flex flex-col h-full">
+            {/* IMAGEN DEL MAZO */}
+            <div className="h-48 md:h-72 relative overflow-hidden cursor-zoom-in" onClick={() => onZoom(item.images[0])}>
                 <img src={item.images[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={item.title} />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                    <Search className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={40} strokeWidth={3} />
+                    <Search className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={30} strokeWidth={3} />
                 </div>
-                <div className="absolute top-6 left-6 px-5 py-2 bg-blue-600/90 backdrop-blur-md rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-xl border border-white/10 text-white">{item.format === 'imperio' ? '🏛️ Imperio' : '📜 PB'}</div>
-                {item.verifiedSeller && <div className="absolute top-6 right-6 bg-green-500 p-2 rounded-2xl shadow-lg border border-white/20"><ShieldCheck size={20} className="text-white" /></div>}
+                <div className="absolute top-3 md:top-6 left-3 md:left-6 px-3 md:px-5 py-1 md:py-2 bg-blue-600/90 backdrop-blur-md rounded-xl md:rounded-2xl text-[7px] md:text-[9px] font-black uppercase tracking-widest shadow-xl border border-white/10 text-white">
+                    {item.format === 'imperio' ? '🏛️ Imperio' : '📜 PB'}
+                </div>
             </div>
             
-            <div className="p-10">
-                <h3 className="text-2xl font-black uppercase italic tracking-tighter mb-1 truncate text-slate-900 dark:text-white">{item.title}</h3>
-                <div className="flex items-center gap-2 mb-4">
-                    <span className="text-[10px] font-black uppercase text-blue-500">@{item.seller?.username}</span>
+            <div className="p-4 md:p-10 flex flex-col flex-grow">
+                <h3 className="text-sm md:text-2xl font-black uppercase italic tracking-tighter mb-1 truncate text-slate-900 dark:text-white">{item.title}</h3>
+                <div className="flex items-center gap-2 mb-2 md:mb-4">
+                    <span className="text-[8px] md:text-[10px] font-black uppercase text-blue-500 truncate">@{item.seller?.username}</span>
                 </div>
                 
-                <div className="flex items-baseline gap-2 mb-8">
-                    <span className="text-4xl font-black text-slate-900 dark:text-white">${item.price.toLocaleString()}</span>
+                <div className="flex items-baseline gap-2 mb-4 md:mb-8">
+                    <span className="text-lg md:text-4xl font-black text-slate-900 dark:text-white">${formattedPrice}</span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                {/* BOTONES DE CONTACTO */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 mt-auto">
                     <a 
                         href={waLink} 
                         target="_blank" 
                         rel="noreferrer" 
-                        className="flex items-center justify-center gap-2 border-2 border-green-500 text-green-600 dark:text-green-500 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-green-500 hover:text-white active:scale-95"
+                        className="flex items-center justify-center gap-2 border-2 border-green-500 text-green-600 dark:text-green-500 py-2 md:py-3.5 rounded-xl md:rounded-2xl font-black text-[8px] md:text-[10px] uppercase tracking-widest transition-all hover:bg-green-500 hover:text-white active:scale-95"
                     >
-                        <MessageCircle size={18} /> WhatsApp
+                        <MessageCircle size={14} className="md:w-[18px]" /> WhatsApp
                     </a>
                     <a 
                         href={`https://instagram.com/${item.instagram.replace('@','')}`} 
                         target="_blank" 
                         rel="noreferrer" 
-                        className="flex items-center justify-center gap-2 border-2 border-pink-500 text-pink-600 dark:text-pink-500 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-pink-500 hover:text-white active:scale-95"
+                        className="flex items-center justify-center gap-2 border-2 border-pink-500 text-pink-600 dark:text-pink-500 py-2 md:py-3.5 rounded-xl md:rounded-2xl font-black text-[8px] md:text-[10px] uppercase tracking-widest transition-all hover:bg-pink-500 hover:text-white active:scale-95"
                     >
-                        <Instagram size={18} /> Instagram
+                        <Instagram size={14} className="md:w-[18px]" /> Instagram
                     </a>
                 </div>
             </div>
