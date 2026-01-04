@@ -1,10 +1,11 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { saveAs } from 'file-saver';
+import { motion, AnimatePresence } from "framer-motion"; // ✅ Añadido para animaciones
 import BACKEND_URL from "../config";
 import {
     Plus, Minus, Eye, Save, Search, X, Camera, Globe, Layout,
-    Users, Star, ShieldAlert
+    Users, Star, ShieldAlert, Sparkles
 } from "lucide-react";
 
 const MAIN_EDITIONS = [
@@ -24,6 +25,16 @@ const TIPOS_PB = [
 ];
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 const getImg = (c) => c?.imgUrl || c?.imageUrl || c?.img || "https://via.placeholder.com/250x350?text=No+Image";
+
+// ✅ VARIANTES DE ANIMACIÓN PARA EL REPARTO (Dealing Effect)
+const cardDealingVariants = {
+    hidden: { opacity: 0, x: 300, y: 300, rotate: 45, scale: 0.5 },
+    visible: (i) => ({
+        opacity: 1, x: 0, y: 0, rotate: 0, scale: 1,
+        transition: { delay: i * 0.1, duration: 0.5, ease: "easeOut" }
+    }),
+    exit: { opacity: 0, scale: 0.8, transition: { duration: 0.2 } }
+};
 
 export default function PBBuilder() {
     const navigate = useNavigate();
@@ -56,13 +67,17 @@ export default function PBBuilder() {
     }, [mazo]);
 
     const simularMano = () => {
-        let baraja = [];
-        mazo.forEach(c => { for (let i = 0; i < c.cantidad; i++) baraja.push(c); });
-        for (let i = baraja.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [baraja[i], baraja[j]] = [baraja[j], baraja[i]];
-        }
-        setManoPrueba(baraja.slice(0, 8));
+        setManoPrueba([]); // Limpiar para reiniciar animación
+        setTimeout(() => {
+            let baraja = [];
+            mazo.forEach(c => { for (let i = 0; i < c.cantidad; i++) baraja.push(c); });
+            if (baraja.length < 8) return alert("Necesitas al menos 8 cartas");
+            for (let i = baraja.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [baraja[i], baraja[j]] = [baraja[j], baraja[i]];
+            }
+            setManoPrueba(baraja.slice(0, 8));
+        }, 50);
     };
 
     useEffect(() => {
@@ -309,28 +324,54 @@ export default function PBBuilder() {
                 <div className="flex gap-2">
                     <button onClick={simularMano} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Mano</button>
                     <button onClick={() => setShowMobileList(true)} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Lista</button>
-                    {/* ✅ BOTÓN DESCARGAR IMAGEN EN MÓVIL AGREGADO */}
-                    <button onClick={handleTakeScreenshot} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700 flex items-center justify-center"><Camera size={18} /></button>
+                    {/* ✅ BOTÓN DESCARGAR IMAGEN EN MÓVIL */}
+                    <button onClick={handleTakeScreenshot} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700 flex items-center justify-center transition-all active:scale-90"><Camera size={18} /></button>
                     <button onClick={() => setModalGuardarOpen(true)} className="bg-blue-600 dark:bg-yellow-600 text-white dark:text-black px-5 py-2 rounded-xl font-black text-xs shadow-lg flex items-center justify-center"><Save size={16} /></button>
                 </div>
             </div>
 
-            {manoPrueba.length > 0 && (
-                <div className="fixed inset-0 bg-slate-950/95 z-[300] flex flex-col items-center justify-center p-4 backdrop-blur-xl animate-in fade-in">
-                    <h3 className="text-xl md:text-2xl font-black text-blue-500 dark:text-yellow-500 uppercase italic mb-8 tracking-widest text-center">Mano Inicial</h3>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-8 gap-3 max-w-6xl px-4">
-                        {manoPrueba.map((c, i) => (
-                            <div key={i} className="animate-in slide-in-from-bottom-4" style={{ transitionDelay: `${i * 50}ms` }}>
-                                <img src={getImg(c)} className="w-full rounded-lg shadow-2xl border border-white/10" alt="mano" />
-                            </div>
-                        ))}
-                    </div>
-                    <div className="mt-12 flex gap-4">
-                        <button onClick={simularMano} className="bg-blue-600 dark:bg-yellow-600 text-white dark:text-black px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all">Mulligan</button>
-                        <button onClick={() => setManoPrueba([])} className="bg-slate-800 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest border border-white/10 active:scale-95 transition-all">Cerrar</button>
-                    </div>
-                </div>
-            )}
+            {/* ✅ MODAL MANO DE PRUEBA ACTUALIZADO CON ANIMACIÓN DE REPARTO */}
+            <AnimatePresence>
+                {manoPrueba.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-slate-950/95 z-[300] flex flex-col items-center justify-center p-4 backdrop-blur-xl overflow-hidden"
+                    >
+                        <motion.h3
+                            initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+                            className="text-xl md:text-2xl font-black text-blue-500 dark:text-yellow-500 uppercase italic mb-8 tracking-widest text-center flex items-center gap-3"
+                        >
+                            <Sparkles className="animate-pulse text-yellow-400" size={24} /> Mano Inicial
+                        </motion.h3>
+
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-8 gap-3 max-w-6xl px-4 relative">
+                            {manoPrueba.map((c, i) => (
+                                <motion.div
+                                    key={`${c.slug}-${i}`}
+                                    custom={i}
+                                    variants={cardDealingVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="exit"
+                                    className="relative shadow-2xl"
+                                >
+                                    <img src={getImg(c)} className="w-full rounded-lg border border-white/10" alt="mano" />
+                                </motion.div>
+                            ))}
+                        </div>
+
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 1 }}
+                            className="mt-12 flex gap-4"
+                        >
+                            <button onClick={simularMano} className="bg-blue-600 dark:bg-yellow-600 text-white dark:text-black px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all">Mulligan</button>
+                            <button onClick={() => setManoPrueba([])} className="bg-slate-800 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest border border-white/10 active:scale-95 transition-all">Cerrar</button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {showMobileList && (
                 <div className="md:hidden fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
@@ -338,9 +379,9 @@ export default function PBBuilder() {
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-black uppercase text-blue-600 dark:text-yellow-500 italic tracking-tighter">Mi Grimorio ({totalCartas}/50)</h3>
                             <div className="flex gap-2">
-                                {/* ✅ BOTÓN DESCARGAR IMAGEN EN LISTA MÓVIL AGREGADO */}
+                                {/* ✅ BOTÓN DESCARGAR IMAGEN EN LISTA MÓVIL */}
                                 <button onClick={handleTakeScreenshot} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-blue-600 dark:text-yellow-500 border border-slate-200 dark:border-slate-700"><Camera size={20}/></button>
-                                <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 border border-slate-200 dark:border-slate-700"><X size={24} /></button>
+                                <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 border border-slate-200 dark:border-slate-700 transition-colors hover:text-red-500"><X size={24} /></button>
                             </div>
                         </div>
                         <div className="grid grid-cols-5 gap-1 mb-4">
