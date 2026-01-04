@@ -1,11 +1,11 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { saveAs } from 'file-saver';
-import { motion, AnimatePresence } from "framer-motion"; // ✅ Añadido para animaciones
+import { motion, AnimatePresence } from "framer-motion";
 import BACKEND_URL from "../config";
 import {
     Plus, Minus, Eye, Save, Search, X, Camera, Globe, Layout,
-    Users, Star, ShieldAlert, Sparkles
+    Users, Star, ShieldAlert, Sparkles, Anchor
 } from "lucide-react";
 
 const MAIN_EDITIONS = [
@@ -26,7 +26,6 @@ const TIPOS_PB = [
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 const getImg = (c) => c?.imgUrl || c?.imageUrl || c?.img || "https://via.placeholder.com/250x350?text=No+Image";
 
-// ✅ VARIANTES DE ANIMACIÓN PARA EL REPARTO (Dealing Effect)
 const cardDealingVariants = {
     hidden: { opacity: 0, x: 300, y: 300, rotate: 45, scale: 0.5 },
     visible: (i) => ({
@@ -57,6 +56,9 @@ export default function PBBuilder() {
     const [cardToZoom, setCardToZoom] = useState(null);
     const [guardando, setGuardando] = useState(false);
     const [manoPrueba, setManoPrueba] = useState([]);
+    
+    // ✅ ESTADO PARA ORO INICIAL
+    const [oroInicialSlug, setOroInicialSlug] = useState(null);
 
     const totalCartas = useMemo(() => mazo.reduce((acc, c) => acc + c.cantidad, 0), [mazo]);
 
@@ -66,17 +68,33 @@ export default function PBBuilder() {
         return { counts };
     }, [mazo]);
 
+    // ✅ SIMULADOR DE MANO ACTUALIZADO (Oro Inicial + 8 Cartas)
     const simularMano = () => {
-        setManoPrueba([]); // Limpiar para reiniciar animación
+        setManoPrueba([]);
+        const oroInicial = mazo.find(c => c.slug === oroInicialSlug);
+        
         setTimeout(() => {
-            let baraja = [];
-            mazo.forEach(c => { for (let i = 0; i < c.cantidad; i++) baraja.push(c); });
-            if (baraja.length < 8) return alert("Necesitas al menos 8 cartas");
-            for (let i = baraja.length - 1; i > 0; i--) {
+            let barajaParaBarajar = [];
+            mazo.forEach(c => {
+                let cant = c.cantidad;
+                // Si es el oro inicial, quitamos una copia de la baraja para el barajeo
+                if (c.slug === oroInicialSlug) cant = c.cantidad - 1;
+                for (let i = 0; i < cant; i++) barajaParaBarajar.push(c);
+            });
+
+            // Barajar barajaParaBarajar
+            for (let i = barajaParaBarajar.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
-                [baraja[i], baraja[j]] = [baraja[j], baraja[i]];
+                [barajaParaBarajar[i], barajaParaBarajar[j]] = [barajaParaBarajar[j], barajaParaBarajar[i]];
             }
-            setManoPrueba(baraja.slice(0, 8));
+
+            const manoFinal = barajaParaBarajar.slice(0, 8);
+            // Si hay oro inicial, lo ponemos siempre al principio
+            if (oroInicial) {
+                setManoPrueba([oroInicial, ...manoFinal]);
+            } else {
+                setManoPrueba(manoFinal);
+            }
         }, 50);
     };
 
@@ -93,6 +111,9 @@ export default function PBBuilder() {
                 setEditingDeckId(isCloning ? null : d._id);
                 setIsPublic(isCloning ? false : (d.isPublic || false));
                 setMazo(d.cards.map(c => ({ ...c, cantidad: c.quantity || 1, imgUrl: getImg(c) })));
+                // Si el mazo guardado tiene un oro inicial (usaremos el primer oro por defecto o lógica previa si existiera)
+                const firstGold = d.cards.find(c => c.type === "Oro");
+                if (firstGold) setOroInicialSlug(firstGold.slug);
             }
         }
     }, [location.state]);
@@ -126,14 +147,23 @@ export default function PBBuilder() {
         if (c.restriction === "limited2") limit = 2;
         if (copiasMismoNombre >= limit) return alert(`⚠️ Solo puedes tener ${limit} copias de "${c.name}" en total.`);
         const ex = mazo.find(x => x.slug === c.slug);
+        
         if (ex) setMazo(mazo.map(x => x.slug === c.slug ? { ...x, cantidad: x.cantidad + 1 } : x));
-        else setMazo([...mazo, { ...c, cantidad: 1, imgUrl: getImg(c) }]);
+        else {
+            setMazo([...mazo, { ...c, cantidad: 1, imgUrl: getImg(c) }]);
+            // Si es el primer oro que agrega, ponerlo como inicial automáticamente
+            if (c.type === "Oro" && !oroInicialSlug) setOroInicialSlug(c.slug);
+        }
     };
 
-    const handleRemove = (slug) => setMazo(mazo.map(c => c.slug === slug ? { ...c, cantidad: c.cantidad - 1 } : c).filter(c => c.cantidad > 0));
+    const handleRemove = (slug) => {
+        if (slug === oroInicialSlug) setOroInicialSlug(null);
+        setMazo(mazo.map(c => c.slug === slug ? { ...c, cantidad: c.cantidad - 1 } : c).filter(c => c.cantidad > 0));
+    };
 
     const handleSaveDeck = async () => {
         if (!nombreMazo.trim()) return alert("Nombre requerido");
+        if (!oroInicialSlug) return alert("Debes seleccionar un Oro Inicial para Primer Bloque");
         const token = localStorage.getItem("token");
         if (!token) return navigate("/login");
         setGuardando(true);
@@ -297,14 +327,25 @@ export default function PBBuilder() {
                             <div className="flex items-center gap-2 mb-3"><div className="h-[2px] flex-1 bg-gradient-to-r from-blue-600 dark:from-yellow-600/50 to-transparent"></div><h3 className="text-blue-600 dark:text-yellow-500 text-[11px] font-black uppercase tracking-tighter italic px-2">{t}</h3></div>
                             <div className="space-y-2">
                                 {mazoAgrupado[t].map(c => (
-                                    <div key={c.slug} className="flex justify-between items-center text-sm py-2.5 px-4 bg-slate-50 dark:bg-white/5 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-white/5 group hover:border-blue-400 dark:hover:border-yellow-500/30 transition-all duration-300 shadow-sm">
+                                    <div key={c.slug} className={`flex justify-between items-center text-sm py-2.5 px-4 bg-slate-50 dark:bg-white/5 backdrop-blur-sm rounded-2xl border transition-all duration-300 shadow-sm group ${oroInicialSlug === c.slug ? 'border-yellow-500 bg-yellow-500/10' : 'border-slate-200 dark:border-white/5'}`}>
                                         <div className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onClick={() => setCardToZoom(c)}>
                                             <div className="bg-white dark:bg-slate-800 text-blue-600 dark:text-yellow-500 w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs shadow-sm border dark:border-0">{c.cantidad}</div>
                                             <span className="truncate font-bold text-slate-700 dark:text-slate-200 uppercase text-[12px]">{c.name}</span>
                                         </div>
-                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                            <button onClick={() => handleAdd(c)} className="w-8 h-8 flex items-center justify-center bg-blue-100 dark:bg-yellow-500/20 text-blue-600 dark:text-yellow-500 rounded-xl hover:bg-blue-600 dark:hover:bg-yellow-500 hover:text-white dark:hover:text-black transition-colors"><Plus size={16} strokeWidth={3} /></button>
-                                            <button onClick={() => handleRemove(c.slug)} className="w-8 h-8 flex items-center justify-center bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-600 hover:text-white transition-colors"><Minus size={16} strokeWidth={3} /></button>
+                                        <div className="flex gap-2 items-center">
+                                            {c.type === "Oro" && (
+                                                <button 
+                                                    onClick={() => setOroInicialSlug(c.slug === oroInicialSlug ? null : c.slug)}
+                                                    className={`p-1.5 rounded-lg transition-all ${oroInicialSlug === c.slug ? 'text-yellow-500 bg-yellow-500/20' : 'text-slate-400 hover:text-yellow-500 opacity-0 group-hover:opacity-100'}`}
+                                                    title="Seleccionar como Oro Inicial"
+                                                >
+                                                    <Anchor size={16} />
+                                                </button>
+                                            )}
+                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                                <button onClick={() => handleAdd(c)} className="w-7 h-7 flex items-center justify-center bg-blue-100 dark:bg-yellow-500/20 text-blue-600 dark:text-yellow-500 rounded-lg hover:bg-blue-600 dark:hover:bg-yellow-500 hover:text-white dark:text-black transition-colors"><Plus size={14} strokeWidth={3} /></button>
+                                                <button onClick={() => handleRemove(c.slug)} className="w-7 h-7 flex items-center justify-center bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-600 hover:text-white transition-colors"><Minus size={14} strokeWidth={3} /></button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -319,69 +360,59 @@ export default function PBBuilder() {
                 </div>
             </div>
 
+            {/* DOCK MÓVIL */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-2 pb-6 z-50 flex items-center justify-between shadow-2xl transition-colors">
                 <div className="flex flex-col px-3"><span className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">TOTAL</span><span className={`text-xl font-black leading-none ${totalCartas === 50 ? 'text-green-600 dark:text-green-500' : 'text-slate-900 dark:text-white'}`}>{totalCartas}/50</span></div>
                 <div className="flex gap-2">
                     <button onClick={simularMano} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Mano</button>
                     <button onClick={() => setShowMobileList(true)} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Lista</button>
-                    {/* ✅ BOTÓN DESCARGAR IMAGEN EN MÓVIL */}
-                    <button onClick={handleTakeScreenshot} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700 flex items-center justify-center transition-all active:scale-90"><Camera size={18} /></button>
+                    <button onClick={handleTakeScreenshot} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700 flex items-center justify-center"><Camera size={18} /></button>
                     <button onClick={() => setModalGuardarOpen(true)} className="bg-blue-600 dark:bg-yellow-600 text-white dark:text-black px-5 py-2 rounded-xl font-black text-xs shadow-lg flex items-center justify-center"><Save size={16} /></button>
                 </div>
             </div>
 
-            {/* ✅ MODAL MANO DE PRUEBA ACTUALIZADO CON ANIMACIÓN DE REPARTO */}
+            {/* MODAL MANO DE PRUEBA */}
             <AnimatePresence>
                 {manoPrueba.length > 0 && (
-                    <motion.div
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-slate-950/95 z-[300] flex flex-col items-center justify-center p-4 backdrop-blur-xl overflow-hidden"
-                    >
-                        <motion.h3
-                            initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-                            className="text-xl md:text-2xl font-black text-blue-500 dark:text-yellow-500 uppercase italic mb-8 tracking-widest text-center flex items-center gap-3"
-                        >
-                            <Sparkles className="animate-pulse text-yellow-400" size={24} /> Mano Inicial
-                        </motion.h3>
-
-                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-8 gap-3 max-w-6xl px-4 relative">
+                    <div className="fixed inset-0 bg-slate-950/95 z-[300] flex flex-col items-center justify-center p-4 backdrop-blur-xl overflow-hidden">
+                        <motion.h3 initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-xl md:text-2xl font-black text-blue-500 dark:text-yellow-500 uppercase italic mb-8 tracking-widest text-center flex items-center gap-3"><Sparkles className="animate-pulse text-yellow-400" size={24} /> Mano Inicial PB</motion.h3>
+                        
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-9 gap-3 max-w-7xl px-4 relative">
                             {manoPrueba.map((c, i) => (
-                                <motion.div
+                                <motion.div 
                                     key={`${c.slug}-${i}`}
                                     custom={i}
                                     variants={cardDealingVariants}
                                     initial="hidden"
                                     animate="visible"
                                     exit="exit"
-                                    className="relative shadow-2xl"
+                                    className="relative"
                                 >
-                                    <img src={getImg(c)} className="w-full rounded-lg border border-white/10" alt="mano" />
+                                    <img src={getImg(c)} className={`w-full rounded-lg border ${oroInicialSlug === c.slug && i === 0 ? 'border-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.5)] scale-105' : 'border-white/10'}`} alt="mano" />
+                                    {oroInicialSlug === c.slug && i === 0 && (
+                                        <div className="absolute -top-2 -right-2 bg-yellow-500 text-black p-1 rounded-full shadow-lg"><Anchor size={12} strokeWidth={3} /></div>
+                                    )}
                                 </motion.div>
                             ))}
                         </div>
 
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 1 }}
-                            className="mt-12 flex gap-4"
-                        >
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }} className="mt-12 flex gap-4">
                             <button onClick={simularMano} className="bg-blue-600 dark:bg-yellow-600 text-white dark:text-black px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all">Mulligan</button>
                             <button onClick={() => setManoPrueba([])} className="bg-slate-800 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest border border-white/10 active:scale-95 transition-all">Cerrar</button>
                         </motion.div>
-                    </motion.div>
+                    </div>
                 )}
             </AnimatePresence>
 
+            {/* MODAL LISTA MÓVIL */}
             {showMobileList && (
                 <div className="md:hidden fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
                     <div className="bg-white dark:bg-slate-900 rounded-t-[3rem] h-[80vh] p-6 overflow-hidden border-t border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-black uppercase text-blue-600 dark:text-yellow-500 italic tracking-tighter">Mi Grimorio ({totalCartas}/50)</h3>
                             <div className="flex gap-2">
-                                {/* ✅ BOTÓN DESCARGAR IMAGEN EN LISTA MÓVIL */}
                                 <button onClick={handleTakeScreenshot} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-blue-600 dark:text-yellow-500 border border-slate-200 dark:border-slate-700"><Camera size={20}/></button>
-                                <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 border border-slate-200 dark:border-slate-700 transition-colors hover:text-red-500"><X size={24} /></button>
+                                <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 border border-slate-200 dark:border-slate-700"><X size={24} /></button>
                             </div>
                         </div>
                         <div className="grid grid-cols-5 gap-1 mb-4">
@@ -398,10 +429,17 @@ export default function PBBuilder() {
                                     <h4 className="text-slate-400 dark:text-yellow-600 text-[10px] font-black uppercase mb-3 tracking-widest border-b dark:border-orange-800 pb-1">{t}</h4>
                                     <div className="space-y-3">
                                         {mazoAgrupado[t].map(c => (
-                                            <div key={c.slug} className="flex justify-between items-center py-2">
+                                            <div key={c.slug} className={`flex justify-between items-center py-2 px-3 rounded-xl border ${oroInicialSlug === c.slug ? 'border-yellow-500 bg-yellow-500/5' : 'border-transparent'}`}>
                                                 <div className="flex items-center gap-3">
-                                                    <img src={getImg(c)} className="w-12 h-16 rounded-xl shadow-md object-cover border border-slate-100 dark:border-0" alt={c.name} />
-                                                    <span className="text-sm font-black text-slate-700 dark:text-slate-200 uppercase truncate max-w-[150px]">{c.name}</span>
+                                                    <img src={getImg(c)} className="w-12 h-16 rounded-xl shadow-md object-cover" alt={c.name} />
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-black text-slate-700 dark:text-slate-200 uppercase truncate max-w-[150px]">{c.name}</span>
+                                                        {c.type === "Oro" && (
+                                                            <button onClick={() => setOroInicialSlug(c.slug === oroInicialSlug ? null : c.slug)} className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full w-fit ${oroInicialSlug === c.slug ? 'bg-yellow-500 text-black' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'}`}>
+                                                                {oroInicialSlug === c.slug ? 'Oro Inicial' : 'Usar como Inicial'}
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="flex items-center gap-4 bg-slate-100 dark:bg-slate-950 p-2 px-5 rounded-2xl">
                                                     <button onClick={() => handleRemove(c.slug)} className="text-red-500 active:scale-90 transition-transform"><Minus size={20} strokeWidth={3}/></button>
