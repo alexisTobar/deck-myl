@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { 
-  Home, Users, Layers, Settings, Hammer, Lock, LogOut, User, LogIn, X, Star, Moon, Sun, ShoppingCart 
+    Home, Users, Layers, Settings, Hammer, Lock, LogOut, User, LogIn, X, Star, Moon, Sun, ShoppingCart 
 } from "lucide-react";
 
 const MAIN_EDITIONS = [
@@ -22,15 +22,11 @@ export default function Navbar() {
   const isPB = location.pathname.includes("/primer-bloque");
   const isBuilder = location.pathname.includes("builder");
 
-  // ✅ MODIFICACIÓN: Inicia siempre en falso (Modo Claro) a menos que exista una preferencia guardada
   const [isDark, setIsDark] = useState(() => {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme) return savedTheme === "dark";
-    return false; // Por defecto siempre claro al iniciar por primera vez
+    return false; 
   });
-
-  // ✅ MODIFICACIÓN: Se elimina el useEffect que forzaba el tema oscuro según la ruta
-  // Esto permite que si el usuario elige un tema, este se mantenga en toda la navegación.
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -86,15 +82,15 @@ export default function Navbar() {
             <img 
               src="https://raw.githubusercontent.com/alexisTobar/deck-myl-assets/refs/heads/main/forja.png" 
               alt="ForjaDeck Logo" 
-              className="h-16 md:h-20 w-auto object-contain brightness-110" 
+              className="h-14 md:h-20 w-auto object-contain brightness-110" 
             />
           </Link>
 
+          {/* NAVEGACIÓN WEB (DESKTOP) */}
           <div className="hidden lg:flex items-center gap-1 bg-white/5 p-1.5 rounded-2xl border border-white/10">
             <NavLink to="/" label="Portal" icon={<Home size={16} />} />
             <NavLink to="/community" label="Comunidad" icon={<Users size={16} />} />
             <NavLink to="/my-decks" label="Mis Mazos" icon={<Layers size={16} />} />
-            {/* ✅ ENLACE AL MARKETPLACE AGREGADO (SOLO WEB) */}
             <NavLink to="/marketplace" label="Mercado" icon={<ShoppingCart size={16} />} />
             
             {isLoggedIn && username === "Juegos Vikingos" && (
@@ -120,27 +116,29 @@ export default function Navbar() {
             </button>
 
             {isLoggedIn ? (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 md:gap-4">
                 <div className="hidden md:flex flex-col items-end leading-tight pr-3 border-r border-white/10">
                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-tighter">Invocador</span>
                   <span className={`text-sm font-black uppercase italic ${themeColor}`}>{username}</span>
                 </div>
+                {/* LOGIN/LOGOUT EN MÓVIL TAMBIÉN ARRIBA */}
                 <button 
                   onClick={handleLogout}
                   className="flex items-center gap-2 bg-white/5 hover:bg-red-500/10 p-2.5 rounded-xl transition-all text-slate-400 hover:text-red-500 border border-white/10"
                 >
-                  <LogOut className="w-5 h-5" />
+                  <LogOut className="w-5 h-5 md:w-5 md:h-5" />
                 </button>
               </div>
             ) : (
-              <Link to="/login" className="px-6 py-2.5 rounded-xl bg-white text-slate-950 text-[11px] font-black uppercase hover:bg-blue-500 hover:text-white transition-all shadow-md flex items-center gap-2">
-                <LogIn size={14} /> Ingresar
+              <Link to="/login" className="px-4 md:px-6 py-2.5 rounded-xl bg-white text-slate-950 text-[10px] md:text-[11px] font-black uppercase hover:bg-blue-500 hover:text-white transition-all shadow-md flex items-center gap-2">
+                <LogIn size={14} /> <span className="hidden xs:inline">Ingresar</span>
               </Link>
             )}
           </div>
         </div>
       </nav>
 
+      {/* MODAL PB */}
       {showPBModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
             <div className="bg-slate-900 border border-white/10 w-full max-w-2xl rounded-[2.5rem] p-10 relative shadow-2xl overflow-hidden">
@@ -164,35 +162,35 @@ export default function Navbar() {
         </div>
       )}
 
+      {/* NAV MÓVIL MEJORADO CON MARKETPLACE */}
       {!isBuilder && (
-        <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[92%] max-w-[400px]">
-          <div className="bg-slate-950/95 border border-white/10 p-2 rounded-[28px] shadow-[0_15px_40px_rgba(0,0,0,0.4)] flex justify-around items-end">
-            <MobileIcon to="/" icon={<Home size={22} />} label="Portal" active={location.pathname === "/"} />
-            <MobileIcon to="/community" icon={<Users size={22} />} label="Arena" active={location.pathname.includes("community")} />
+        <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-[440px]">
+          <div className="bg-slate-950/95 border border-white/10 p-2 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex justify-between items-center px-4">
             
-            {(isImperio || isPB) ? (
-              <button 
-                onClick={handleBuildClick}
-                className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-xl border-4 border-slate-950 -translate-y-4 active:scale-90 transition-all bg-blue-600`}
-              >
-                <Hammer size={26} />
-              </button>
-            ) : (
-              <div className="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center text-slate-500 border-4 border-slate-950 -translate-y-4">
-                <Lock size={20} />
-              </div>
-            )}
+            <MobileIcon to="/" icon={<Home size={20} />} label="Portal" active={location.pathname === "/"} />
+            
+            <MobileIcon to="/community" icon={<Users size={20} />} label="Arena" active={location.pathname.includes("community")} />
+            
+            {/* BOTÓN CENTRAL DINÁMICO */}
+            <div className="relative -translate-y-4">
+                {(isImperio || isPB) ? (
+                <button 
+                    onClick={handleBuildClick}
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-[0_10px_20px_rgba(37,99,235,0.4)] border-4 border-slate-950 transition-all active:scale-90 bg-blue-600"
+                >
+                    <Hammer size={28} />
+                </button>
+                ) : (
+                <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center text-slate-500 border-4 border-slate-950">
+                    <Lock size={22} />
+                </div>
+                )}
+            </div>
 
-            <MobileIcon to="/my-decks" icon={<Layers size={22} />} label="Mazos" active={location.pathname === "/my-decks"} />
+            <MobileIcon to="/marketplace" icon={<ShoppingCart size={20} />} label="Mercado" active={location.pathname.includes("marketplace")} />
             
-            {isLoggedIn ? (
-               <button onClick={handleLogout} className="flex flex-col items-center gap-1 p-2 transition-all active:scale-90 mb-1">
-                  <LogOut size={22} className="text-slate-400" />
-                  <span className="text-[8px] font-black uppercase text-red-500 tracking-tighter">Salir</span>
-               </button>
-            ) : (
-               <MobileIcon to="/login" icon={<User size={22} />} label="Entrar" active={location.pathname === "/login"} />
-            )}
+            <MobileIcon to="/my-decks" icon={<Layers size={20} />} label="Mazos" active={location.pathname === "/my-decks"} />
+
           </div>
         </div>
       )}
@@ -212,11 +210,13 @@ function NavLink({ to, label, icon }) {
 
 function MobileIcon({ to, icon, label, active }) {
   return (
-    <Link to={to} className="flex flex-col items-center gap-1.5 p-2 mb-1">
-      <div className={`transition-all ${active ? 'text-blue-400 scale-110' : 'text-slate-500'}`}>
+    <Link to={to} className="flex flex-col items-center gap-1 p-2 transition-all">
+      <div className={`transition-all duration-300 ${active ? 'text-blue-400 scale-110' : 'text-slate-500'}`}>
         {icon}
       </div>
-      <span className={`text-[8px] font-black uppercase tracking-tighter ${active ? 'text-blue-400' : 'text-slate-400'}`}>{label}</span>
+      <span className={`text-[7px] font-black uppercase tracking-wider ${active ? 'text-blue-400' : 'text-slate-500'}`}>
+        {label}
+      </span>
     </Link>
   );
 }
