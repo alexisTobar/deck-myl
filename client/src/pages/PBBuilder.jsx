@@ -68,7 +68,7 @@ export default function PBBuilder() {
         return { counts };
     }, [mazo]);
 
-    // ✅ SIMULADOR DE MANO ACTUALIZADO (Oro Inicial + 8 Cartas)
+    // ✅ SIMULADOR DE MANO ACTUALIZADO (Oro Inicial separado de las 8 Cartas)
     const simularMano = () => {
         setManoPrueba([]);
         const oroInicial = mazo.find(c => c.slug === oroInicialSlug);
@@ -89,12 +89,8 @@ export default function PBBuilder() {
             }
 
             const manoFinal = barajaParaBarajar.slice(0, 8);
-            // Si hay oro inicial, lo ponemos siempre al principio
-            if (oroInicial) {
-                setManoPrueba([oroInicial, ...manoFinal]);
-            } else {
-                setManoPrueba(manoFinal);
-            }
+            // La mano siempre tendrá 8 cartas (o menos si el mazo es pequeño)
+            setManoPrueba(manoFinal);
         }, 50);
     };
 
@@ -371,29 +367,50 @@ export default function PBBuilder() {
                 </div>
             </div>
 
-            {/* MODAL MANO DE PRUEBA */}
+            {/* ✅ MODAL MANO DE PRUEBA ACTUALIZADO */}
             <AnimatePresence>
                 {manoPrueba.length > 0 && (
                     <div className="fixed inset-0 bg-slate-950/95 z-[300] flex flex-col items-center justify-center p-4 backdrop-blur-xl overflow-hidden">
                         <motion.h3 initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-xl md:text-2xl font-black text-blue-500 dark:text-yellow-500 uppercase italic mb-8 tracking-widest text-center flex items-center gap-3"><Sparkles className="animate-pulse text-yellow-400" size={24} /> Mano Inicial PB</motion.h3>
                         
-                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-9 gap-3 max-w-7xl px-4 relative">
-                            {manoPrueba.map((c, i) => (
-                                <motion.div 
-                                    key={`${c.slug}-${i}`}
-                                    custom={i}
-                                    variants={cardDealingVariants}
-                                    initial="hidden"
-                                    animate="visible"
-                                    exit="exit"
-                                    className="relative"
-                                >
-                                    <img src={getImg(c)} className={`w-full rounded-lg border ${oroInicialSlug === c.slug && i === 0 ? 'border-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.5)] scale-105' : 'border-white/10'}`} alt="mano" />
-                                    {oroInicialSlug === c.slug && i === 0 && (
-                                        <div className="absolute -top-2 -right-2 bg-yellow-500 text-black p-1 rounded-full shadow-lg"><Anchor size={12} strokeWidth={3} /></div>
-                                    )}
-                                </motion.div>
-                            ))}
+                        <div className="flex flex-col md:flex-row gap-8 items-center max-w-full">
+                            {/* SECCIÓN ORO INICIAL SEPARADA */}
+                            {oroInicialSlug && mazo.find(c => c.slug === oroInicialSlug) && (
+                                <div className="flex flex-col items-center gap-2 border-r border-white/10 pr-8">
+                                    <span className="text-[10px] font-black text-yellow-500 uppercase tracking-widest bg-yellow-500/10 px-3 py-1 rounded-full border border-yellow-500/20">Oro Inicial</span>
+                                    <motion.div 
+                                        initial={{ opacity: 0, scale: 0.5 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="w-28 md:w-32"
+                                    >
+                                        <img 
+                                            src={getImg(mazo.find(c => c.slug === oroInicialSlug))} 
+                                            className="w-full rounded-lg border-2 border-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.4)]" 
+                                            alt="oro inicial" 
+                                        />
+                                    </motion.div>
+                                </div>
+                            )}
+
+                            {/* SECCIÓN MANO REPARTIDA */}
+                            <div className="flex flex-col items-center gap-2">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cartas Repartidas</span>
+                                <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-3">
+                                    {manoPrueba.map((c, i) => (
+                                        <motion.div 
+                                            key={`${c.slug}-${i}`}
+                                            custom={i}
+                                            variants={cardDealingVariants}
+                                            initial="hidden"
+                                            animate="visible"
+                                            exit="exit"
+                                            className="w-20 md:w-28"
+                                        >
+                                            <img src={getImg(c)} className="w-full rounded-lg border border-white/10 shadow-xl" alt="mano" />
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
 
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }} className="mt-12 flex gap-4">
@@ -404,14 +421,13 @@ export default function PBBuilder() {
                 )}
             </AnimatePresence>
 
-            {/* MODAL LISTA MÓVIL */}
             {showMobileList && (
                 <div className="md:hidden fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
                     <div className="bg-white dark:bg-slate-900 rounded-t-[3rem] h-[80vh] p-6 overflow-hidden border-t border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-black uppercase text-blue-600 dark:text-yellow-500 italic tracking-tighter">Mi Grimorio ({totalCartas}/50)</h3>
                             <div className="flex gap-2">
-                                <button onClick={handleTakeScreenshot} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-blue-600 dark:text-yellow-500 border border-slate-200 dark:border-slate-700"><Camera size={20}/></button>
+                                <button onClick={handleTakeScreenshot} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-blue-600 dark:text-yellow-500 border border-slate-200 dark:border-submit-700"><Camera size={20}/></button>
                                 <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 border border-slate-200 dark:border-slate-700"><X size={24} /></button>
                             </div>
                         </div>
