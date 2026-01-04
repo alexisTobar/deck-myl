@@ -332,9 +332,20 @@ export default function ImperioBuilder() {
             </div>
 
             <div className="hidden md:flex w-85 border-l border-slate-200 dark:border-white/10 flex-col h-screen bg-white dark:bg-[#0f0a07] shadow-2xl transition-colors duration-500">
-                <div className="p-5 border-b border-slate-200 dark:border-orange-500/30 bg-slate-50 dark:bg-slate-900/50 backdrop-blur-md font-black text-slate-900 dark:text-orange-500 uppercase tracking-widest flex justify-between items-center shadow-sm">
-                    <div className="flex items-center gap-2"><Layout size={18}/><span className="italic">Grimorio Imperio</span></div>
-                    <div className={`px-3 py-1 rounded-full text-xs font-black transition-all duration-500 border ${totalCartas === 50 ? 'bg-blue-600 dark:bg-orange-500/10 border-blue-600 dark:border-orange-500 text-white dark:text-yellow-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>{totalCartas} / 50</div>
+                <div className="p-5 border-b border-slate-200 dark:border-orange-500/30 bg-slate-50 dark:bg-slate-900/50 backdrop-blur-md flex flex-col gap-2 shadow-sm">
+                    <div className="flex justify-between items-center text-slate-900 dark:text-orange-500 font-black uppercase tracking-widest">
+                        <div className="flex items-center gap-2"><Layout size={18}/><span className="italic">Grimorio Imperio</span></div>
+                        <div className={`px-3 py-1 rounded-full text-xs font-black transition-all duration-500 border ${totalCartas === 50 ? 'bg-blue-600 dark:bg-orange-500/10 border-blue-600 dark:border-orange-500 text-white dark:text-yellow-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>{totalCartas} / 50</div>
+                    </div>
+                    {/* ✅ NUEVOS CONTADORES POR TIPO WEB */}
+                    <div className="grid grid-cols-5 gap-1 pt-1">
+                        {ORDER_TYPES.map(type => (
+                            <div key={type} className="flex flex-col items-center bg-slate-100 dark:bg-slate-800/50 rounded-lg p-1 border border-slate-200 dark:border-white/5">
+                                <span className="text-[7px] font-black text-slate-400 uppercase">{type}</span>
+                                <span className="text-[10px] font-black text-slate-700 dark:text-orange-500">{statsForExport.counts[type] || 0}</span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar bg-transparent">
                     {ORDER_TYPES.map(t => mazoAgrupado[t] && (
@@ -374,7 +385,7 @@ export default function ImperioBuilder() {
                 </div>
             </div>
 
-            {/* MODALES */}
+            {/* ✅ MODALES */}
             {manoPrueba.length > 0 && (
                 <div className="fixed inset-0 bg-slate-950/95 z-[300] flex flex-col items-center justify-center p-4 backdrop-blur-xl animate-in fade-in">
                     <h3 className="text-xl md:text-2xl font-black text-blue-500 dark:text-orange-500 uppercase italic mb-8 tracking-widest text-center">Mano Inicial</h3>
@@ -395,9 +406,18 @@ export default function ImperioBuilder() {
             {showMobileList && (
                 <div className="md:hidden fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
                     <div className="bg-white dark:bg-slate-900 rounded-t-[3rem] h-[80vh] p-6 overflow-hidden border-t border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-6">
+                        <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-black uppercase text-blue-600 dark:text-orange-500 italic tracking-tighter">Grimorio ({totalCartas}/50)</h3>
                             <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 transition-colors hover:text-red-500"><X size={24} /></button>
+                        </div>
+                        {/* ✅ CONTADORES MÓVIL */}
+                        <div className="grid grid-cols-5 gap-1 mb-4">
+                            {ORDER_TYPES.map(type => (
+                                <div key={type} className="flex flex-col items-center bg-slate-50 dark:bg-slate-800 rounded-lg p-2 border border-slate-100 dark:border-white/5">
+                                    <span className="text-[6px] font-black text-slate-400 uppercase">{type}</span>
+                                    <span className="text-xs font-black text-slate-700 dark:text-orange-500">{statsForExport.counts[type] || 0}</span>
+                                </div>
+                            ))}
                         </div>
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
                             {ORDER_TYPES.map(t => mazoAgrupado[t] && (

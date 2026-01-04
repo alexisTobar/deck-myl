@@ -47,6 +47,8 @@ export default function PBBuilder() {
     const [guardando, setGuardando] = useState(false);
     const [manoPrueba, setManoPrueba] = useState([]);
 
+    const totalCartas = useMemo(() => mazo.reduce((acc, c) => acc + c.cantidad, 0), [mazo]);
+
     const statsForExport = useMemo(() => {
         const counts = { Aliado: 0, Talismán: 0, Arma: 0, Tótem: 0, Oro: 0 };
         mazo.forEach(c => { if (counts[c.type] !== undefined) counts[c.type] += c.cantidad; });
@@ -103,8 +105,7 @@ export default function PBBuilder() {
         const copiasMismoNombre = mazo
             .filter(x => x.name.toLowerCase().trim() === c.name.toLowerCase().trim())
             .reduce((acc, curr) => acc + curr.cantidad, 0);
-        const totalMazo = mazo.reduce((a, b) => a + b.cantidad, 0);
-        if (totalMazo >= 50 && !mazo.find(x => x.slug === c.slug)) return alert("Mazo lleno");
+        if (totalCartas >= 50 && !mazo.find(x => x.slug === c.slug)) return alert("Mazo lleno");
         let limit = 3;
         if (c.restriction === "limited1") limit = 1;
         if (c.restriction === "limited2") limit = 2;
@@ -158,12 +159,11 @@ export default function PBBuilder() {
             ctx.fillText("ESTRATEGIA OFICIAL", 150, 60);
             ctx.fillStyle = "white"; ctx.font = "italic bold 55px Arial";
             ctx.fillText(nombreMazo.toUpperCase() || "MAZO SIN NOMBRE", 150, 110);
-            const totalCards = mazo.reduce((a, b) => a + b.cantidad, 0);
             ctx.fillStyle = "#1e293b";
             if (ctx.roundRect) ctx.roundRect(950, 50, 200, 60, 15); else ctx.fillRect(950, 50, 200, 60);
             ctx.fill();
             ctx.fillStyle = "#ffffffff"; ctx.font = "bold 17px Arial"; ctx.textAlign = "center";
-            ctx.fillText(`${totalCards} CARTAS`, 1050, 90); ctx.textAlign = "left";
+            ctx.fillText(`${totalCartas} CARTAS`, 1050, 90); ctx.textAlign = "left";
 
             let dx = 50, dy = 180;
             for (const card of mazo) {
@@ -183,7 +183,7 @@ export default function PBBuilder() {
             const footerY = canvas.height - 150; let startX = 50;
             ORDER_TYPES.forEach((type) => {
                 const count = statsForExport.counts[type] || 0;
-                const percentage = totalCards > 0 ? (count / totalCards) : 0;
+                const percentage = totalCartas > 0 ? (count / totalCartas) : 0;
                 ctx.fillStyle = "#161b22";
                 if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(startX, footerY, 215, 100, 20); ctx.fill(); ctx.strokeStyle = "#eab30833"; ctx.stroke(); }
                 ctx.fillStyle = "#eab308"; ctx.font = "bold 12px Arial"; ctx.fillText(type.toUpperCase(), startX + 15, footerY + 30);
@@ -203,8 +203,6 @@ export default function PBBuilder() {
         mazo.forEach(c => { const t = c.type || "Otros"; if (!g[t]) g[t] = []; g[t].push(c); });
         return g;
     }, [mazo]);
-
-    const totalCartas = mazo.reduce((acc, c) => acc + c.cantidad, 0);
 
     return (
         <div className="h-screen flex flex-col md:flex-row font-sans bg-[#F8FAFC] dark:bg-[#0c0e14] text-slate-900 dark:text-white overflow-hidden transition-colors duration-500">
@@ -263,9 +261,20 @@ export default function PBBuilder() {
             </div>
 
             <div className="hidden md:flex w-85 border-l border-slate-200 dark:border-white/10 flex-col h-screen bg-white dark:bg-gradient-to-b dark:from-slate-900 dark:via-[#0c0e14] dark:to-black shadow-2xl transition-colors duration-500">
-                <div className="p-5 border-b border-slate-200 dark:border-yellow-500/30 bg-slate-50 dark:bg-slate-900/50 backdrop-blur-md font-black text-slate-900 dark:text-yellow-500 uppercase tracking-widest flex justify-between items-center shadow-sm">
-                    <div className="flex items-center gap-2"><Layout size={18} /><span className="italic">Grimorio PB</span></div>
-                    <div className={`px-3 py-1 rounded-full text-xs font-black transition-all duration-500 border ${totalCartas === 50 ? 'bg-blue-600 dark:bg-yellow-500/10 border-blue-600 dark:border-yellow-500 text-white dark:text-yellow-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>{totalCartas} / 50</div>
+                <div className="p-5 border-b border-slate-200 dark:border-yellow-500/30 bg-slate-50 dark:bg-slate-900/50 backdrop-blur-md flex flex-col gap-2 shadow-sm">
+                    <div className="flex justify-between items-center text-slate-900 dark:text-yellow-500 font-black uppercase tracking-widest">
+                        <div className="flex items-center gap-2"><Layout size={18} /><span className="italic">Grimorio PB</span></div>
+                        <div className={`px-3 py-1 rounded-full text-xs font-black border ${totalCartas === 50 ? 'bg-blue-600 dark:bg-yellow-500/10 border-blue-600 dark:border-yellow-500 text-white dark:text-yellow-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>{totalCartas} / 50</div>
+                    </div>
+                    {/* ✅ NUEVOS CONTADORES POR TIPO WEB */}
+                    <div className="grid grid-cols-5 gap-1 pt-1">
+                        {ORDER_TYPES.map(type => (
+                            <div key={type} className="flex flex-col items-center bg-slate-100 dark:bg-slate-800/50 rounded-lg p-1 border border-slate-200 dark:border-white/5">
+                                <span className="text-[7px] font-black text-slate-400 uppercase">{type}</span>
+                                <span className="text-[10px] font-black text-slate-700 dark:text-yellow-500">{statsForExport.counts[type] || 0}</span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
                 
                 <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar bg-transparent">
@@ -296,7 +305,6 @@ export default function PBBuilder() {
                 </div>
             </div>
 
-            {/* MÓVIL DOCK */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-2 pb-6 z-50 flex items-center justify-between shadow-2xl transition-colors">
                 <div className="flex flex-col px-3"><span className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">TOTAL</span><span className={`text-xl font-black leading-none ${totalCartas === 50 ? 'text-green-600 dark:text-green-500' : 'text-slate-900 dark:text-white'}`}>{totalCartas}/50</span></div>
                 <div className="flex gap-2">
@@ -306,7 +314,6 @@ export default function PBBuilder() {
                 </div>
             </div>
 
-            {/* MODAL MANO DE PRUEBA */}
             {manoPrueba.length > 0 && (
                 <div className="fixed inset-0 bg-slate-950/95 z-[300] flex flex-col items-center justify-center p-4 backdrop-blur-xl animate-in fade-in">
                     <h3 className="text-xl md:text-2xl font-black text-blue-500 dark:text-yellow-500 uppercase italic mb-8 tracking-widest text-center">Mano Inicial</h3>
@@ -324,13 +331,21 @@ export default function PBBuilder() {
                 </div>
             )}
 
-            {/* MODAL LISTA MÓVIL */}
             {showMobileList && (
                 <div className="md:hidden fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
                     <div className="bg-white dark:bg-slate-900 rounded-t-[3rem] h-[80vh] p-6 overflow-hidden border-t border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-6">
+                        <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-black uppercase text-blue-600 dark:text-yellow-500 italic tracking-tighter">Mi Grimorio ({totalCartas}/50)</h3>
                             <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400"><X size={24} /></button>
+                        </div>
+                        {/* ✅ CONTADORES MÓVIL */}
+                        <div className="grid grid-cols-5 gap-1 mb-4">
+                            {ORDER_TYPES.map(type => (
+                                <div key={type} className="flex flex-col items-center bg-slate-50 dark:bg-slate-800 rounded-lg p-2 border border-slate-100 dark:border-white/5">
+                                    <span className="text-[6px] font-black text-slate-400 uppercase">{type}</span>
+                                    <span className="text-xs font-black text-slate-700 dark:text-yellow-500">{statsForExport.counts[type] || 0}</span>
+                                </div>
+                            ))}
                         </div>
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
                             {ORDER_TYPES.map(t => mazoAgrupado[t] && (
@@ -358,7 +373,6 @@ export default function PBBuilder() {
                 </div>
             )}
 
-            {/* MODAL ZOOM */}
             {cardToZoom && (
                 <div className="fixed inset-0 z-[400] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-4 transition-all duration-300" onClick={() => setCardToZoom(null)}>
                     <button onClick={() => setCardToZoom(null)} className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-2xl z-[410] transition-all"><X size={24} strokeWidth={3} /></button>
@@ -375,7 +389,6 @@ export default function PBBuilder() {
                 </div>
             )}
 
-            {/* MODAL GUARDAR */}
             {modalGuardarOpen && (
                 <div className="fixed inset-0 bg-slate-950/90 z-[500] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in" onClick={() => setModalGuardarOpen(false)}>
                     <div className="bg-white dark:bg-slate-800 p-8 rounded-[3rem] w-full max-w-sm border border-slate-200 dark:border-slate-700 shadow-2xl" onClick={e => e.stopPropagation()}>
