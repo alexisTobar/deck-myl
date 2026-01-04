@@ -34,6 +34,7 @@ export default function HomePortal() {
     const [newPlayerData, setNewPlayerData] = useState({ name: "", instagram: "", logo: "" });
 
     const VIKINGO_LOGO = "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/vikingo.png";
+    const FORJADECK_LOGO = "https://raw.githubusercontent.com/alexisTobar/deck-myl-assets/refs/heads/main/forja.png";
 
     useEffect(() => {
         const fetchTrending = async () => {
@@ -93,17 +94,25 @@ export default function HomePortal() {
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-[#0A0C10] dark:via-[#0f172a] dark:to-[#0A0C10] flex flex-col items-center font-sans text-slate-900 dark:text-white selection:bg-blue-100 dark:selection:bg-blue-900/30 overflow-x-hidden transition-colors duration-500">
             
             {/* --- HERO SECTION --- */}
-            <header className="w-full max-w-7xl px-6 pt-24 pb-12 text-center animate-in fade-in slide-in-from-top-10 duration-1000">
+            <header className="w-full max-w-7xl px-4 md:px-6 pt-16 md:pt-24 pb-12 text-center animate-in fade-in slide-in-from-top-10 duration-1000">
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/5 dark:bg-blue-400/10 border border-blue-600/10 dark:border-blue-400/20 rounded-full mb-8 shadow-sm hover:scale-105 transition-transform cursor-default">
                     <Star size={12} className="text-blue-600 dark:text-blue-400 fill-blue-600 dark:fill-blue-400" />
                     <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-blue-600 dark:text-blue-400">Nueva Versión ForjaDeck v3.0</span>
                 </div>
                 
-                <h1 className="text-7xl md:text-9xl font-light tracking-tighter text-slate-900 dark:text-white mb-6 drop-shadow-sm">
-                    Forja<span className="font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">Deck</span>
-                </h1>
+                {/* ✅ MEJORA: Logo oficial responsivo */}
+                <div className="flex justify-center mb-6 px-4">
+                    <motion.img 
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.8 }}
+                        src={FORJADECK_LOGO}
+                        alt="ForjaDeck Logo"
+                        className="w-[85vw] max-w-[500px] md:max-w-[700px] h-auto object-contain brightness-110 dark:brightness-125 drop-shadow-2xl"
+                    />
+                </div>
                 
-                <p className="text-slate-500 dark:text-slate-400 text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed opacity-80">
+                <p className="text-slate-500 dark:text-slate-400 text-base md:text-xl max-w-2xl mx-auto font-medium leading-relaxed opacity-80 px-4">
                     La plataforma técnica para la forja de estrategias. 
                     Optimización de mazos basada en el análisis de datos masivos.
                 </p>
@@ -133,10 +142,10 @@ export default function HomePortal() {
             <section className="w-full max-w-7xl px-6 mb-32">
                 <div className="flex items-center justify-between mb-12 border-b border-slate-200 dark:border-white/10 pb-8">
                     <div className="text-left">
-                        <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic flex items-center gap-3">
+                        <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic flex items-center gap-3">
                             <TrendingUp className="text-blue-600 dark:text-blue-400" /> Análisis del Meta
                         </h3>
-                        <p className="text-slate-400 dark:text-slate-500 text-sm font-bold uppercase mt-1 tracking-widest">Tendencias extraídas de la base de datos global</p>
+                        <p className="text-slate-400 dark:text-slate-500 text-[10px] md:text-sm font-bold uppercase mt-1 tracking-widest">Tendencias extraídas de la base de datos global</p>
                     </div>
                 </div>
 
@@ -174,16 +183,16 @@ export default function HomePortal() {
                     <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-white/10 rounded-full blur-[80px] group-hover:scale-150 transition-transform duration-1000"></div>
                     
                     <div className="bg-white dark:bg-[#0A0C10] rounded-[2.8rem] p-8 md:p-12 flex flex-col md:flex-row items-center gap-10">
-                        <div className="flex-1 text-center md:text-left">
+                        <div className="flex-1 text-center md:text-left order-2 md:order-1">
                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-500/10 rounded-full mb-6">
                                 <ShoppingBag size={14} className="text-orange-500" />
                                 <span className="text-[10px] font-black uppercase tracking-widest text-orange-500">Official Store</span>
                             </div>
-                            <h2 className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter mb-4">Juegos <span className="text-blue-600">Vikingos</span></h2>
+                            <h2 className="text-4xl md:text-7xl font-black uppercase italic tracking-tighter mb-4 leading-none">Juegos <span className="text-blue-600">Vikingos</span></h2>
                             <p className="text-slate-500 dark:text-slate-400 text-lg mb-8 max-w-lg font-medium leading-relaxed italic">
                                 Encuentra las cartas más codiciadas y los últimos lanzamientos de Mitos y Leyendas. Calidad legendaria para invocadores reales.
                             </p>
-                            <div className="flex flex-col sm:flex-row gap-4">
+                            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
                                 <a href="https://www.juegosvikingos.cl" target="_blank" rel="noreferrer" className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase italic tracking-widest flex items-center justify-center gap-3 hover:bg-blue-700 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-blue-600/30">
                                     Visitar Tienda <ExternalLink size={18} />
                                 </a>
@@ -192,10 +201,10 @@ export default function HomePortal() {
                                 </a>
                             </div>
                         </div>
-                        <div className="flex-1 relative w-full md:w-auto h-64 md:h-96 flex items-center justify-center">
+                        <div className="flex-1 order-1 md:order-2">
                             <img 
                                 src={VIKINGO_LOGO} 
-                                className="w-full max-w-[320px] md:max-w-full h-auto object-contain drop-shadow-[0_20px_50px_rgba(37,99,235,0.4)] animate-float" 
+                                className="w-full max-w-[280px] md:max-w-full h-auto object-contain drop-shadow-[0_20px_50px_rgba(37,99,235,0.4)] animate-float" 
                                 alt="Logo Juegos Vikingos" 
                             />
                         </div>
@@ -203,25 +212,25 @@ export default function HomePortal() {
                 </div>
             </section>
 
-            {/* --- ✅ RED DE INVOCADORES --- */}
+            {/* --- RED DE INVOCADORES --- */}
             <section className="w-full max-w-7xl px-6 mb-32">
                 <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-4">
-                    <div className="text-left">
-                        <h3 className="text-3xl font-black text-slate-900 dark:text-white uppercase italic flex items-center gap-3">
+                    <div className="text-center md:text-left">
+                        <h3 className="text-3xl font-black text-slate-900 dark:text-white uppercase italic flex items-center gap-3 justify-center md:justify-start">
                             <Instagram className="text-pink-600" /> Red de Invocadores
                         </h3>
                         <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Sigue a los mejores jugadores y comunidades</p>
                     </div>
                     <button 
                         onClick={() => setShowPlayerModal(true)}
-                        className="group relative px-6 py-3 bg-white dark:bg-white/5 border border-pink-600/30 rounded-2xl font-black text-[10px] uppercase text-pink-600 overflow-hidden transition-all hover:bg-pink-600 hover:text-white"
+                        className="group relative px-6 py-3 bg-white dark:bg-white/5 border border-pink-600/30 rounded-2xl font-black text-[10px] uppercase text-pink-600 overflow-hidden transition-all hover:bg-pink-600 hover:text-white shadow-lg"
                     >
                         <span className="relative z-10 flex items-center gap-2"><PlusCircle size={18} /> Aparecer aquí</span>
                         <div className="absolute inset-0 bg-pink-600 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                     </button>
                 </div>
 
-                <div className="flex gap-8 overflow-x-auto no-scrollbar py-6">
+                <div className="flex gap-8 overflow-x-auto no-scrollbar py-6 px-2">
                     {players.length > 0 ? players.map((player, idx) => (
                         <a 
                             key={idx} 
@@ -230,12 +239,12 @@ export default function HomePortal() {
                             rel="noreferrer"
                             className="flex flex-col items-center gap-3 group min-w-[100px]"
                         >
-                            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 group-hover:rotate-12 transition-transform duration-500 shadow-xl">
+                            <div className="w-16 h-16 md:w-24 md:h-24 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 group-hover:rotate-12 transition-transform duration-500 shadow-xl">
                                 <div className="w-full h-full rounded-full border-[4px] border-white dark:border-[#0f172a] overflow-hidden">
                                     <img src={player.logo || "https://via.placeholder.com/150?text=MyL"} className="w-full h-full object-cover" alt={player.name} />
                                 </div>
                             </div>
-                            <span className="text-[10px] font-black uppercase tracking-tighter text-slate-700 dark:text-slate-300 group-hover:text-pink-500 transition-colors">@{player.name}</span>
+                            <span className="text-[9px] font-black uppercase tracking-tighter text-slate-700 dark:text-slate-300 group-hover:text-pink-500 transition-colors truncate w-full text-center">@{player.name}</span>
                         </a>
                     )) : (
                         <p className="text-slate-500 italic text-sm">Sé el primero en unirte a la red...</p>
@@ -243,7 +252,7 @@ export default function HomePortal() {
                 </div>
             </section>
 
-            {/* --- ✅ EL NUEVO MODAL "FORJA DE INVOCADORES" (REDISEÑADO) --- */}
+            {/* --- EL NUEVO MODAL "FORJA DE INVOCADORES" --- */}
             <AnimatePresence>
                 {showPlayerModal && (
                     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
@@ -259,81 +268,34 @@ export default function HomePortal() {
                             exit={{ scale: 0.8, opacity: 0, y: 100 }}
                             className="relative w-full max-w-lg bg-[#0f172a] border border-white/10 rounded-[3.5rem] shadow-[0_0_100px_rgba(219,39,119,0.2)] overflow-hidden"
                         >
-                            {/* Header del Modal con Aura */}
                             <div className="bg-gradient-to-b from-pink-600/20 to-transparent p-10 pb-4 text-center">
                                 <div className="w-16 h-16 bg-pink-600 rounded-2xl mx-auto mb-6 flex items-center justify-center rotate-12 shadow-[0_0_30px_rgba(219,39,119,0.5)]">
                                     <UserPlus size={32} className="text-white -rotate-12" />
                                 </div>
-                                <h3 className="text-4xl font-black uppercase italic tracking-tighter text-white">Únete al <span className="text-pink-600 font-black">Relato</span></h3>
-                                <p className="text-slate-400 text-sm mt-2 font-bold uppercase tracking-widest">Registra tu leyenda en la red</p>
+                                <h3 className="text-3xl md:text-4xl font-black uppercase italic tracking-tighter text-white">Únete al <span className="text-pink-600">Relato</span></h3>
+                                <p className="text-slate-400 text-[10px] md:text-sm mt-2 font-bold uppercase tracking-widest leading-tight">Registra tu leyenda en la red de invocadores</p>
                             </div>
 
-                            <form onSubmit={handleSavePlayer} className="p-10 pt-6 space-y-6">
-                                {/* PREVIEW DINÁMICO */}
-                                <div className="flex justify-center mb-8">
+                            <form onSubmit={handleSavePlayer} className="p-8 md:p-10 pt-6 space-y-6">
+                                <div className="flex justify-center mb-4">
                                     <div className="flex flex-col items-center gap-2">
-                                        <div className="w-24 h-24 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 animate-spin-slow">
+                                        <div className="w-20 h-20 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 animate-spin-slow">
                                             <div className="w-full h-full rounded-full border-[4px] border-[#0f172a] overflow-hidden bg-slate-800 flex items-center justify-center">
-                                                {newPlayerData.logo ? (
-                                                    <img src={newPlayerData.logo} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <Camera className="text-slate-600" size={32} />
-                                                )}
+                                                {newPlayerData.logo ? <img src={newPlayerData.logo} className="w-full h-full object-cover" /> : <Camera className="text-slate-600" size={28} />}
                                             </div>
                                         </div>
-                                        <span className="text-[10px] font-black text-pink-500 uppercase tracking-[0.2em]">Vista Previa</span>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-4">
-                                    <div className="group relative">
-                                        <input 
-                                            type="text" required 
-                                            className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold text-white outline-none focus:border-pink-600 focus:bg-white/10 transition-all placeholder:text-slate-600"
-                                            placeholder="Nombre de Gladiador / Comunidad"
-                                            value={newPlayerData.name}
-                                            onChange={e => setNewPlayerData({...newPlayerData, name: e.target.value})}
-                                        />
-                                        <Users className="absolute right-4 top-4 text-slate-600 group-focus-within:text-pink-600 transition-colors" size={20} />
-                                    </div>
-
-                                    <div className="group relative">
-                                        <input 
-                                            type="url" required 
-                                            className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold text-white outline-none focus:border-pink-600 focus:bg-white/10 transition-all placeholder:text-slate-600"
-                                            placeholder="Link de Instagram (URL completa)"
-                                            value={newPlayerData.instagram}
-                                            onChange={e => setNewPlayerData({...newPlayerData, instagram: e.target.value})}
-                                        />
-                                        <Instagram className="absolute right-4 top-4 text-slate-600 group-focus-within:text-pink-600 transition-colors" size={20} />
-                                    </div>
-
-                                    <div className="group relative">
-                                        <input 
-                                            type="text" 
-                                            className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold text-white outline-none focus:border-pink-600 focus:bg-white/10 transition-all placeholder:text-slate-600"
-                                            placeholder="URL de tu Logo o Foto (Opcional)"
-                                            value={newPlayerData.logo}
-                                            onChange={e => setNewPlayerData({...newPlayerData, logo: e.target.value})}
-                                        />
-                                        <Camera className="absolute right-4 top-4 text-slate-600 group-focus-within:text-pink-600 transition-colors" size={20} />
-                                    </div>
+                                    <input type="text" required className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold text-white outline-none focus:border-pink-600 transition-all placeholder:text-slate-600" placeholder="Nombre de Gladiador / Comunidad" value={newPlayerData.name} onChange={e => setNewPlayerData({...newPlayerData, name: e.target.value})} />
+                                    <input type="url" required className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold text-white outline-none focus:border-pink-600 transition-all placeholder:text-slate-600" placeholder="Link de Instagram (URL completa)" value={newPlayerData.instagram} onChange={e => setNewPlayerData({...newPlayerData, instagram: e.target.value})} />
+                                    <input type="text" className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold text-white outline-none focus:border-pink-600 transition-all placeholder:text-slate-600" placeholder="URL de tu Logo o Foto (Opcional)" value={newPlayerData.logo} onChange={e => setNewPlayerData({...newPlayerData, logo: e.target.value})} />
                                 </div>
 
-                                <div className="flex flex-col gap-3 pt-4">
-                                    <button 
-                                        type="submit" 
-                                        className="w-full py-5 bg-pink-600 text-white rounded-3xl text-xs font-black uppercase italic tracking-[0.2em] shadow-[0_10px_30px_rgba(219,39,119,0.4)] hover:scale-[1.03] active:scale-95 transition-all flex items-center justify-center gap-2"
-                                    >
-                                        <Sparkles size={18} /> Inyectar Leyenda
-                                    </button>
-                                    <button 
-                                        type="button"
-                                        onClick={() => setShowPlayerModal(false)}
-                                        className="w-full py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-white transition-colors"
-                                    >
-                                        Abortar Misión
-                                    </button>
+                                <div className="flex flex-col gap-3 pt-2">
+                                    <button type="submit" className="w-full py-5 bg-pink-600 text-white rounded-3xl text-xs font-black uppercase italic tracking-[0.2em] shadow-lg hover:scale-[1.03] transition-all flex items-center justify-center gap-2"><Sparkles size={18} /> Inyectar Leyenda</button>
+                                    <button type="button" onClick={() => setShowPlayerModal(false)} className="w-full py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-white transition-colors">Abortar Misión</button>
                                 </div>
                             </form>
                         </motion.div>
@@ -343,7 +305,6 @@ export default function HomePortal() {
 
             {/* --- CARACTERÍSTICAS --- */}
             <section className="w-full bg-white/60 dark:bg-[#0A0C10]/60 backdrop-blur-xl border-y border-slate-200 dark:border-white/10 py-24 mb-20 relative overflow-hidden">
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-200/20 dark:bg-blue-900/10 blur-[100px] rounded-full"></div>
                 <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-16 relative z-10">
                     <Feature icon={<ShieldCheck size={32} className="text-blue-500 dark:text-blue-400" />} title="Validación DAR" text="Arquitectura de mazos protegida bajo las reglas vigentes." />
                     <Feature icon={<Zap size={32} className="text-blue-400 dark:text-blue-300" />} title="Motor Forja" text="Procesamiento en tiempo real de estadísticas y win-rates." />
@@ -355,13 +316,17 @@ export default function HomePortal() {
             <footer className="w-full py-20 bg-white dark:bg-[#0A0C10] border-t dark:border-white/5 transition-colors duration-500">
                 <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12">
                     <div className="text-center md:text-left">
-                        <div className="text-3xl font-light tracking-tighter text-slate-900 dark:text-white mb-2 italic">Forja<span className="font-black text-blue-600 dark:text-blue-400">Deck</span></div>
+                        <img 
+                            src={FORJADECK_LOGO} 
+                            className="h-10 md:h-12 w-auto mb-4 object-contain opacity-90 brightness-110" 
+                            alt="ForjaDeck Footer" 
+                        />
                         <p className="text-[11px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-[0.4em]">Intelligence Database for Invocadores</p>
                     </div>
 
                     <div className="flex flex-col items-center md:items-end">
-                        <div className="flex items-center gap-2 text-sm font-black text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 px-4 py-2 rounded-2xl border border-slate-100 dark:border-white/10">
-                            Hecho con <Heart size={16} className="text-red-500 fill-red-500 animate-pulse" /> por <span className="text-blue-600 dark:text-blue-400 border-b-2 border-blue-600/20">Alexis Tobar</span>
+                        <div className="flex items-center gap-2 text-sm font-black text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 px-4 py-2 rounded-2xl border border-slate-100 dark:border-white/10 shadow-sm">
+                            Hecho con <Heart size={16} className="text-red-500 fill-red-500 animate-pulse" /> por <span className="text-blue-600 dark:text-blue-400">Alexis Tobar</span>
                         </div>
                         <div className="mt-6 flex items-center gap-4">
                             <span className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">Powered by</span>
@@ -380,19 +345,19 @@ function FormatCard({ title, desc, img, icon, onClick, delay }) {
     return (
         <div 
             onClick={onClick}
-            className={`group cursor-pointer bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 overflow-hidden hover:shadow-[0_20px_50px_rgba(37,99,235,0.15)] dark:hover:shadow-blue-500/10 hover:border-blue-400 dark:hover:border-blue-500/50 transition-all duration-500 flex flex-col animate-in fade-in slide-in-from-bottom-10 ${delay}`}
+            className={`group cursor-pointer bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 overflow-hidden hover:shadow-2xl hover:border-blue-400 transition-all duration-500 flex flex-col animate-in fade-in slide-in-from-bottom-10 ${delay}`}
         >
-            <div className="h-72 relative overflow-hidden">
+            <div className="h-48 md:h-72 relative overflow-hidden">
                 <img src={img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-90 dark:opacity-60" alt={title} />
                 <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-900 via-white/10 dark:via-transparent group-hover:from-blue-50/80 dark:group-hover:from-blue-900/20 transition-colors duration-500"></div>
                 <div className="absolute bottom-6 left-8 p-4 bg-white/95 dark:bg-slate-800/95 backdrop-blur shadow-2xl rounded-2xl border border-slate-100 dark:border-white/10 group-hover:-translate-y-2 transition-transform duration-500">
                     {icon}
                 </div>
             </div>
-            <div className="p-10 pt-6">
-                <h2 className="text-4xl font-black text-slate-900 dark:text-white mb-2 uppercase italic tracking-tighter group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{title}</h2>
-                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-8 leading-relaxed">{desc}</p>
-                <div className="flex items-center gap-3 text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">
+            <div className="p-8 md:p-10 pt-6">
+                <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 uppercase italic tracking-tighter group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight">{title}</h2>
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-6 md:mb-8 leading-relaxed">{desc}</p>
+                <div className="flex items-center gap-3 text-[10px] md:text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">
                     Crea tu Mazo <ArrowRight size={18} className="group-hover:translate-x-3 transition-transform" />
                 </div>
             </div>
@@ -403,7 +368,7 @@ function FormatCard({ title, desc, img, icon, onClick, delay }) {
 function Feature({ icon, title, text }) {
     return (
         <div className="text-center flex flex-col items-center group cursor-default">
-            <div className="mb-6 p-6 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-white/10 shadow-sm group-hover:shadow-xl dark:group-hover:shadow-blue-500/10 group-hover:scale-110 group-hover:border-blue-200 dark:group-hover:border-blue-500/30 transition-all duration-500 text-blue-600 dark:text-blue-400">
+            <div className="mb-6 p-6 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-white/10 shadow-sm group-hover:shadow-xl group-hover:scale-110 transition-all duration-500 text-blue-600 dark:text-blue-400">
                 {icon}
             </div>
             <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4 italic">{title}</h4>
