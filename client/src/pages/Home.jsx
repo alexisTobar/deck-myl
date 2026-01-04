@@ -28,7 +28,10 @@ import { toast } from "sonner";
 
 export default function HomePortal() {
     const navigate = useNavigate();
-    const [trendingCards, setTrendingCards] = useState([]);
+    
+    // ✅ ESTADOS SEPARADOS POR FORMATO
+    const [pbTrending, setPbTrending] = useState([]);
+    const [impTrending, setImpTrending] = useState([]);
     const [loading, setLoading] = useState(true);
     const [players, setPlayers] = useState([]);
     
@@ -47,13 +50,21 @@ export default function HomePortal() {
     const LOGO_BLANCO = "https://raw.githubusercontent.com/alexisTobar/deck-myl-assets/main/logoletrasblancas.png";
 
     useEffect(() => {
-        const fetchTrending = async () => {
+        const fetchTrendingData = async () => {
+            setLoading(true);
             try {
-                const res = await fetch(`${BACKEND_URL}/api/decks/stats/meta`);
-                if (res.ok) {
-                    const data = await res.json();
-                    // ✅ AHORA TOMAMOS EL TOP 10
-                    setTrendingCards(data.slice(0, 10));
+                // ✅ PETICIÓN PARA PRIMER BLOQUE
+                const resPb = await fetch(`${BACKEND_URL}/api/decks/stats/meta?format=primer_bloque`);
+                if (resPb.ok) {
+                    const data = await resPb.json();
+                    setPbTrending(data.slice(0, 10));
+                }
+
+                // ✅ PETICIÓN PARA IMPERIO
+                const resImp = await fetch(`${BACKEND_URL}/api/decks/stats/meta?format=imperio`);
+                if (resImp.ok) {
+                    const data = await resImp.json();
+                    setImpTrending(data.slice(0, 10));
                 }
             } catch (error) {
                 console.error("Error cargando tendencias:", error);
@@ -72,7 +83,7 @@ export default function HomePortal() {
             } catch (error) { console.error(error); }
         };
 
-        fetchTrending();
+        fetchTrendingData();
         fetchPlayers();
     }, []);
 
@@ -101,15 +112,16 @@ export default function HomePortal() {
         }
     };
 
-    // ✅ PREPARACIÓN DE DATOS PARA EL GRÁFICO DE PASTEL
+    // ✅ PREPARACIÓN DE DATOS PARA EL GRÁFICO DE PASTEL (Compara con su propio formato)
     const getChartData = (card) => {
-        const totalOtherUsage = trendingCards
+        const currentPool = card.format === 'primer_bloque' ? pbTrending : impTrending;
+        const totalOtherUsage = currentPool
             .filter(c => c.name !== card.name)
             .reduce((acc, curr) => acc + curr.usageCount, 0);
         
         return [
             { name: card.name, value: card.usageCount, color: '#3b82f6' },
-            { name: 'Otras del Top', value: totalOtherUsage, color: '#1e293b' }
+            { name: 'Resto del Top 10', value: totalOtherUsage, color: '#1e293b' }
         ];
     };
 
@@ -130,7 +142,7 @@ export default function HomePortal() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
-                            src={LOGO_NEGRO}
+                            src={LOGO_NEGRO} 
                             alt="ForjaDeck Logo"
                             className="w-[85vw] max-w-[500px] md:max-w-[650px] h-auto object-contain dark:hidden"
                         />
@@ -177,55 +189,55 @@ export default function HomePortal() {
                 />
             </motion.main>
 
-            {/* --- ✅ SECCIÓN: ANÁLISIS DEL META MEJORADO (TOP 10) --- */}
+            {/* --- ✅ SECCIÓN: ANÁLISIS DEL META (PRIMER BLOQUE) --- */}
+            <motion.section 
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                className="w-full max-w-7xl px-6 mb-20"
+            >
+                <div className="flex items-center justify-between mb-8 border-b border-slate-200 dark:border-white/10 pb-6">
+                    <div className="text-left">
+                        <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic flex items-center gap-3">
+                            <ScrollText className="text-blue-600 dark:text-blue-400" size={24} /> Top 10 Primer Bloque
+                        </h3>
+                        <p className="text-slate-400 dark:text-slate-500 text-[10px] md:text-xs font-bold uppercase mt-1 tracking-widest text-center md:text-left">Frecuencia de uso en relatos clásicos</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 md:gap-6">
+                    {loading ? (
+                        [...Array(10)].map((_, n) => <div key={n} className="h-48 md:h-64 bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl animate-pulse"></div>)
+                    ) : (
+                        pbTrending.map((card, idx) => (
+                            <MetaCard key={idx} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
+                        ))
+                    )}
+                </div>
+            </motion.section>
+
+            {/* --- ✅ SECCIÓN: ANÁLISIS DEL META (IMPERIO) --- */}
             <motion.section 
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
                 className="w-full max-w-7xl px-6 mb-32"
             >
-                <div className="flex items-center justify-between mb-12 border-b border-slate-200 dark:border-white/10 pb-8">
+                <div className="flex items-center justify-between mb-8 border-b border-slate-200 dark:border-white/10 pb-6">
                     <div className="text-left">
-                        <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic flex items-center gap-3">
-                            <TrendingUp className="text-blue-600 dark:text-blue-400" /> Top 10 Meta
+                        <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic flex items-center gap-3">
+                            <Sword className="text-blue-600 dark:text-blue-400" size={24} /> Top 10 Imperio
                         </h3>
-                        <p className="text-slate-400 dark:text-slate-500 text-[10px] md:text-sm font-bold uppercase mt-1 tracking-widest">Haz clic para ver el análisis de frecuencia</p>
+                        <p className="text-slate-400 dark:text-slate-500 text-[10px] md:text-xs font-bold uppercase mt-1 tracking-widest text-center md:text-left">Frecuencia de uso en el formato actual</p>
                     </div>
                 </div>
 
-                {/* ✅ GRID RESPONSIVO (5X2 en Desktop, 2x5 en Móvil) */}
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 md:gap-6">
                     {loading ? (
                         [...Array(10)].map((_, n) => <div key={n} className="h-48 md:h-64 bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl animate-pulse"></div>)
                     ) : (
-                        trendingCards.map((card, idx) => (
-                            <motion.div 
-                                key={idx} 
-                                whileHover={{ y: -8, scale: 1.02 }}
-                                onClick={() => {
-                                    setSelectedMetaCard(card);
-                                    setShowMetaModal(true);
-                                }}
-                                className="cursor-pointer group bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 p-3 rounded-[1.5rem] hover:shadow-2xl transition-all duration-500"
-                            >
-                                <div className="aspect-[3/4] bg-slate-100 dark:bg-slate-800 rounded-xl mb-3 overflow-hidden relative">
-                                    <img 
-                                        src={card.imgUrl || card.img} 
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                                        alt={card.name} 
-                                        onError={(e) => e.target.src = "https://via.placeholder.com/200x280?text=MyL"}
-                                    />
-                                    <div className="absolute bottom-2 left-2 px-2 py-1 bg-blue-600 rounded-lg text-[10px] font-black text-white shadow-lg">
-                                        #{idx + 1}
-                                    </div>
-                                </div>
-                                <div className="text-center">
-                                    <h4 className="text-[10px] md:text-xs font-black text-slate-900 dark:text-white truncate uppercase mb-1">{card.name}</h4>
-                                    <div className="flex items-center justify-center gap-1 text-blue-600 dark:text-blue-400 font-black text-[9px] uppercase">
-                                        <BarChart3 size={10} /> Análisis
-                                    </div>
-                                </div>
-                            </motion.div>
+                        impTrending.map((card, idx) => (
+                            <MetaCard key={idx} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
                         ))
                     )}
                 </div>
@@ -245,32 +257,31 @@ export default function HomePortal() {
                             </button>
 
                             <div className="flex flex-col md:flex-row h-full">
-                                {/* Imagen de la Carta */}
                                 <div className="w-full md:w-1/2 p-8 bg-slate-50 dark:bg-black/20 flex items-center justify-center">
                                     <img src={selectedMetaCard.imgUrl || selectedMetaCard.img} className="w-full max-w-[240px] rounded-2xl shadow-2xl border-4 border-white dark:border-white/5" alt={selectedMetaCard.name} />
                                 </div>
 
-                                {/* Datos y Gráfico */}
                                 <div className="w-full md:w-1/2 p-8 md:p-10 flex flex-col justify-center">
                                     <div className="mb-6">
-                                        <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Data Analysis</span>
+                                        <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Deep Scan Analysis</span>
                                         <h3 className="text-3xl font-black uppercase italic text-slate-900 dark:text-white leading-none">{selectedMetaCard.name}</h3>
+                                        <p className="text-[9px] font-bold text-slate-400 uppercase mt-2 italic tracking-widest">{selectedMetaCard.format.replace('_',' ')}</p>
                                     </div>
 
-                                    {/* Estadísticas Rápidas */}
                                     <div className="grid grid-cols-2 gap-4 mb-8">
-                                        <div className="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-2xl border border-blue-100 dark:border-blue-500/20">
-                                            <p className="text-[10px] font-bold text-blue-400 uppercase mb-1">Frecuencia</p>
-                                            <p className="text-2xl font-black text-blue-600 dark:text-blue-400">{selectedMetaCard.usageCount} <span className="text-xs">Mazos</span></p>
+                                        <div className="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-2xl border border-blue-100 dark:border-blue-500/20 text-center md:text-left">
+                                            <p className="text-[10px] font-bold text-blue-400 uppercase mb-1">Ocurrencias</p>
+                                            <p className="text-2xl font-black text-blue-600 dark:text-blue-400">{selectedMetaCard.usageCount}</p>
                                         </div>
-                                        <div className="p-4 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl border border-indigo-100 dark:border-indigo-500/20">
-                                            <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Impacto</p>
-                                            <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{((selectedMetaCard.usageCount / trendingCards.reduce((a,b)=>a+b.usageCount,0))*100).toFixed(1)}%</p>
+                                        <div className="p-4 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl border border-indigo-100 dark:border-indigo-500/20 text-center md:text-left">
+                                            <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Meta Share</p>
+                                            <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
+                                                {((selectedMetaCard.usageCount / (selectedMetaCard.format === 'primer_bloque' ? pbTrending : impTrending).reduce((a,b)=>a+b.usageCount,0))*100).toFixed(1)}%
+                                            </p>
                                         </div>
                                     </div>
 
-                                    {/* Gráfico de Pastel */}
-                                    <div className="h-48 w-full">
+                                    <div className="h-48 w-full relative">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
                                                 <Pie
@@ -285,16 +296,16 @@ export default function HomePortal() {
                                                     ))}
                                                 </Pie>
                                                 <RechartsTooltip 
-                                                    contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}
+                                                    contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '10px', color: '#fff' }}
                                                 />
                                             </PieChart>
                                         </ResponsiveContainer>
-                                        <div className="text-center -mt-28 mb-16 pointer-events-none">
-                                            <p className="text-[10px] font-black uppercase text-slate-400">Share of Top</p>
+                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                            <p className="text-[8px] font-black uppercase text-slate-400 text-center leading-tight">Usage<br/>Distribution</p>
                                         </div>
                                     </div>
                                     
-                                    <p className="text-xs text-slate-400 italic text-center">Datos basados en la arquitectura de mazos analizada por ForjaDeck v3.0</p>
+                                    <p className="text-[9px] text-slate-500 italic text-center mt-4">Analítica generada por el Motor Forja v3.0</p>
                                 </div>
                             </div>
                         </motion.div>
@@ -407,15 +418,15 @@ export default function HomePortal() {
                             exit={{ scale: 0.8, opacity: 0, y: 100 }}
                             className="relative w-full max-w-lg bg-[#0f172a] border border-white/10 rounded-[3.5rem] shadow-[0_0_100px_rgba(219,39,119,0.2)] overflow-hidden"
                         >
-                            <div className="bg-gradient-to-b from-pink-600/20 to-transparent p-10 pb-4 text-center">
+                            <div className="bg-gradient-to-b from-pink-600/20 to-transparent p-10 pb-4 text-center text-white">
                                 <div className="w-16 h-16 bg-pink-600 rounded-2xl mx-auto mb-6 flex items-center justify-center rotate-12 shadow-[0_0_30px_rgba(219,39,119,0.5)]">
                                     <UserPlus size={32} className="text-white -rotate-12" />
                                 </div>
-                                <h3 className="text-3xl md:text-4xl font-black uppercase italic tracking-tighter text-white">Únete al <span className="text-pink-600 font-black">Relato</span></h3>
-                                <p className="text-slate-400 text-[10px] md:text-sm mt-2 font-bold uppercase tracking-widest leading-tight">Registra tu leyenda en la red de invocadores</p>
+                                <h3 className="text-4xl font-black uppercase italic tracking-tighter">Únete al <span className="text-pink-600 font-black">Relato</span></h3>
+                                <p className="text-slate-400 text-sm mt-2 font-bold uppercase tracking-widest">Registra tu leyenda en la red</p>
                             </div>
 
-                            <form onSubmit={handleSavePlayer} className="p-8 md:p-10 pt-6 space-y-6">
+                            <form onSubmit={handleSavePlayer} className="p-8 md:p-10 pt-6 space-y-6 text-white">
                                 <div className="flex justify-center mb-4">
                                     <div className="flex flex-col items-center gap-2">
                                         <div className="w-20 h-20 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 animate-spin-slow">
@@ -461,7 +472,6 @@ export default function HomePortal() {
             <footer className="w-full py-20 bg-white dark:bg-[#0A0C10] border-t dark:border-white/5 transition-colors duration-500">
                 <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12">
                     <div className="text-center md:text-left">
-                        {/* ✅ Logo dinámico en footer */}
                         <img 
                             src={LOGO_NEGRO} 
                             className="h-10 md:h-12 w-auto mb-4 object-contain dark:hidden" 
@@ -492,6 +502,34 @@ export default function HomePortal() {
 
 // COMPONENTES AUXILIARES
 
+function MetaCard({ card, index, onClick }) {
+    return (
+        <motion.div 
+            whileHover={{ y: -8, scale: 1.02 }}
+            onClick={onClick}
+            className="cursor-pointer group bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 p-3 rounded-[1.5rem] hover:shadow-2xl transition-all duration-500"
+        >
+            <div className="aspect-[3/4] bg-slate-100 dark:bg-slate-800 rounded-xl mb-3 overflow-hidden relative shadow-inner">
+                <img 
+                    src={card.imgUrl || card.img} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                    alt={card.name} 
+                    onError={(e) => e.target.src = "https://via.placeholder.com/200x280?text=MyL"}
+                />
+                <div className="absolute bottom-2 left-2 px-2 py-1 bg-blue-600 text-white rounded-lg text-[10px] font-black shadow-lg">
+                    #{index + 1}
+                </div>
+            </div>
+            <div className="text-center">
+                <h4 className="text-[10px] md:text-xs font-black text-slate-900 dark:text-white truncate uppercase mb-1">{card.name}</h4>
+                <div className="flex items-center justify-center gap-1 text-blue-600 dark:text-blue-400 font-black text-[9px] uppercase">
+                    <BarChart3 size={10} /> Análisis
+                </div>
+            </div>
+        </motion.div>
+    );
+}
+
 function FormatCard({ title, desc, img, icon, onClick, delay }) {
     return (
         <div 
@@ -505,8 +543,8 @@ function FormatCard({ title, desc, img, icon, onClick, delay }) {
                     {icon}
                 </div>
             </div>
-            <div className="p-8 md:p-10 pt-6">
-                <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 uppercase italic tracking-tighter group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight">{title}</h2>
+            <div className="p-8 md:p-10 pt-6 text-slate-900 dark:text-white">
+                <h2 className="text-3xl md:text-4xl font-black mb-2 uppercase italic tracking-tighter group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight">{title}</h2>
                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-6 md:mb-8 leading-relaxed">{desc}</p>
                 <div className="flex items-center gap-3 text-[10px] md:text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">
                     Crea tu Mazo <ArrowRight size={18} className="group-hover:translate-x-3 transition-transform" />
