@@ -1,84 +1,49 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { saveAs } from 'file-saver';
-import { motion, AnimatePresence } from "framer-motion"; // ✅ Añadido para animaciones
+import { motion, AnimatePresence } from "framer-motion";
 import BACKEND_URL from "../config";
-import { 
-    Plus, Minus, Eye, Save, Search, X, Camera, Globe, Layout, 
-    Users, Star, Sword, ChevronDown, ShieldAlert, Filter, Sparkles
+import {
+    Plus, Minus, Eye, Save, Search, X, Camera, Globe, Layout,
+    Users, Star, ShieldAlert, Sparkles, Anchor
 } from "lucide-react";
 
-const TYPE_MAP = { "1": "Aliado", "2": "Talismán", "3": "Arma", "4": "Tótem", "5": "Oro" };
-
-// ✅ LISTA DE RAZAS PARA IMPERIO
-const RAZAS_IMPERIO = [
-    "Caballero", "Eterno", "Héroe", "Faerie", "Dragón", "Bestia", "Guerrero", "Sacerdote", "Sombra"
+const MAIN_EDITIONS = [
+    { id: "espada_sagrada", label: "Espada Sagrada", color: "from-blue-600 to-blue-800" },
+    { id: "helenica", label: "Helénica", color: "from-red-600 to-red-800" },
+    { id: "hijos_de_daana", label: "Hijos de Daana", color: "from-green-600 to-green-800" },
+    { id: "dominios_de_ra", label: "Dominios de Ra", color: "from-yellow-600 to-yellow-800" }
 ];
 
-const EDICIONES_IMPERIO = { 
-    "kvsm_titanes": "KVSM Titanes",
-    "25_Aniversario_Imp": "25 Aniversario",
-    "libertadores": "Libertadores", 
-    "onyria": "Onyria", 
-    "toolkit_cenizas_de_fuego": "Toolkit Cenizas", 
-    "toolkit_hielo_inmortal": "Toolkit Hielo", 
-    "lootbox_2024": "Lootbox 2024", 
-    "secretos_arcanos": "Secretos Arcanos", 
-    "bestiarium": "Bestiarium", 
-    "escuadronmecha": "Escuadrón Mecha", 
-    "amenazakaiju": "Amenaza Kaiju", 
-    "zodiaco": "Zodiaco", 
-    "espiritu_samurai": "Espíritu Samurai" 
-};
-
-const TIPOS_IMPERIO = [
-    { id: "1", label: "Aliado", icon: <Users size={14} />, color: "border-blue-500 text-blue-400" },
-    { id: "2", label: "Talismán", icon: <Layout size={14} />, color: "border-purple-500 text-purple-400" },
-    { id: "3", label: "Arma", icon: <Layout size={14} />, color: "border-red-500 text-red-400" },
-    { id: "4", label: "Tótem", icon: <Layout size={14} />, color: "border-green-500 text-green-400" },
-    { id: "5", label: "Oro", icon: <Globe size={14} />, label: "Oro", color: "border-yellow-500 text-yellow-400" }
+const RAZAS_PB = ["Caballero", "Héroe", "Defensor", "Eterno", "Dragón", "Olímpico", "Desafiante", "Faraón", "Faerie", "Titán", "Sombra", "Sacerdote"];
+const TIPOS_PB = [
+    { id: "Aliado", label: "Aliado", icon: <Users size={14} /> },
+    { id: "Talismán", label: "Talismán", icon: <Layout size={14} /> },
+    { id: "Arma", icon: <Layout size={14} />, label: "Arma" },
+    { id: "Tótem", icon: <Layout size={14} />, label: "Tótem" },
+    { id: "Oro", icon: <Globe size={14} />, label: "Oro" }
 ];
-
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 const getImg = (c) => c?.imgUrl || c?.imageUrl || c?.img || "https://via.placeholder.com/250x350?text=No+Image";
 
-// ✅ VARIANTES DE ANIMACIÓN PARA EL REPARTO
 const cardDealingVariants = {
-    hidden: { 
-        opacity: 0, 
-        x: 300, 
-        y: 300, 
-        rotate: 45, 
-        scale: 0.5 
-    },
+    hidden: { opacity: 0, x: 300, y: 300, rotate: 45, scale: 0.5 },
     visible: (i) => ({
-        opacity: 1, 
-        x: 0, 
-        y: 0, 
-        rotate: 0, 
-        scale: 1,
-        transition: { 
-            delay: i * 0.1, 
-            duration: 0.5, 
-            ease: "easeOut" 
-        }
+        opacity: 1, x: 0, y: 0, rotate: 0, scale: 1,
+        transition: { delay: i * 0.1, duration: 0.5, ease: "easeOut" }
     }),
-    exit: { 
-        opacity: 0, 
-        scale: 0.8, 
-        transition: { duration: 0.2 } 
-    }
+    exit: { opacity: 0, scale: 0.8, transition: { duration: 0.2 } }
 };
 
-export default function ImperioBuilder() {
+export default function PBBuilder() {
     const navigate = useNavigate();
     const location = useLocation();
     const gridContainerRef = useRef(null);
 
-    const formato = "imperio";
-    const [edicionSeleccionada, setEdicionSeleccionada] = useState("kvsm_titanes");
-    const [tipoSeleccionado, setTipoSeleccionado] = useState(""); 
-    const [razaSeleccionada, setRazaSeleccionada] = useState(""); 
+    const formato = "primer_bloque";
+    const [mainEditionSelected, setMainEditionSelected] = useState(location.state?.initialEdition || "espada_sagrada");
+    const [tipoSeleccionado, setTipoSeleccionado] = useState("");
+    const [razaSeleccionada, setRazaSeleccionada] = useState("");
     const [busqueda, setBusqueda] = useState("");
     const [cartas, setCartas] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -90,149 +55,123 @@ export default function ImperioBuilder() {
     const [showMobileList, setShowMobileList] = useState(false);
     const [cardToZoom, setCardToZoom] = useState(null);
     const [guardando, setGuardando] = useState(false);
-    
-    // ✅ ESTADO PARA MANO DE PRUEBA
     const [manoPrueba, setManoPrueba] = useState([]);
+    
+    // ✅ ESTADO PARA ORO INICIAL
+    const [oroInicialSlug, setOroInicialSlug] = useState(null);
 
-    // ✅ Cálculo de totalCartas al inicio para evitar ReferenceError
     const totalCartas = useMemo(() => mazo.reduce((acc, c) => acc + c.cantidad, 0), [mazo]);
-
-    const mazoAgrupado = useMemo(() => {
-        const g = {};
-        mazo.forEach(c => { 
-            const t = TYPE_MAP[String(c.type)] || "Otros"; 
-            if (!g[t]) g[t] = []; 
-            g[t].push(c); 
-        });
-        return g;
-    }, [mazo]);
 
     const statsForExport = useMemo(() => {
         const counts = { Aliado: 0, Talismán: 0, Arma: 0, Tótem: 0, Oro: 0 };
-        mazo.forEach(c => { 
-            const typeName = TYPE_MAP[String(c.type)];
-            if (counts[typeName] !== undefined) counts[typeName] += c.cantidad; 
-        });
+        mazo.forEach(c => { if (counts[c.type] !== undefined) counts[c.type] += c.cantidad; });
         return { counts };
     }, [mazo]);
 
-    // ✅ FUNCIÓN SIMULADOR DE MANO MEJORADA CON ANIMACIÓN
+    // ✅ SIMULADOR DE MANO MEJORADO (Oro Inicial filtrado de la baraja)
     const simularMano = () => {
-        // Primero limpiamos la mano para que la animación se reinicie si ya había una
         setManoPrueba([]);
-        
+        if (!oroInicialSlug) return alert("Selecciona un Oro Inicial primero.");
+
         setTimeout(() => {
-            let baraja = [];
-            mazo.forEach(c => { for (let i = 0; i < c.cantidad; i++) baraja.push(c); });
-            if (baraja.length < 8) return alert("Necesitas al menos 8 cartas en el mazo");
-            for (let i = baraja.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [baraja[i], baraja[j]] = [baraja[j], baraja[i]];
+            let barajaCompleta = [];
+            mazo.forEach(c => {
+                for (let i = 0; i < c.cantidad; i++) {
+                    barajaCompleta.push(c);
+                }
+            });
+
+            const indexOro = barajaCompleta.findIndex(c => c.slug === oroInicialSlug);
+            if (indexOro !== -1) {
+                barajaCompleta.splice(indexOro, 1);
             }
-            setManoPrueba(baraja.slice(0, 8));
+
+            for (let i = barajaCompleta.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [barajaCompleta[i], barajaCompleta[j]] = [barajaCompleta[j], barajaCompleta[i]];
+            }
+
+            const manoFinal = barajaCompleta.slice(0, 8);
+            setManoPrueba(manoFinal);
         }, 50);
     };
 
     useEffect(() => {
+        if (location.state?.initialEdition) setMainEditionSelected(location.state.initialEdition);
+    }, [location.state]);
+
+    useEffect(() => {
         if (location.state?.deckToEdit) {
             const d = location.state.deckToEdit;
-            setNombreMazo(location.state.isCloning ? `${d.name} (Copia)` : d.name || "");
-            setEditingDeckId(location.state.isCloning ? null : d._id);
-            setIsPublic(d.isPublic || false);
-            setMazo(d.cards.map(c => ({ 
-                ...c, 
-                cantidad: c.quantity || c.cantidad || 1, 
-                imgUrl: getImg(c),
-                type: String(c.type)
-            })));
+            const isCloning = location.state?.isCloning;
+            if (d.format === "primer_bloque") {
+                setNombreMazo(isCloning ? `Copia de ${d.name}` : d.name);
+                setEditingDeckId(isCloning ? null : d._id);
+                setIsPublic(isCloning ? false : (d.isPublic || false));
+                setMazo(d.cards.map(c => ({ ...c, cantidad: c.quantity || 1, imgUrl: getImg(c) })));
+                const firstGold = d.cards.find(c => c.type === "Oro");
+                if (firstGold) setOroInicialSlug(firstGold.slug);
+            }
         }
     }, [location.state]);
 
-    // ✅ EFECTO DE BÚSQUEDA CORREGIDO
     useEffect(() => {
         const fetchCartas = async () => {
             setLoading(true);
             try {
-                const params = new URLSearchParams();
-                params.append("format", formato);
-                
-                if (busqueda) {
-                    params.append("q", busqueda);
-                } else {
-                    params.append("edition", edicionSeleccionada);
-                }
-                
-                if (razaSeleccionada) {
-                    params.append("type", "1");
-                    params.append("race", razaSeleccionada);
-                } else if (tipoSeleccionado) {
-                    params.append("type", tipoSeleccionado);
-                }
-
+                const params = new URLSearchParams({ format: formato });
+                if (busqueda) params.append("q", busqueda);
+                else params.append("edition", mainEditionSelected);
+                if (tipoSeleccionado) params.append("type", tipoSeleccionado);
+                if (razaSeleccionada) params.append("race", razaSeleccionada);
                 const res = await fetch(`${BACKEND_URL}/api/cards/search?${params.toString()}`);
                 const data = await res.json();
                 setCartas(Array.isArray(data) ? data : (data.results || []));
-            } catch (e) { 
-                console.error("Error fetching cards:", e); 
-            } finally { 
-                setLoading(false); 
-            }
+            } catch (e) { console.error(e); } finally { setLoading(false); }
         };
         const timer = setTimeout(fetchCartas, 300);
         return () => clearTimeout(timer);
-    }, [busqueda, edicionSeleccionada, tipoSeleccionado, razaSeleccionada, formato]);
+    }, [busqueda, mainEditionSelected, tipoSeleccionado, razaSeleccionada]);
 
     const handleAdd = (c) => {
         if (c.restriction === "banned") return alert(`🚫 ${c.name} está PROHIBIDA.`);
         const copiasMismoNombre = mazo
             .filter(x => x.name.toLowerCase().trim() === c.name.toLowerCase().trim())
             .reduce((acc, curr) => acc + curr.cantidad, 0);
-
-        if (totalCartas >= 50 && !mazo.find(x => x.slug === c.slug)) return alert("Mazo lleno (Máximo 50 cartas)");
-
+        if (totalCartas >= 50 && !mazo.find(x => x.slug === c.slug)) return alert("Mazo lleno");
         let limit = 3;
         if (c.restriction === "limited1") limit = 1;
         if (c.restriction === "limited2") limit = 2;
-
-        if (copiasMismoNombre >= limit) return alert(`⚠️ Sólo puedes tener ${limit} copia(s) de "${c.name}" en total.`);
-
-        setMazo(prevMazo => {
-            const ex = prevMazo.find(x => x.slug === c.slug);
-            if (ex) return prevMazo.map(x => x.slug === c.slug ? { ...x, cantidad: x.cantidad + 1 } : x);
-            return [...prevMazo, { ...c, cantidad: 1, imgUrl: getImg(c), type: String(c.type) }];
-        });
+        if (copiasMismoNombre >= limit) return alert(`⚠️ Solo puedes tener ${limit} copias de "${c.name}" en total.`);
+        const ex = mazo.find(x => x.slug === c.slug);
+        
+        if (ex) setMazo(mazo.map(x => x.slug === c.slug ? { ...x, cantidad: x.cantidad + 1 } : x));
+        else {
+            setMazo([...mazo, { ...c, cantidad: 1, imgUrl: getImg(c) }]);
+            if (c.type === "Oro" && !oroInicialSlug) setOroInicialSlug(c.slug);
+        }
     };
 
-    const handleRemove = (slug) => setMazo(prev => prev.map(c => c.slug === slug ? { ...c, cantidad: c.cantidad - 1 } : c).filter(c => c.cantidad > 0));
+    const handleRemove = (slug) => {
+        if (slug === oroInicialSlug) setOroInicialSlug(null);
+        setMazo(mazo.map(c => c.slug === slug ? { ...c, cantidad: c.cantidad - 1 } : c).filter(c => c.cantidad > 0));
+    };
 
     const handleSaveDeck = async () => {
         if (!nombreMazo.trim()) return alert("Nombre requerido");
+        if (!oroInicialSlug) return alert("Debes seleccionar un Oro Inicial para Primer Bloque");
         const token = localStorage.getItem("token");
         if (!token) return navigate("/login");
         setGuardando(true);
         try {
             const url = editingDeckId ? `${BACKEND_URL}/api/decks/${editingDeckId}` : `${BACKEND_URL}/api/decks`;
             const method = editingDeckId ? "PUT" : "POST";
-            
-            const deckData = {
-                name: nombreMazo,
-                cards: mazo.map(c => ({ ...c, quantity: c.cantidad })),
-                format: "imperio", 
-                isPublic: isPublic
-            };
-
-            const res = await fetch(url, { 
-                method, 
-                headers: { "Content-Type": "application/json", "auth-token": token }, 
-                body: JSON.stringify(deckData) 
+            const res = await fetch(url, {
+                method, headers: { "Content-Type": "application/json", "auth-token": token },
+                body: JSON.stringify({ name: nombreMazo, cards: mazo.map(c => ({ ...c, quantity: c.cantidad })), format: formato, isPublic: isPublic })
             });
-
             if (res.ok) navigate("/my-decks");
-            else {
-                const err = await res.json();
-                alert(err.error || "Error al guardar");
-            }
-        } catch (e) { alert("Error de conexión"); } finally { setGuardando(false); }
+        } catch (e) { alert("Error"); } finally { setGuardando(false); }
     };
 
     const handleTakeScreenshot = async () => {
@@ -243,8 +182,8 @@ export default function ImperioBuilder() {
             const cardsPerRow = 10;
             const rows = Math.ceil(mazo.length / cardsPerRow);
             canvas.width = 1200;
-            canvas.height = 300 + (rows * 160) + 180; 
-            ctx.fillStyle = "#0f0a07"; 
+            canvas.height = 300 + (rows * 160) + 180;
+            ctx.fillStyle = "#0c0e14";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             const loadImg = (url) => new Promise((resolve) => {
                 const img = new Image(); img.crossOrigin = "anonymous";
@@ -254,108 +193,106 @@ export default function ImperioBuilder() {
             const logo = await loadImg("https://raw.githubusercontent.com/alexisTobar/deck-myl-assets/refs/heads/main/forja.png");
             if (logo) {
                 ctx.save(); ctx.globalAlpha = 0.04;
-                ctx.drawImage(logo, canvas.width/2 - 350, canvas.height/2 - 350, 700, 700);
+                ctx.drawImage(logo, canvas.width / 2 - 350, canvas.height / 2 - 350, 700, 700);
                 ctx.restore(); ctx.drawImage(logo, 50, 30, 80, 80);
             }
-            ctx.fillStyle = "#f97316"; ctx.font = "bold 24px Arial";
-            ctx.fillText("WORKSHOP IMPERIO", 150, 60);
+            ctx.fillStyle = "#eab308"; ctx.font = "bold 20px Orbitron, Arial";
+            ctx.fillText("ESTRATEGIA OFICIAL", 150, 60);
             ctx.fillStyle = "white"; ctx.font = "italic bold 55px Arial";
-            ctx.fillText(nombreMazo.toUpperCase() || "ESTRATEGIA", 150, 110);
-            
-            let curX = 50, curY = 180;
+            ctx.fillText(nombreMazo.toUpperCase() || "MAZO SIN NOMBRE", 150, 110);
+            ctx.fillStyle = "#1e293b";
+            if (ctx.roundRect) ctx.roundRect(950, 50, 200, 60, 15); else ctx.fillRect(950, 50, 200, 60);
+            ctx.fill();
+            ctx.fillStyle = "#ffffffff"; ctx.font = "bold 17px Arial"; ctx.textAlign = "center";
+            ctx.fillText(`${totalCartas} CARTAS`, 1050, 90); ctx.textAlign = "left";
+
+            let dx = 50, dy = 180;
             for (const card of mazo) {
                 const img = await loadImg(card.imgUrl);
                 if (img) {
                     ctx.shadowColor = "rgba(0,0,0,0.5)"; ctx.shadowBlur = 10;
-                    ctx.drawImage(img, curX, curY, 105, 147); ctx.shadowBlur = 0;
-                    ctx.fillStyle = "#f97316";
-                    if(ctx.roundRect) { ctx.beginPath(); ctx.roundRect(curX+75, curY+120, 32, 28, 8); ctx.fill(); }
-                    else ctx.fillRect(curX+75, curY+120, 32, 28);
-                    ctx.fillStyle = "white"; ctx.font = "bold 16px Arial";
-                    ctx.fillText(`x${card.cantidad}`, curX+79, curY+140);
+                    ctx.drawImage(img, dx, dy, 105, 147); ctx.shadowBlur = 0;
+                    ctx.fillStyle = "#eab308";
+                    const badgeX = dx + 75; const badgeY = dy + 120;
+                    if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(badgeX, badgeY, 32, 28, 8); ctx.fill(); }
+                    else { ctx.fillRect(badgeX, badgeY, 32, 28); }
+                    ctx.fillStyle = "black"; ctx.font = "black 16px Arial";
+                    ctx.fillText(`x${card.cantidad}`, badgeX + 4, badgeY + 20);
                 }
-                curX += 112; if (curX > 1120) { curX = 50; curY += 165; }
+                dx += 112; if (dx > 1120) { dx = 50; dy += 165; }
             }
             const footerY = canvas.height - 150; let startX = 50;
             ORDER_TYPES.forEach((type) => {
                 const count = statsForExport.counts[type] || 0;
-                const perc = totalCartas > 0 ? (count / totalCartas) : 0;
-                ctx.fillStyle = "#1e1b18";
-                if(ctx.roundRect) { ctx.beginPath(); ctx.roundRect(startX, footerY, 215, 100, 20); ctx.fill(); ctx.strokeStyle = "#f9731633"; ctx.stroke(); }
-                ctx.fillStyle = "#f97316"; ctx.font = "bold 12px Arial"; ctx.fillText(type.toUpperCase(), startX + 15, footerY + 30);
+                const percentage = totalCartas > 0 ? (count / totalCartas) : 0;
+                ctx.fillStyle = "#161b22";
+                if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(startX, footerY, 215, 100, 20); ctx.fill(); ctx.strokeStyle = "#eab30833"; ctx.stroke(); }
+                ctx.fillStyle = "#eab308"; ctx.font = "bold 12px Arial"; ctx.fillText(type.toUpperCase(), startX + 15, footerY + 30);
                 ctx.fillStyle = "white"; ctx.font = "bold 40px Arial"; ctx.fillText(count, startX + 15, footerY + 75);
-                ctx.fillStyle = "#332211"; ctx.fillRect(startX + 15, footerY + 85, 175, 6);
-                ctx.fillStyle = "#f97316"; ctx.fillRect(startX + 15, footerY + 85, 175 * perc, 6);
+                ctx.fillStyle = "#334155"; ctx.fillRect(startX + 15, footerY + 85, 175, 6);
+                ctx.fillStyle = "#eab308"; ctx.fillRect(startX + 15, footerY + 85, 175 * percentage, 6);
                 startX += 230;
             });
             ctx.fillStyle = "#475569"; ctx.font = "12px Arial";
             ctx.fillText("GENERADO POR WARNING DECK BUILDER • 2025", 50, canvas.height - 20);
-            canvas.toBlob((blob) => { saveAs(blob, `WD_Imp_${nombreMazo || "Deck"}.png`); setGuardando(false); });
-        } catch (err) { alert('Error imagen'); setGuardando(false); }
+            canvas.toBlob((blob) => { saveAs(blob, `WD_PB_${nombreMazo || "Deck"}.png`); setGuardando(false); });
+        } catch (err) { console.error(err); setGuardando(false); }
     };
 
+    const mazoAgrupado = useMemo(() => {
+        const g = {};
+        mazo.forEach(c => { const t = c.type || "Otros"; if (!g[t]) g[t] = []; g[t].push(c); });
+        return g;
+    }, [mazo]);
+
     return (
-        <div className="h-screen flex flex-col md:flex-row font-sans bg-[#F8FAFC] dark:bg-[#0f0a07] text-slate-900 dark:text-white overflow-hidden transition-colors duration-500">
+        <div className="h-screen flex flex-col md:flex-row font-sans bg-[#F8FAFC] dark:bg-[#0c0e14] text-slate-900 dark:text-white overflow-hidden transition-colors duration-500">
             <div className="flex-1 flex flex-col h-full relative overflow-hidden">
-                <div className="bg-white dark:bg-slate-900/80 border-b border-slate-200 dark:border-orange-500/20 p-3 flex justify-between items-center px-4 shadow-sm z-20">
-                    <button onClick={() => navigate("/imperio")} className="p-1.5 rounded-lg border border-slate-200 dark:border-orange-500/30 text-slate-500 dark:text-orange-500 text-xs font-bold hover:bg-slate-100 dark:hover:bg-orange-500/10 transition-all italic tracking-tighter uppercase">Volver</button>
-                    <h2 className="text-xs font-black uppercase text-blue-600 dark:text-orange-500 tracking-widest leading-none italic flex items-center gap-2"><Star size={14}/> Forja Imperio</h2>
+                <div className="bg-white dark:bg-slate-900/80 border-b border-slate-200 dark:border-yellow-500/20 p-3 flex justify-between items-center px-4 shadow-sm z-20">
+                    <button onClick={() => navigate("/primer-bloque")} className="p-1.5 rounded-lg border border-slate-200 dark:border-yellow-500/30 text-slate-500 dark:text-yellow-500 text-xs font-bold hover:bg-slate-100 dark:hover:bg-yellow-500/10 transition-all italic tracking-tighter uppercase">Volver</button>
+                    <h2 className="text-xs font-black uppercase text-blue-600 dark:text-yellow-500 tracking-widest leading-none italic flex items-center gap-2"><Star size={14} /> Forja Primer Bloque</h2>
                     <div className="w-10"></div>
                 </div>
 
                 <div className="p-4 bg-white/50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800 space-y-4 z-10 backdrop-blur-md">
-                    <div className="flex flex-col md:flex-row gap-3">
-                        <div className="relative flex-1">
-                            <select value={edicionSeleccionada} onChange={(e) => { setEdicionSeleccionada(e.target.value); setBusqueda(""); }}
-                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-blue-600 dark:text-orange-400 p-2.5 rounded-xl appearance-none font-black outline-none focus:border-blue-500 dark:focus:border-orange-500 cursor-pointer text-sm transition-all"
-                            >
-                                {Object.entries(EDICIONES_IMPERIO).map(([id, label]) => (
-                                    <option key={id} value={id}>{label}</option>
-                                ))}
-                            </select>
-                            <ChevronDown className="absolute right-3 top-3 text-slate-400 pointer-events-none" size={16} />
-                        </div>
-                        <input type="text" placeholder="Búsqueda Global..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="flex-[2] p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:border-blue-500 dark:focus:border-orange-500 font-bold transition-all text-slate-900 dark:text-white" />
-                    </div>
-                    <div className="flex flex-wrap gap-2 justify-center">
-                        {TIPOS_IMPERIO.map((tipo) => (
-                            <button key={tipo.id} 
-                                onClick={() => { setTipoSeleccionado(tipoSeleccionado === tipo.id ? "" : tipo.id); setRazaSeleccionada(""); }} 
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 transition-all text-[10px] uppercase font-black ${tipoSeleccionado === tipo.id ? `border-blue-600 dark:border-orange-500 text-blue-600 dark:text-orange-500 bg-blue-50 dark:bg-slate-800 shadow-md` : 'bg-white dark:bg-transparent border-slate-200 dark:border-slate-800 text-slate-400'}`}>
-                                {tipo.icon} {tipo.label}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {MAIN_EDITIONS.map(ed => (
+                            <button key={ed.id} onClick={() => { setMainEditionSelected(ed.id); setBusqueda(""); }}
+                                className={`py-3 px-1 rounded-2xl text-[10px] font-black uppercase transition-all border-2 shadow-sm ${mainEditionSelected === ed.id ? `bg-gradient-to-r ${ed.color} border-white text-white scale-105 shadow-lg` : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>
+                                {ed.label}
                             </button>
                         ))}
                     </div>
-
-                    <div className="flex flex-wrap gap-1.5 justify-center pt-2 border-t border-slate-200 dark:border-white/5">
-                        <button onClick={() => setRazaSeleccionada("")} className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all border ${razaSeleccionada === "" ? 'bg-slate-800 text-white border-slate-700' : 'bg-transparent text-slate-400 border-transparent hover:text-slate-200'}`}>Todas</button>
-                        {RAZAS_IMPERIO.map(raza => (
-                            <button key={raza} onClick={() => { setRazaSeleccionada(razaSeleccionada === raza ? "" : raza); setTipoSeleccionado(""); }}
-                                className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all border ${razaSeleccionada === raza ? 'bg-blue-600 dark:bg-orange-600 text-white border-blue-500 dark:border-orange-400 shadow-lg scale-105' : 'bg-slate-100 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-orange-500'}`}
-                            >
-                                {raza}
+                    <div className="flex flex-wrap gap-2">
+                        <input type="text" placeholder="Búsqueda..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="flex-1 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:border-blue-500 dark:focus:border-yellow-500 font-bold transition-all" />
+                        <select value={razaSeleccionada} onChange={(e) => setRazaSeleccionada(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-yellow-500/30 p-2 rounded-xl text-[11px] font-black text-slate-700 dark:text-yellow-400 outline-none"><option value="">Raza...</option>{RAZAS_PB.map(r => <option key={r} value={r}>{r}</option>)}</select>
+                    </div>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                        {TIPOS_PB.map((tipo) => (
+                            <button key={tipo.id} onClick={() => setTipoSeleccionado(tipoSeleccionado === tipo.id ? "" : tipo.id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 transition-all text-[10px] uppercase font-black ${tipoSeleccionado === tipo.id ? `border-blue-600 dark:border-yellow-500 text-blue-600 dark:text-yellow-500 bg-blue-50 dark:bg-slate-800 shadow-md` : 'bg-white dark:bg-transparent border-slate-200 dark:border-slate-800 text-slate-400'}`}>
+                                {tipo.icon} {tipo.label}
                             </button>
                         ))}
                     </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar pb-24 md:pb-4" ref={gridContainerRef}>
-                    {loading ? <div className="text-center mt-20 animate-pulse text-blue-600 dark:text-orange-500 font-black uppercase tracking-widest italic">Invocando grimorio...</div> : (
+                    {loading ? <div className="text-center mt-20 animate-pulse text-blue-600 dark:text-yellow-500 font-black uppercase tracking-widest italic">Invocando grimorio...</div> : (
                         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                             {cartas.map(c => {
                                 const cant = mazo.find(x => x.slug === c.slug)?.cantidad || 0;
                                 return (
                                     <div key={c.slug} className="relative cursor-pointer group" onClick={() => handleAdd(c)}>
-                                        <div className={`rounded-xl overflow-hidden border-2 transition-all duration-300 transform hover:scale-105 ${cant > 0 ? 'border-blue-600 dark:border-orange-500 shadow-xl' : 'border-slate-200 dark:border-slate-800'} ${c.restriction === 'banned' ? 'opacity-40 grayscale' : ''}`}>
+                                        <div className={`rounded-xl overflow-hidden border-2 transition-all duration-300 transform hover:scale-105 ${cant > 0 ? 'border-blue-600 dark:border-yellow-500 shadow-xl' : 'border-slate-200 dark:border-slate-800'} ${c.restriction === 'banned' ? 'opacity-40 grayscale' : ''}`}>
                                             <img src={getImg(c)} className="w-full h-auto transition-transform" alt={c.name} />
                                             {c.restriction && c.restriction !== 'unrestricted' && (
                                                 <div className="absolute top-1 left-1 bg-red-600 p-1 rounded-md text-[8px] font-black uppercase text-white shadow-xl flex items-center gap-1">
-                                                    <ShieldAlert size={10}/> {c.restriction === 'banned' ? 'BAN' : c.restriction === 'limited1' ? '1' : '2'}
+                                                    <ShieldAlert size={10} /> {c.restriction === 'banned' ? 'BAN' : c.restriction === 'limited1' ? '1' : '2'}
                                                 </div>
                                             )}
-                                            {cant > 0 && <div className="absolute inset-0 bg-blue-600/20 dark:bg-black/40 flex items-center justify-center"><div className="w-10 h-10 rounded-full bg-blue-600 dark:bg-orange-500 text-white flex items-center justify-center font-black text-xl border-2 border-white shadow-2xl">{cant}</div></div>}
+                                            {cant > 0 && <div className="absolute inset-0 bg-blue-600/20 dark:bg-black/40 flex items-center justify-center"><div className="w-10 h-10 rounded-full bg-blue-600 dark:bg-yellow-500 text-white dark:text-black flex items-center justify-center font-black text-xl border-2 border-white shadow-2xl">{cant}</div></div>}
                                         </div>
-                                        <button onClick={(e) => { e.stopPropagation(); setCardToZoom(c); }} className="absolute top-1.5 right-1.5 bg-white/80 dark:bg-black/60 backdrop-blur-md text-slate-900 dark:text-white w-7 h-7 rounded-lg flex items-center justify-center border border-slate-200 dark:border-white/20 hover:bg-blue-600 dark:hover:bg-orange-600 hover:text-white transition-all"><Search size={14} strokeWidth={3} /></button>
+                                        <button onClick={(e) => { e.stopPropagation(); setCardToZoom(c); }} className="absolute top-1.5 right-1.5 bg-white/80 dark:bg-black/60 backdrop-blur-md text-slate-900 dark:text-white w-7 h-7 rounded-lg flex items-center justify-center border border-slate-200 dark:border-white/20 hover:bg-blue-600 dark:hover:bg-yellow-600 hover:text-white dark:hover:text-black transition-all"><Search size={14} strokeWidth={3} /></button>
                                     </div>
                                 );
                             })}
@@ -364,35 +301,47 @@ export default function ImperioBuilder() {
                 </div>
             </div>
 
-            <div className="hidden md:flex w-85 border-l border-slate-200 dark:border-white/10 flex-col h-screen bg-white dark:bg-[#0f0a07] shadow-2xl transition-colors duration-500">
-                <div className="p-5 border-b border-slate-200 dark:border-orange-500/30 bg-slate-50 dark:bg-slate-900/50 backdrop-blur-md flex flex-col gap-2 shadow-sm">
-                    <div className="flex justify-between items-center text-slate-900 dark:text-orange-500 font-black uppercase tracking-widest">
-                        <div className="flex items-center gap-2"><Layout size={18}/><span className="italic">Grimorio Imperio</span></div>
-                        <div className={`px-3 py-1 rounded-full text-xs font-black transition-all duration-500 border ${totalCartas === 50 ? 'bg-blue-600 dark:bg-orange-500/10 border-blue-600 dark:border-orange-500 text-white dark:text-yellow-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>{totalCartas} / 50</div>
+            <div className="hidden md:flex w-85 border-l border-slate-200 dark:border-white/10 flex-col h-screen bg-white dark:bg-gradient-to-b dark:from-slate-900 dark:via-[#0c0e14] dark:to-black shadow-2xl transition-colors duration-500">
+                <div className="p-5 border-b border-slate-200 dark:border-yellow-500/30 bg-slate-50 dark:bg-slate-900/50 backdrop-blur-md flex flex-col gap-2 shadow-sm">
+                    <div className="flex justify-between items-center text-slate-900 dark:text-yellow-500 font-black uppercase tracking-widest">
+                        <div className="flex items-center gap-2"><Layout size={18} /><span className="italic">Grimorio PB</span></div>
+                        <div className={`px-3 py-1 rounded-full text-xs font-black border ${totalCartas === 50 ? 'bg-blue-600 dark:bg-yellow-500/10 border-blue-600 dark:border-yellow-500 text-white dark:text-yellow-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>{totalCartas} / 50</div>
                     </div>
                     <div className="grid grid-cols-5 gap-1 pt-1">
                         {ORDER_TYPES.map(type => (
                             <div key={type} className="flex flex-col items-center bg-slate-100 dark:bg-slate-800/50 rounded-lg p-1 border border-slate-200 dark:border-white/5">
                                 <span className="text-[7px] font-black text-slate-400 uppercase">{type}</span>
-                                <span className="text-[10px] font-black text-slate-700 dark:text-orange-500">{statsForExport.counts[type] || 0}</span>
+                                <span className="text-[10px] font-black text-slate-700 dark:text-yellow-500">{statsForExport.counts[type] || 0}</span>
                             </div>
                         ))}
                     </div>
                 </div>
+                
                 <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar bg-transparent">
                     {ORDER_TYPES.map(t => mazoAgrupado[t] && (
                         <div key={t} className="animate-in fade-in slide-in-from-bottom-2">
-                            <div className="flex items-center gap-2 mb-3"><div className="h-[2px] flex-1 bg-gradient-to-r from-blue-600 dark:from-orange-600/50 to-transparent"></div><h3 className="text-blue-600 dark:text-orange-500 text-[11px] font-black uppercase tracking-tighter italic px-2">{t}</h3></div>
+                            <div className="flex items-center gap-2 mb-3"><div className="h-[2px] flex-1 bg-gradient-to-r from-blue-600 dark:from-yellow-600/50 to-transparent"></div><h3 className="text-blue-600 dark:text-yellow-500 text-[11px] font-black uppercase tracking-tighter italic px-2">{t}</h3></div>
                             <div className="space-y-2">
                                 {mazoAgrupado[t].map(c => (
-                                    <div key={c.slug} className="flex justify-between items-center text-sm py-2.5 px-4 bg-slate-50 dark:bg-white/5 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-white/5 group hover:border-blue-400 dark:hover:border-orange-500/30 transition-all duration-300 shadow-sm">
+                                    <div key={c.slug} className={`flex justify-between items-center text-sm py-2.5 px-4 bg-slate-50 dark:bg-white/5 backdrop-blur-sm rounded-2xl border transition-all duration-300 shadow-sm group ${oroInicialSlug === c.slug ? 'border-yellow-500 bg-yellow-500/10' : 'border-slate-200 dark:border-white/5'}`}>
                                         <div className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onClick={() => setCardToZoom(c)}>
-                                            <div className="bg-white dark:bg-slate-800 text-blue-600 dark:text-orange-400 w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs shadow-sm border dark:border-0">{c.cantidad}</div>
+                                            <div className="bg-white dark:bg-slate-800 text-blue-600 dark:text-yellow-500 w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs shadow-sm border dark:border-0">{c.cantidad}</div>
                                             <span className="truncate font-bold text-slate-700 dark:text-slate-200 uppercase text-[12px]">{c.name}</span>
                                         </div>
-                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                            <button onClick={() => handleAdd(c)} className="w-8 h-8 flex items-center justify-center bg-blue-100 dark:bg-orange-500/20 text-blue-600 dark:text-orange-500 rounded-xl hover:bg-blue-600 dark:hover:bg-orange-500 hover:text-white transition-colors"><Plus size={16} strokeWidth={3} /></button>
-                                            <button onClick={() => handleRemove(c.slug)} className="w-8 h-8 flex items-center justify-center bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-600 hover:text-white transition-colors"><Minus size={16} strokeWidth={3} /></button>
+                                        <div className="flex gap-2 items-center">
+                                            {c.type === "Oro" && (
+                                                <button 
+                                                    onClick={() => setOroInicialSlug(c.slug === oroInicialSlug ? null : c.slug)}
+                                                    className={`p-1.5 rounded-lg transition-all ${oroInicialSlug === c.slug ? 'text-yellow-500 bg-yellow-500/20' : 'text-slate-400 hover:text-yellow-500 opacity-0 group-hover:opacity-100'}`}
+                                                    title="Seleccionar como Oro Inicial"
+                                                >
+                                                    <Anchor size={16} />
+                                                </button>
+                                            )}
+                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                                <button onClick={() => handleAdd(c)} className="w-7 h-7 flex items-center justify-center bg-blue-100 dark:bg-yellow-500/20 text-blue-600 dark:text-yellow-500 rounded-lg hover:bg-blue-600 dark:hover:bg-yellow-500 hover:text-white dark:text-black transition-colors"><Plus size={14} strokeWidth={3} /></button>
+                                                <button onClick={() => handleRemove(c.slug)} className="w-7 h-7 flex items-center justify-center bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-600 hover:text-white transition-colors"><Minus size={14} strokeWidth={3} /></button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -400,88 +349,115 @@ export default function ImperioBuilder() {
                         </div>
                     ))}
                 </div>
-                <div className="p-5 bg-white dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-200 dark:border-white/5 flex flex-col gap-3 transition-all shadow-inner">
-                    <button onClick={simularMano} className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-indigo-600 text-slate-700 dark:text-white py-3 rounded-2xl font-black text-[11px] uppercase active:scale-95 flex items-center justify-center gap-2 border border-slate-200 dark:border-white/5 shadow-sm transition-all"><Eye size={16} /> Mano de Prueba</button>
-                    <button onClick={handleTakeScreenshot} className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 text-slate-700 dark:text-white py-3 rounded-2xl font-black text-[11px] uppercase active:scale-95 flex items-center justify-center gap-2 border border-slate-200 dark:border-white/5 shadow-sm transition-all"><Camera size={16} /> Descargar Imagen</button>
-                    <button onClick={() => setModalGuardarOpen(true)} className="w-full bg-blue-600 dark:bg-orange-600 hover:bg-blue-700 dark:hover:bg-orange-500 text-white py-3 rounded-2xl font-black text-[11px] uppercase active:scale-95 flex items-center justify-center gap-2 shadow-xl transition-all"><Save size={16} /> Guardar Mazo</button>
+                <div className="p-5 bg-white dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-200 dark:border-white/5 flex flex-col gap-3">
+                    <button onClick={simularMano} className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-indigo-600 text-slate-700 dark:text-white py-3 rounded-2xl font-black text-[11px] uppercase active:scale-95 flex items-center justify-center gap-2 border border-slate-200 dark:border-white/5 transition-all"><Eye size={16} /> Mano de Prueba</button>
+                    <button onClick={handleTakeScreenshot} className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 text-slate-700 dark:hover:text-white py-3 rounded-2xl font-black text-[11px] uppercase active:scale-95 flex items-center justify-center gap-2 border border-slate-200 dark:border-white/5 transition-all"><Camera size={16} /> Descargar Imagen</button>
+                    <button onClick={() => setModalGuardarOpen(true)} className="w-full bg-blue-600 dark:bg-yellow-600 hover:bg-blue-700 dark:hover:bg-yellow-500 text-white dark:text-black py-3 rounded-2xl font-black text-[11px] uppercase active:scale-95 flex items-center justify-center gap-2 shadow-xl transition-all"><Save size={16} /> Guardar Mazo</button>
                 </div>
             </div>
 
+            {/* DOCK MÓVIL */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-2 pb-6 z-50 flex items-center justify-between shadow-2xl transition-colors">
                 <div className="flex flex-col px-3"><span className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">TOTAL</span><span className={`text-xl font-black leading-none ${totalCartas === 50 ? 'text-green-600 dark:text-green-500' : 'text-slate-900 dark:text-white'}`}>{totalCartas}/50</span></div>
                 <div className="flex gap-2">
-                    <button onClick={simularMano} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Mano</button>
-                    <button onClick={() => setShowMobileList(true)} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Lista</button>
-                    <button onClick={() => setModalGuardarOpen(true)} className="bg-blue-600 dark:bg-orange-600 text-white px-5 py-2 rounded-xl font-black text-xs shadow-lg flex items-center justify-center"><Save size={16} /></button>
+                    <button onClick={simularMano} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Mano</button>
+                    <button onClick={() => setShowMobileList(true)} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Lista</button>
+                    <button onClick={handleTakeScreenshot} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700 flex items-center justify-center"><Camera size={18} /></button>
+                    <button onClick={() => setModalGuardarOpen(true)} className="bg-blue-600 dark:bg-yellow-600 text-white dark:text-black px-5 py-2 rounded-xl font-black text-xs shadow-lg flex items-center justify-center"><Save size={16} /></button>
                 </div>
             </div>
 
-            {/* ✅ MODAL MANO DE PRUEBA ACTUALIZADO CON ANIMACIÓN */}
+            {/* ✅ MODAL MANO DE PRUEBA ACTUALIZADO CON SECCIÓN SEPARADA */}
             <AnimatePresence>
                 {manoPrueba.length > 0 && (
                     <div className="fixed inset-0 bg-slate-950/95 z-[300] flex flex-col items-center justify-center p-4 backdrop-blur-xl overflow-hidden">
-                        <motion.h3 
-                            initial={{ opacity: 0, y: -20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-xl md:text-2xl font-black text-blue-500 dark:text-orange-500 uppercase italic mb-8 tracking-widest text-center flex items-center gap-2"
-                        >
-                            <Sparkles className="text-yellow-400" /> Mano Inicial
-                        </motion.h3>
+                        <motion.h3 initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-xl md:text-2xl font-black text-blue-500 dark:text-yellow-500 uppercase italic mb-8 tracking-widest text-center flex items-center gap-3"><Sparkles className="animate-pulse text-yellow-400" size={24} /> Mano Inicial PB</motion.h3>
                         
-                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-8 gap-3 max-w-6xl px-4 relative">
-                            {manoPrueba.map((c, i) => (
-                                <motion.div 
-                                    key={`${c.slug}-${i}`}
-                                    custom={i}
-                                    variants={cardDealingVariants}
-                                    initial="hidden"
-                                    animate="visible"
-                                    exit="exit"
-                                    className="relative shadow-2xl"
-                                >
-                                    <img src={getImg(c)} className="w-full rounded-lg border border-white/10" alt="mano" />
-                                </motion.div>
-                            ))}
+                        <div className="flex flex-col md:flex-row gap-8 items-start max-w-7xl px-4 overflow-y-auto max-h-[70vh]">
+                            {/* ✅ ORO INICIAL EN SECCIÓN APARTE */}
+                            {oroInicialSlug && mazo.find(c => c.slug === oroInicialSlug) && (
+                                <div className="flex flex-col items-center gap-4 bg-yellow-500/5 p-6 rounded-[2.5rem] border border-yellow-500/20 w-full md:w-auto">
+                                    <span className="text-[11px] font-black text-yellow-500 uppercase tracking-[0.2em] bg-yellow-500/10 px-4 py-1 rounded-full border border-yellow-500/30">Oro Inicial</span>
+                                    <motion.div 
+                                        initial={{ opacity: 0, scale: 0.5 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="w-32 md:w-40 relative"
+                                    >
+                                        <img 
+                                            src={getImg(mazo.find(c => c.slug === oroInicialSlug))} 
+                                            className="w-full rounded-xl border-2 border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.4)]" 
+                                            alt="oro inicial" 
+                                        />
+                                        <Anchor className="absolute -top-3 -right-3 text-yellow-500 bg-slate-900 rounded-full p-1 border-2 border-yellow-500 shadow-xl" size={28} strokeWidth={3} />
+                                    </motion.div>
+                                </div>
+                            )}
+
+                            {/* ✅ 8 CARTAS REPARTIDAS */}
+                            <div className="flex flex-col items-center gap-4 w-full">
+                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Mano Repartida (8)</span>
+                                <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-3">
+                                    {manoPrueba.map((c, i) => (
+                                        <motion.div 
+                                            key={`${c.slug}-${i}`}
+                                            custom={i}
+                                            variants={cardDealingVariants}
+                                            initial="hidden"
+                                            animate="visible"
+                                            exit="exit"
+                                            className="w-full"
+                                        >
+                                            <img src={getImg(c)} className="w-full rounded-lg border border-white/10 shadow-xl" alt="mano" />
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
 
-                        <motion.div 
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 1 }}
-                            className="mt-12 flex gap-4"
-                        >
-                            <button onClick={simularMano} className="bg-blue-600 dark:bg-orange-600 text-white dark:text-black px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all">Mulligan</button>
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }} className="mt-12 flex gap-4">
+                            <button onClick={simularMano} className="bg-blue-600 dark:bg-yellow-600 text-white dark:text-black px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all">Mulligan</button>
                             <button onClick={() => setManoPrueba([])} className="bg-slate-800 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest border border-white/10 active:scale-95 transition-all">Cerrar</button>
                         </motion.div>
                     </div>
                 )}
             </AnimatePresence>
 
+            {/* MODAL LISTA MÓVIL */}
             {showMobileList && (
                 <div className="md:hidden fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
                     <div className="bg-white dark:bg-slate-900 rounded-t-[3rem] h-[80vh] p-6 overflow-hidden border-t border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-black uppercase text-blue-600 dark:text-orange-500 italic tracking-tighter">Grimorio ({totalCartas}/50)</h3>
-                            <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400"><X size={24} /></button>
+                            <h3 className="text-xl font-black uppercase text-blue-600 dark:text-yellow-500 italic tracking-tighter">Mi Grimorio ({totalCartas}/50)</h3>
+                            <div className="flex gap-2">
+                                <button onClick={handleTakeScreenshot} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-blue-600 dark:text-yellow-500 border border-slate-200 dark:border-slate-700"><Camera size={20}/></button>
+                                <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 border border-slate-200 dark:border-slate-700"><X size={24} /></button>
+                            </div>
                         </div>
                         <div className="grid grid-cols-5 gap-1 mb-4">
                             {ORDER_TYPES.map(type => (
                                 <div key={type} className="flex flex-col items-center bg-slate-50 dark:bg-slate-800 rounded-lg p-2 border border-slate-100 dark:border-white/5">
                                     <span className="text-[6px] font-black text-slate-400 uppercase">{type}</span>
-                                    <span className="text-xs font-black text-slate-700 dark:text-orange-500">{statsForExport.counts[type] || 0}</span>
+                                    <span className="text-xs font-black text-slate-700 dark:text-yellow-500">{statsForExport.counts[type] || 0}</span>
                                 </div>
                             ))}
                         </div>
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
                             {ORDER_TYPES.map(t => mazoAgrupado[t] && (
                                 <div key={t} className="mb-6">
-                                    <h4 className="text-slate-400 dark:text-orange-600 text-[10px] font-black uppercase mb-3 tracking-widest border-b dark:border-orange-800 pb-1">{t}</h4>
+                                    <h4 className="text-slate-400 dark:text-yellow-600 text-[10px] font-black uppercase mb-3 tracking-widest border-b dark:border-orange-800 pb-1">{t}</h4>
                                     <div className="space-y-3">
                                         {mazoAgrupado[t].map(c => (
-                                            <div key={c.slug} className="flex justify-between items-center py-2">
+                                            <div key={c.slug} className={`flex justify-between items-center py-2 px-3 rounded-xl border ${oroInicialSlug === c.slug ? 'border-yellow-500 bg-yellow-500/5' : 'border-transparent'}`}>
                                                 <div className="flex items-center gap-3">
                                                     <img src={getImg(c)} className="w-12 h-16 rounded-xl shadow-md object-cover border border-slate-100 dark:border-0" alt={c.name} />
-                                                    <span className="text-sm font-black text-slate-700 dark:text-slate-200 uppercase truncate max-w-[150px]">{c.name}</span>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-black text-slate-700 dark:text-slate-200 uppercase truncate max-w-[150px]">{c.name}</span>
+                                                        {c.type === "Oro" && (
+                                                            <button onClick={() => setOroInicialSlug(c.slug === oroInicialSlug ? null : c.slug)} className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full w-fit ${oroInicialSlug === c.slug ? 'bg-yellow-500 text-black' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'}`}>
+                                                                {oroInicialSlug === c.slug ? 'Oro Inicial' : 'Usar como Inicial'}
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="flex items-center gap-4 bg-slate-100 dark:bg-slate-950 p-2 px-5 rounded-2xl">
                                                     <button onClick={() => handleRemove(c.slug)} className="text-red-500 active:scale-90 transition-transform"><Minus size={20} strokeWidth={3}/></button>
@@ -502,7 +478,7 @@ export default function ImperioBuilder() {
                 <div className="fixed inset-0 z-[400] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-4 transition-all duration-300" onClick={() => setCardToZoom(null)}>
                     <button onClick={() => setCardToZoom(null)} className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-2xl z-[410] transition-all"><X size={24} strokeWidth={3} /></button>
                     <div className="relative max-w-sm w-full flex flex-col items-center animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
-                        <img src={getImg(cardToZoom)} className="w-full h-auto rounded-[2rem] shadow-[0_0_50px_rgba(37,99,235,0.3)] dark:shadow-[0_0_50px_rgba(249,115,22,0.3)] border-4 border-white/20" alt="zoom" />
+                        <img src={getImg(cardToZoom)} className="w-full h-auto rounded-[2rem] shadow-[0_0_50px_rgba(37,99,235,0.3)] dark:shadow-[0_0_50px_rgba(234,179,8,0.3)] border-4 border-white/20" alt="zoom" />
                         <div className="mt-8 flex items-center justify-center gap-10 bg-white/90 dark:bg-slate-900/90 p-5 px-12 rounded-[2.5rem] border border-slate-200 dark:border-slate-700 shadow-2xl backdrop-blur-lg">
                             <button onClick={() => handleRemove(cardToZoom.slug)} className="w-14 h-14 rounded-2xl bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white flex items-center justify-center transition-all active:scale-90"><Minus size={28} strokeWidth={3} /></button>
                             <span className="text-5xl font-black text-slate-900 dark:text-white leading-none">
@@ -517,14 +493,14 @@ export default function ImperioBuilder() {
             {modalGuardarOpen && (
                 <div className="fixed inset-0 bg-slate-950/90 z-[500] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in" onClick={() => setModalGuardarOpen(false)}>
                     <div className="bg-white dark:bg-slate-800 p-8 rounded-[3rem] w-full max-w-sm border border-slate-200 dark:border-slate-700 shadow-2xl" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-2xl font-black mb-8 uppercase text-blue-600 dark:text-orange-500 tracking-tighter italic text-center leading-none">Archivar<br/>Estrategia Imperio</h3>
-                        <input value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-blue-500 dark:focus:border-orange-500 mb-4 transition-all text-slate-900 dark:text-white font-black uppercase text-sm tracking-widest" placeholder="NOMBRE DEL MAZO..." />
+                        <h3 className="text-2xl font-black mb-8 uppercase text-blue-600 dark:text-yellow-500 tracking-tighter italic text-center leading-none">Archivar<br/>Estrategia PB</h3>
+                        <input value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-blue-500 dark:focus:border-yellow-500 mb-4 transition-all text-slate-900 dark:text-white font-black uppercase text-sm tracking-widest" placeholder="NOMBRE DEL MAZO..." />
                         <label className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl cursor-pointer hover:bg-blue-50 dark:hover:bg-slate-950 transition-colors border border-slate-200 dark:border-slate-700">
-                            <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-6 h-6 rounded-lg accent-blue-600 dark:accent-orange-600" />
+                            <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-6 h-6 rounded-lg accent-blue-600 dark:accent-yellow-600" />
                             <span className="text-xs font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest italic">Publicar en Arena <Globe size={14} className="inline ml-1 text-blue-600 dark:text-orange-500" /></span>
                         </label>
                         <div className="flex flex-col gap-2 mt-10">
-                            <button onClick={handleSaveDeck} disabled={guardando || !nombreMazo.trim()} className="w-full bg-blue-600 dark:bg-orange-600 text-white dark:text-black py-4 rounded-2xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-3 italic"><Save size={18} /> CONFIRMAR</button>
+                            <button onClick={handleSaveDeck} disabled={guardando || !nombreMazo.trim()} className="w-full bg-blue-600 dark:bg-yellow-600 text-white dark:text-black py-4 rounded-2xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-3 italic"><Save size={18} /> CONFIRMAR</button>
                             <button onClick={() => setModalGuardarOpen(false)} className="w-full text-slate-400 font-black py-2 hover:text-slate-600 dark:hover:text-white transition-colors uppercase italic text-[10px] tracking-[0.2em]">CANCELAR</button>
                         </div>
                     </div>
