@@ -44,4 +44,23 @@ router.get('/all', async (req, res) => {
     }
 });
 
+// ✅ NUEVA RUTA: BORRAR PUBLICACIÓN (Necesaria para que el Dashboard funcione)
+router.delete('/:id', verifyToken, async (req, res) => {
+    try {
+        const item = await Marketplace.findById(req.params.id);
+        
+        if (!item) {
+            return res.status(404).json({ msg: "La publicación no existe" });
+        }
+
+        // Aquí borramos físicamente el registro de la base de datos
+        await Marketplace.findByIdAndDelete(req.params.id);
+        
+        res.json({ msg: "Publicación eliminada correctamente por la administración" });
+    } catch (error) {
+        console.error("Error al borrar item del market:", error);
+        res.status(500).json({ error: "Error interno al intentar eliminar" });
+    }
+});
+
 module.exports = router;
