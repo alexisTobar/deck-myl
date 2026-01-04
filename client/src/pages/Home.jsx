@@ -29,7 +29,7 @@ import { toast } from "sonner";
 export default function HomePortal() {
     const navigate = useNavigate();
     
-    // ✅ ESTADOS SEPARADOS POR FORMATO
+    // ✅ ESTADOS SEPARADOS POR FORMATO PARA EVITAR MEZCLAS
     const [pbTrending, setPbTrending] = useState([]);
     const [impTrending, setImpTrending] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -53,14 +53,14 @@ export default function HomePortal() {
         const fetchTrendingData = async () => {
             setLoading(true);
             try {
-                // ✅ PETICIÓN PARA PRIMER BLOQUE
+                // ✅ PETICIÓN FILTRADA PARA PRIMER BLOQUE
                 const resPb = await fetch(`${BACKEND_URL}/api/decks/stats/meta?format=primer_bloque`);
                 if (resPb.ok) {
                     const data = await resPb.json();
                     setPbTrending(data.slice(0, 10));
                 }
 
-                // ✅ PETICIÓN PARA IMPERIO
+                // ✅ PETICIÓN FILTRADA PARA IMPERIO
                 const resImp = await fetch(`${BACKEND_URL}/api/decks/stats/meta?format=imperio`);
                 if (resImp.ok) {
                     const data = await resImp.json();
@@ -112,16 +112,16 @@ export default function HomePortal() {
         }
     };
 
-    // ✅ PREPARACIÓN DE DATOS PARA EL GRÁFICO DE PASTEL (Compara con su propio formato)
+    // ✅ PREPARACIÓN DE DATOS PARA EL GRÁFICO DE PASTEL (Comparación local por pool)
     const getChartData = (card) => {
-        const currentPool = card.format === 'primer_bloque' ? pbTrending : impTrending;
-        const totalOtherUsage = currentPool
+        const pool = card.format === 'primer_bloque' ? pbTrending : impTrending;
+        const totalOtherUsage = pool
             .filter(c => c.name !== card.name)
             .reduce((acc, curr) => acc + curr.usageCount, 0);
         
         return [
             { name: card.name, value: card.usageCount, color: '#3b82f6' },
-            { name: 'Resto del Top 10', value: totalOtherUsage, color: '#1e293b' }
+            { name: 'Otras del Top 10', value: totalOtherUsage, color: '#1e293b' }
         ];
     };
 
@@ -142,7 +142,7 @@ export default function HomePortal() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
-                            src={LOGO_NEGRO} 
+                            src={LOGO_NEGRO}
                             alt="ForjaDeck Logo"
                             className="w-[85vw] max-w-[500px] md:max-w-[650px] h-auto object-contain dark:hidden"
                         />
@@ -157,7 +157,7 @@ export default function HomePortal() {
                     />
                 </div>
                 
-                <p className="text-slate-500 dark:text-slate-400 text-base md:text-xl max-w-2xl mx-auto font-medium leading-relaxed opacity-80 px-4">
+                <p className="text-slate-500 dark:text-slate-400 text-base md:text-xl max-w-2xl mx-auto font-medium leading-relaxed opacity-80 px-4 text-center">
                     La plataforma técnica para la forja de estrategias. 
                     Optimización de mazos basada en el análisis de datos masivos.
                 </p>
@@ -189,19 +189,19 @@ export default function HomePortal() {
                 />
             </motion.main>
 
-            {/* --- ✅ SECCIÓN: ANÁLISIS DEL META (PRIMER BLOQUE) --- */}
+            {/* --- ✅ SECCIÓN: TOP 10 PRIMER BLOQUE --- */}
             <motion.section 
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
                 className="w-full max-w-7xl px-6 mb-20"
             >
-                <div className="flex items-center justify-between mb-8 border-b border-slate-200 dark:border-white/10 pb-6">
-                    <div className="text-left">
-                        <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic flex items-center gap-3">
+                <div className="flex flex-col md:flex-row items-center justify-between mb-10 border-b border-slate-200 dark:border-white/10 pb-6">
+                    <div className="text-center md:text-left">
+                        <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic flex items-center justify-center md:justify-start gap-3">
                             <ScrollText className="text-blue-600 dark:text-blue-400" size={24} /> Top 10 Primer Bloque
                         </h3>
-                        <p className="text-slate-400 dark:text-slate-500 text-[10px] md:text-xs font-bold uppercase mt-1 tracking-widest text-center md:text-left">Frecuencia de uso en relatos clásicos</p>
+                        <p className="text-slate-400 dark:text-slate-500 text-[10px] md:text-sm font-bold uppercase mt-1 tracking-widest leading-none">Análisis de frecuencia en relatos clásicos</p>
                     </div>
                 </div>
 
@@ -210,25 +210,25 @@ export default function HomePortal() {
                         [...Array(10)].map((_, n) => <div key={n} className="h-48 md:h-64 bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl animate-pulse"></div>)
                     ) : (
                         pbTrending.map((card, idx) => (
-                            <MetaCard key={idx} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
+                            <MetaCard key={`pb-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
                         ))
                     )}
                 </div>
             </motion.section>
 
-            {/* --- ✅ SECCIÓN: ANÁLISIS DEL META (IMPERIO) --- */}
+            {/* --- ✅ SECCIÓN: TOP 10 IMPERIO --- */}
             <motion.section 
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
                 className="w-full max-w-7xl px-6 mb-32"
             >
-                <div className="flex items-center justify-between mb-8 border-b border-slate-200 dark:border-white/10 pb-6">
-                    <div className="text-left">
-                        <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic flex items-center gap-3">
+                <div className="flex flex-col md:flex-row items-center justify-between mb-10 border-b border-slate-200 dark:border-white/10 pb-6">
+                    <div className="text-center md:text-left">
+                        <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic flex items-center justify-center md:justify-start gap-3">
                             <Sword className="text-blue-600 dark:text-blue-400" size={24} /> Top 10 Imperio
                         </h3>
-                        <p className="text-slate-400 dark:text-slate-500 text-[10px] md:text-xs font-bold uppercase mt-1 tracking-widest text-center md:text-left">Frecuencia de uso en el formato actual</p>
+                        <p className="text-slate-400 dark:text-slate-500 text-[10px] md:text-sm font-bold uppercase mt-1 tracking-widest leading-none">Análisis de frecuencia en formato competitivo</p>
                     </div>
                 </div>
 
@@ -237,7 +237,7 @@ export default function HomePortal() {
                         [...Array(10)].map((_, n) => <div key={n} className="h-48 md:h-64 bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl animate-pulse"></div>)
                     ) : (
                         impTrending.map((card, idx) => (
-                            <MetaCard key={idx} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
+                            <MetaCard key={`imp-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
                         ))
                     )}
                 </div>
@@ -265,7 +265,7 @@ export default function HomePortal() {
                                     <div className="mb-6">
                                         <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Deep Scan Analysis</span>
                                         <h3 className="text-3xl font-black uppercase italic text-slate-900 dark:text-white leading-none">{selectedMetaCard.name}</h3>
-                                        <p className="text-[9px] font-bold text-slate-400 uppercase mt-2 italic tracking-widest">{selectedMetaCard.format.replace('_',' ')}</p>
+                                        <p className="text-[9px] font-bold text-blue-500 uppercase mt-2 italic tracking-widest">{selectedMetaCard.format.replace('_',' ')}</p>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4 mb-8">
@@ -331,7 +331,7 @@ export default function HomePortal() {
                                 <span className="text-[10px] font-black uppercase tracking-widest text-orange-500">Official Store</span>
                             </div>
                             <h2 className="text-4xl md:text-7xl font-black uppercase italic tracking-tighter mb-4 leading-none">Juegos <span className="text-blue-600">Vikingos</span></h2>
-                            <p className="text-slate-500 dark:text-slate-400 text-lg mb-8 max-w-lg font-medium leading-relaxed italic">
+                            <p className="text-slate-500 dark:text-slate-400 text-lg mb-8 max-w-lg font-medium leading-relaxed italic text-center md:text-left mx-auto md:mx-0">
                                 Encuentra las cartas más codiciadas y los últimos lanzamientos de Mitos y Leyendas. Calidad legendaria para invocadores reales.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
@@ -343,7 +343,7 @@ export default function HomePortal() {
                                 </a>
                             </div>
                         </div>
-                        <div className="flex-1 order-1 md:order-2">
+                        <div className="flex-1 order-1 md:order-2 flex justify-center">
                             <motion.img 
                                 animate={{ y: [0, -20, 0] }}
                                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
@@ -389,7 +389,7 @@ export default function HomePortal() {
                             rel="noreferrer"
                             className="flex flex-col items-center gap-3 group min-w-[100px]"
                         >
-                            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 group-hover:rotate-12 transition-transform duration-500 shadow-xl">
+                            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 shadow-xl">
                                 <div className="w-full h-full rounded-full border-[4px] border-white dark:border-[#0f172a] overflow-hidden">
                                     <img src={player.logo || "https://via.placeholder.com/150?text=MyL"} className="w-full h-full object-cover" alt={player.name} />
                                 </div>
@@ -406,18 +406,8 @@ export default function HomePortal() {
             <AnimatePresence>
                 {showPlayerModal && (
                     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-                        <motion.div 
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            onClick={() => setShowPlayerModal(false)}
-                            className="absolute inset-0 bg-[#060912]/90 backdrop-blur-xl"
-                        />
-                        
-                        <motion.div 
-                            initial={{ scale: 0.8, opacity: 0, y: 100 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.8, opacity: 0, y: 100 }}
-                            className="relative w-full max-w-lg bg-[#0f172a] border border-white/10 rounded-[3.5rem] shadow-[0_0_100px_rgba(219,39,119,0.2)] overflow-hidden"
-                        >
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowPlayerModal(false)} className="absolute inset-0 bg-[#060912]/90 backdrop-blur-xl" />
+                        <motion.div initial={{ scale: 0.8, opacity: 0, y: 100 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 100 }} className="relative w-full max-w-lg bg-[#0f172a] border border-white/10 rounded-[3.5rem] shadow-[0_0_100px_rgba(219,39,119,0.2)] overflow-hidden">
                             <div className="bg-gradient-to-b from-pink-600/20 to-transparent p-10 pb-4 text-center text-white">
                                 <div className="w-16 h-16 bg-pink-600 rounded-2xl mx-auto mb-6 flex items-center justify-center rotate-12 shadow-[0_0_30px_rgba(219,39,119,0.5)]">
                                     <UserPlus size={32} className="text-white -rotate-12" />
@@ -425,7 +415,6 @@ export default function HomePortal() {
                                 <h3 className="text-4xl font-black uppercase italic tracking-tighter">Únete al <span className="text-pink-600 font-black">Relato</span></h3>
                                 <p className="text-slate-400 text-sm mt-2 font-bold uppercase tracking-widest">Registra tu leyenda en la red</p>
                             </div>
-
                             <form onSubmit={handleSavePlayer} className="p-8 md:p-10 pt-6 space-y-6 text-white">
                                 <div className="flex justify-center mb-4">
                                     <div className="flex flex-col items-center gap-2">
@@ -436,13 +425,11 @@ export default function HomePortal() {
                                         </div>
                                     </div>
                                 </div>
-
                                 <div className="grid grid-cols-1 gap-4">
                                     <input type="text" required className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold text-white outline-none focus:border-pink-600 transition-all placeholder:text-slate-600" placeholder="Nombre de Gladiador / Comunidad" value={newPlayerData.name} onChange={e => setNewPlayerData({...newPlayerData, name: e.target.value})} />
                                     <input type="url" required className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold text-white outline-none focus:border-pink-600 transition-all placeholder:text-slate-600" placeholder="Link de Instagram (URL completa)" value={newPlayerData.instagram} onChange={e => setNewPlayerData({...newPlayerData, instagram: e.target.value})} />
                                     <input type="text" className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold text-white outline-none focus:border-pink-600 transition-all placeholder:text-slate-600" placeholder="URL de tu Logo o Foto (Opcional)" value={newPlayerData.logo} onChange={e => setNewPlayerData({...newPlayerData, logo: e.target.value})} />
                                 </div>
-
                                 <div className="flex flex-col gap-3 pt-2">
                                     <button type="submit" className="w-full py-5 bg-pink-600 text-white rounded-3xl text-xs font-black uppercase italic tracking-[0.2em] shadow-lg hover:scale-[1.03] transition-all flex items-center justify-center gap-2"><Sparkles size={18} /> Inyectar Leyenda</button>
                                     <button type="button" onClick={() => setShowPlayerModal(false)} className="w-full py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-white transition-colors">Abortar Misión</button>
@@ -472,22 +459,13 @@ export default function HomePortal() {
             <footer className="w-full py-20 bg-white dark:bg-[#0A0C10] border-t dark:border-white/5 transition-colors duration-500">
                 <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12">
                     <div className="text-center md:text-left">
-                        <img 
-                            src={LOGO_NEGRO} 
-                            className="h-10 md:h-12 w-auto mb-4 object-contain dark:hidden" 
-                            alt="ForjaDeck Footer" 
-                        />
-                        <img 
-                            src={LOGO_BLANCO} 
-                            className="h-10 md:h-12 w-auto mb-4 object-contain hidden dark:block" 
-                            alt="ForjaDeck Footer Dark" 
-                        />
+                        <img src={LOGO_NEGRO} className="h-10 md:h-12 w-auto mb-4 object-contain dark:hidden" alt="ForjaDeck Footer" />
+                        <img src={LOGO_BLANCO} className="h-10 md:h-12 w-auto mb-4 object-contain hidden dark:block" alt="ForjaDeck Footer Dark" />
                         <p className="text-[11px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-[0.4em]">Intelligence Database for Invocadores</p>
                     </div>
-
                     <div className="flex flex-col items-center md:items-end">
                         <div className="flex items-center gap-2 text-sm font-black text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 px-4 py-2 rounded-2xl border border-slate-100 dark:border-white/10 shadow-sm">
-                            Hecho con <Heart size={16} className="text-red-500 fill-red-500 animate-pulse" /> por <span className="text-blue-600 dark:text-blue-400">Alexis Tobar</span>
+                            Hecho con <Heart size={16} className="text-red-500 fill-red-500 animate-pulse" /> por <span className="text-blue-600 dark:text-blue-400 ml-1">Alexis Tobar</span>
                         </div>
                         <div className="mt-6 flex items-center gap-4">
                             <span className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">Powered by</span>
@@ -500,8 +478,7 @@ export default function HomePortal() {
     );
 }
 
-// COMPONENTES AUXILIARES
-
+// ✅ COMPONENTE INTERNO DE TARJETA META (REUTILIZADO PARA PB E IMPERIO)
 function MetaCard({ card, index, onClick }) {
     return (
         <motion.div 
@@ -520,10 +497,10 @@ function MetaCard({ card, index, onClick }) {
                     #{index + 1}
                 </div>
             </div>
-            <div className="text-center">
+            <div className="text-center px-1">
                 <h4 className="text-[10px] md:text-xs font-black text-slate-900 dark:text-white truncate uppercase mb-1">{card.name}</h4>
                 <div className="flex items-center justify-center gap-1 text-blue-600 dark:text-blue-400 font-black text-[9px] uppercase">
-                    <BarChart3 size={10} /> Análisis
+                    <BarChart3 size={10} /> Ver Análisis
                 </div>
             </div>
         </motion.div>
@@ -534,7 +511,7 @@ function FormatCard({ title, desc, img, icon, onClick, delay }) {
     return (
         <div 
             onClick={onClick}
-            className={`group cursor-pointer bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 overflow-hidden hover:shadow-[0_20px_50px_rgba(37,99,235,0.15)] dark:hover:shadow-blue-500/10 hover:border-blue-400 dark:hover:border-blue-500/50 transition-all duration-500 flex flex-col animate-in fade-in slide-in-from-bottom-10 ${delay}`}
+            className={`group cursor-pointer bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 overflow-hidden hover:shadow-2xl hover:border-blue-400 transition-all duration-500 flex flex-col animate-in fade-in slide-in-from-bottom-10 ${delay}`}
         >
             <div className="h-48 md:h-72 relative overflow-hidden">
                 <img src={img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-90 dark:opacity-60" alt={title} />
@@ -543,8 +520,8 @@ function FormatCard({ title, desc, img, icon, onClick, delay }) {
                     {icon}
                 </div>
             </div>
-            <div className="p-8 md:p-10 pt-6 text-slate-900 dark:text-white">
-                <h2 className="text-3xl md:text-4xl font-black mb-2 uppercase italic tracking-tighter group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight">{title}</h2>
+            <div className="p-8 md:p-10 pt-6">
+                <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 uppercase italic tracking-tighter group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight">{title}</h2>
                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-6 md:mb-8 leading-relaxed">{desc}</p>
                 <div className="flex items-center gap-3 text-[10px] md:text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">
                     Crea tu Mazo <ArrowRight size={18} className="group-hover:translate-x-3 transition-transform" />
