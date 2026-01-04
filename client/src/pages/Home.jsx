@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+// ✅ IMPORTACIÓN PARA GRÁFICOS PROFESIONALES
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
 import BACKEND_URL from "../config";
 import { 
     Sword, 
@@ -19,7 +21,8 @@ import {
     X,
     Camera,
     Sparkles,
-    UserPlus
+    UserPlus,
+    BarChart3
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -29,6 +32,10 @@ export default function HomePortal() {
     const [loading, setLoading] = useState(true);
     const [players, setPlayers] = useState([]);
     
+    // ✅ ESTADOS PARA EL MODAL DE ANÁLISIS DE CARTAS
+    const [selectedMetaCard, setSelectedMetaCard] = useState(null);
+    const [showMetaModal, setShowMetaModal] = useState(false);
+
     // ✅ ESTADOS PARA EL NUEVO MODAL GALÁCTICO
     const [showPlayerModal, setShowPlayerModal] = useState(false);
     const [newPlayerData, setNewPlayerData] = useState({ name: "", instagram: "", logo: "" });
@@ -45,7 +52,8 @@ export default function HomePortal() {
                 const res = await fetch(`${BACKEND_URL}/api/decks/stats/meta`);
                 if (res.ok) {
                     const data = await res.json();
-                    setTrendingCards(data.slice(0, 4));
+                    // ✅ AHORA TOMAMOS EL TOP 10
+                    setTrendingCards(data.slice(0, 10));
                 }
             } catch (error) {
                 console.error("Error cargando tendencias:", error);
@@ -93,6 +101,18 @@ export default function HomePortal() {
         }
     };
 
+    // ✅ PREPARACIÓN DE DATOS PARA EL GRÁFICO DE PASTEL
+    const getChartData = (card) => {
+        const totalOtherUsage = trendingCards
+            .filter(c => c.name !== card.name)
+            .reduce((acc, curr) => acc + curr.usageCount, 0);
+        
+        return [
+            { name: card.name, value: card.usageCount, color: '#3b82f6' },
+            { name: 'Otras del Top', value: totalOtherUsage, color: '#1e293b' }
+        ];
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-[#0A0C10] dark:via-[#0f172a] dark:to-[#0A0C10] flex flex-col items-center font-sans text-slate-900 dark:text-white selection:bg-blue-100 dark:selection:bg-blue-900/30 overflow-x-hidden transition-colors duration-500">
             
@@ -103,7 +123,6 @@ export default function HomePortal() {
                     <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-blue-600 dark:text-blue-400">Nueva Versión ForjaDeck v3.0</span>
                 </div>
                 
-                {/* ✅ MEJORA: Logo oficial responsivo con cambio de color por modo */}
                 <div className="flex justify-center mb-8 px-4">
                     <picture>
                         <source srcSet={LOGO_BLANCO} media="(prefers-color-scheme: dark)" />
@@ -111,12 +130,11 @@ export default function HomePortal() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
-                            src={LOGO_NEGRO} // Por defecto letras negras
+                            src={LOGO_NEGRO}
                             alt="ForjaDeck Logo"
                             className="w-[85vw] max-w-[500px] md:max-w-[650px] h-auto object-contain dark:hidden"
                         />
                     </picture>
-                    {/* Versión forzada para cuando la clase .dark está activa en el html */}
                     <motion.img 
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -133,7 +151,7 @@ export default function HomePortal() {
                 </p>
             </header>
 
-            {/* --- SELECTOR DE FORMATOS (Scroll Efecto) --- */}
+            {/* --- SELECTOR DE FORMATOS --- */}
             <motion.main 
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -159,7 +177,7 @@ export default function HomePortal() {
                 />
             </motion.main>
 
-            {/* --- ANÁLISIS DEL META (Scroll Efecto) --- */}
+            {/* --- ✅ SECCIÓN: ANÁLISIS DEL META MEJORADO (TOP 10) --- */}
             <motion.section 
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
@@ -169,43 +187,120 @@ export default function HomePortal() {
                 <div className="flex items-center justify-between mb-12 border-b border-slate-200 dark:border-white/10 pb-8">
                     <div className="text-left">
                         <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic flex items-center gap-3">
-                            <TrendingUp className="text-blue-600 dark:text-blue-400" /> Análisis del Meta
+                            <TrendingUp className="text-blue-600 dark:text-blue-400" /> Top 10 Meta
                         </h3>
-                        <p className="text-slate-400 dark:text-slate-500 text-[10px] md:text-sm font-bold uppercase mt-1 tracking-widest">Tendencias extraídas de la base de datos global</p>
+                        <p className="text-slate-400 dark:text-slate-500 text-[10px] md:text-sm font-bold uppercase mt-1 tracking-widest">Haz clic para ver el análisis de frecuencia</p>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {/* ✅ GRID RESPONSIVO (5X2 en Desktop, 2x5 en Móvil) */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 md:gap-6">
                     {loading ? (
-                        [1, 2, 3, 4].map(n => <div key={n} className="h-72 bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl animate-pulse"></div>)
+                        [...Array(10)].map((_, n) => <div key={n} className="h-48 md:h-64 bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl animate-pulse"></div>)
                     ) : (
                         trendingCards.map((card, idx) => (
                             <motion.div 
                                 key={idx} 
-                                whileHover={{ y: -12, scale: 1.02 }}
-                                className="group bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 p-4 rounded-[2rem] hover:shadow-2xl dark:hover:shadow-blue-900/20 transition-all duration-500"
+                                whileHover={{ y: -8, scale: 1.02 }}
+                                onClick={() => {
+                                    setSelectedMetaCard(card);
+                                    setShowMetaModal(true);
+                                }}
+                                className="cursor-pointer group bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 p-3 rounded-[1.5rem] hover:shadow-2xl transition-all duration-500"
                             >
-                                <div className="aspect-[3/4] bg-slate-100 dark:bg-slate-800 rounded-2xl mb-4 overflow-hidden shadow-inner relative">
+                                <div className="aspect-[3/4] bg-slate-100 dark:bg-slate-800 rounded-xl mb-3 overflow-hidden relative">
                                     <img 
                                         src={card.imgUrl || card.img} 
                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                                         alt={card.name} 
-                                        onError={(e) => e.target.src = "https://via.placeholder.com/200x280?text=Forja+Deck"}
+                                        onError={(e) => e.target.src = "https://via.placeholder.com/200x280?text=MyL"}
                                     />
-                                    <div className="absolute top-2 right-2 px-2 py-1 bg-white/90 dark:bg-[#0A0C10]/90 backdrop-blur-sm rounded-lg text-[8px] font-black uppercase text-blue-600 dark:text-blue-400 shadow-sm border border-white dark:border-white/10">
-                                        {card.format === 'primer_bloque' ? 'PB' : 'IMP'}
+                                    <div className="absolute bottom-2 left-2 px-2 py-1 bg-blue-600 rounded-lg text-[10px] font-black text-white shadow-lg">
+                                        #{idx + 1}
                                     </div>
                                 </div>
-                                <div className="px-1 text-center">
-                                    <h4 className="text-xs font-black text-slate-900 dark:text-white truncate uppercase tracking-tighter mb-1">{card.name}</h4>
-                                    <div className="h-1 w-8 bg-blue-600 dark:bg-blue-400 mx-auto rounded-full group-hover:w-16 transition-all mb-3"></div>
-                                    <p className="text-[10px] text-blue-600 dark:text-blue-400 font-black uppercase italic">Uso: {card.usageCount} Mazos</p>
+                                <div className="text-center">
+                                    <h4 className="text-[10px] md:text-xs font-black text-slate-900 dark:text-white truncate uppercase mb-1">{card.name}</h4>
+                                    <div className="flex items-center justify-center gap-1 text-blue-600 dark:text-blue-400 font-black text-[9px] uppercase">
+                                        <BarChart3 size={10} /> Análisis
+                                    </div>
                                 </div>
                             </motion.div>
                         ))
                     )}
                 </div>
             </motion.section>
+
+            {/* ✅ MODAL DE ANÁLISIS PROFESIONAL DE CARTA */}
+            <AnimatePresence>
+                {showMetaModal && selectedMetaCard && (
+                    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowMetaModal(false)} className="absolute inset-0 bg-[#060912]/95 backdrop-blur-xl" />
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="relative w-full max-w-2xl bg-white dark:bg-[#0f172a] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl"
+                        >
+                            <button onClick={() => setShowMetaModal(false)} className="absolute top-6 right-6 z-10 p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-blue-500 transition-colors">
+                                <X size={20} />
+                            </button>
+
+                            <div className="flex flex-col md:flex-row h-full">
+                                {/* Imagen de la Carta */}
+                                <div className="w-full md:w-1/2 p-8 bg-slate-50 dark:bg-black/20 flex items-center justify-center">
+                                    <img src={selectedMetaCard.imgUrl || selectedMetaCard.img} className="w-full max-w-[240px] rounded-2xl shadow-2xl border-4 border-white dark:border-white/5" alt={selectedMetaCard.name} />
+                                </div>
+
+                                {/* Datos y Gráfico */}
+                                <div className="w-full md:w-1/2 p-8 md:p-10 flex flex-col justify-center">
+                                    <div className="mb-6">
+                                        <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Data Analysis</span>
+                                        <h3 className="text-3xl font-black uppercase italic text-slate-900 dark:text-white leading-none">{selectedMetaCard.name}</h3>
+                                    </div>
+
+                                    {/* Estadísticas Rápidas */}
+                                    <div className="grid grid-cols-2 gap-4 mb-8">
+                                        <div className="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-2xl border border-blue-100 dark:border-blue-500/20">
+                                            <p className="text-[10px] font-bold text-blue-400 uppercase mb-1">Frecuencia</p>
+                                            <p className="text-2xl font-black text-blue-600 dark:text-blue-400">{selectedMetaCard.usageCount} <span className="text-xs">Mazos</span></p>
+                                        </div>
+                                        <div className="p-4 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl border border-indigo-100 dark:border-indigo-500/20">
+                                            <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Impacto</p>
+                                            <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{((selectedMetaCard.usageCount / trendingCards.reduce((a,b)=>a+b.usageCount,0))*100).toFixed(1)}%</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Gráfico de Pastel */}
+                                    <div className="h-48 w-full">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={getChartData(selectedMetaCard)}
+                                                    innerRadius={50}
+                                                    outerRadius={70}
+                                                    paddingAngle={5}
+                                                    dataKey="value"
+                                                >
+                                                    {getChartData(selectedMetaCard).map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                                                    ))}
+                                                </Pie>
+                                                <RechartsTooltip 
+                                                    contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}
+                                                />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                        <div className="text-center -mt-28 mb-16 pointer-events-none">
+                                            <p className="text-[10px] font-black uppercase text-slate-400">Share of Top</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <p className="text-xs text-slate-400 italic text-center">Datos basados en la arquitectura de mazos analizada por ForjaDeck v3.0</p>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* --- SECCIÓN: JUEGOS VIKINGOS STORE --- */}
             <motion.section 
@@ -283,7 +378,7 @@ export default function HomePortal() {
                             rel="noreferrer"
                             className="flex flex-col items-center gap-3 group min-w-[100px]"
                         >
-                            <div className="w-16 h-16 md:w-24 md:h-24 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 group-hover:rotate-12 transition-transform duration-500 shadow-xl">
+                            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 group-hover:rotate-12 transition-transform duration-500 shadow-xl">
                                 <div className="w-full h-full rounded-full border-[4px] border-white dark:border-[#0f172a] overflow-hidden">
                                     <img src={player.logo || "https://via.placeholder.com/150?text=MyL"} className="w-full h-full object-cover" alt={player.name} />
                                 </div>
