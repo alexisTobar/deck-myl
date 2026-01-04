@@ -34,43 +34,44 @@ export default function ImperioHome() {
                 />
             </div>
 
-            <section className="relative h-screen flex items-center justify-center border-b border-slate-200 dark:border-white/5 z-10 px-4">
-                <div className="text-center max-w-6xl">
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex justify-center mb-6">
+            <section className="relative min-h-screen flex items-center justify-center border-b border-slate-200 dark:border-white/5 z-10 px-4 py-20">
+                <div className="text-center w-full max-w-6xl mx-auto">
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex justify-center mb-4 md:mb-6">
                         <Zap size={32} className="text-blue-600 animate-pulse" fill="currentColor" />
                     </motion.div>
                     
+                    {/* 📱 MEJORA: Título con clamp para evitar desbordamiento en móvil */}
                     <motion.h1 
                         initial={{ opacity: 0, y: 20 }} 
                         animate={{ opacity: 1, y: 0 }} 
-                        className="text-7xl md:text-[11rem] font-black text-slate-900 dark:text-white mb-6 uppercase tracking-tighter italic leading-none"
+                        className="text-[14vw] sm:text-[12vw] md:text-[10rem] font-black text-slate-900 dark:text-white mb-6 uppercase tracking-tighter italic leading-[0.9] break-words"
                     >
                         ERA<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">IMPERIO</span>
                     </motion.h1>
 
-                    <motion.p {...fadeInUp} className="text-lg md:text-3xl text-slate-500 dark:text-slate-300 mb-12 max-w-3xl mx-auto italic font-medium leading-relaxed">
+                    <motion.p {...fadeInUp} className="text-base md:text-3xl text-slate-500 dark:text-slate-300 mb-10 md:mb-12 max-w-3xl mx-auto italic font-medium leading-relaxed px-2">
                         Domina el poder del presente. El campo de batalla oficial analizado por <span className="text-blue-600 font-bold">ForjaDeck</span>.
                     </motion.p>
 
-                    <motion.div {...fadeInUp} className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                        <Link to="/imperio/builder" className="group relative px-14 py-7 bg-blue-600 text-white rounded-2xl transition-all hover:scale-110 active:scale-95 shadow-xl shadow-blue-600/20 overflow-hidden">
-                            <span className="relative z-10 font-black uppercase italic text-2xl flex items-center gap-3">
-                                <Sword size={28} /> FORJAR MAZO
+                    <motion.div {...fadeInUp} className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center items-center w-full px-4">
+                        <Link to="/imperio/builder" className="w-full sm:w-auto group relative px-8 md:px-14 py-5 md:py-7 bg-blue-600 text-white rounded-2xl transition-all hover:scale-105 active:scale-95 shadow-xl shadow-blue-600/20 overflow-hidden text-center">
+                            <span className="relative z-10 font-black uppercase italic text-xl md:text-2xl flex items-center justify-center gap-3">
+                                <Sword size={24} /> FORJAR MAZO
                             </span>
                         </Link>
-                        <Link to="/community" className="px-14 py-7 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-2xl font-black transition-all hover:bg-blue-600/10 flex items-center justify-center gap-3 uppercase italic text-2xl text-slate-700 dark:text-slate-200 shadow-sm">
-                            <Users size={28} /> COMUNIDAD
+                        <Link to="/community" className="w-full sm:w-auto px-8 md:px-14 py-5 md:py-7 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-2xl font-black transition-all hover:bg-blue-600/10 flex items-center justify-center gap-3 uppercase italic text-xl md:text-2xl text-slate-700 dark:text-slate-200 shadow-sm text-center">
+                            <Users size={24} /> COMUNIDAD
                         </Link>
                     </motion.div>
                 </div>
             </section>
 
             {/* SECCIÓN RADAR */}
-            <section className="max-w-7xl mx-auto px-6 py-32 relative z-10">
+            <section className="max-w-7xl mx-auto px-6 py-20 md:py-32 relative z-10">
                 <motion.div {...fadeInUp} className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-center">
                     <div className="lg:col-span-1 text-left">
                         <Target className="text-blue-600 mb-6" size={48} />
-                        <h2 className="text-5xl font-black uppercase italic tracking-tighter leading-none mb-6">Radar de <span className="text-blue-600">Razas</span></h2>
+                        <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none mb-6">Radar de <span className="text-blue-600">Razas</span></h2>
                         <p className="text-slate-500 dark:text-slate-400 text-lg leading-relaxed font-medium">Tendencia de uso en torneos recientes y popularidad en la arena oficial.</p>
                     </div>
                     <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -82,11 +83,11 @@ export default function ImperioHome() {
                 </motion.div>
             </section>
 
-            {/* SECCIÓN ANALISTAS (TUS VIDEOS ESPECÍFICOS) */}
-            <section className="max-w-7xl mx-auto px-6 py-32 relative z-10 border-t border-slate-200 dark:border-white/5">
-                <motion.div {...fadeInUp} className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+            {/* SECCIÓN ANALISTAS */}
+            <section className="max-w-7xl mx-auto px-6 py-20 md:py-32 relative z-10 border-t border-slate-200 dark:border-white/5">
+                <motion.div {...fadeInUp} className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 md:after:mb-16 gap-6">
                     <div className="text-left">
-                        <h2 className="text-5xl font-black uppercase italic tracking-tighter leading-none">Analistas del <span className="text-blue-600">Meta</span></h2>
+                        <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">Analistas del <span className="text-blue-600">Meta</span></h2>
                         <p className="text-slate-400 mt-2 font-bold uppercase tracking-widest text-[10px] italic">Contenido destacado de la comunidad</p>
                     </div>
                     <div className="flex items-center gap-4 text-red-600 font-black uppercase text-sm">
@@ -101,11 +102,11 @@ export default function ImperioHome() {
             </section>
 
             {/* RECURSOS */}
-            <section className="bg-white dark:bg-slate-950/50 py-32 border-y border-slate-200 dark:border-white/10 relative z-10 transition-colors">
-                <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 text-center md:text-left">
+            <section className="bg-white dark:bg-slate-950/50 py-20 md:py-32 border-y border-slate-200 dark:border-white/10 relative z-10 transition-colors">
+                <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 text-center md:text-left">
                     <ResourceBox 
                         title="Banlist Oficial"
-                        desc="Consulta la lista actualizada de cartas restringidas para el formato competitivo Imperio."
+                        desc="Consulta la lista actualizada de cartas restringidas para el formato Imperio."
                         icon={<Trophy size={48} className="text-blue-600" />}
                         link="https://blog.myl.cl/banlists-actualizadas/"
                         btnText="Ver Banlist"
@@ -121,7 +122,7 @@ export default function ImperioHome() {
             </section>
 
             {/* FOOTER */}
-            <footer className="bg-white dark:bg-black py-20 border-t border-slate-200 dark:border-white/5 relative z-10">
+            <footer className="bg-white dark:bg-black py-16 md:py-20 border-t border-slate-200 dark:border-white/5 relative z-10">
                 <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12">
                     <div className="text-center md:text-left">
                         <h2 className="text-4xl font-light italic uppercase tracking-tighter text-slate-900 dark:text-white">Forja<span className="text-blue-600 font-black">Deck</span></h2>
@@ -147,25 +148,30 @@ export default function ImperioHome() {
 // SUBCOMPONENTES
 function RaceRank({ name, power, color }) {
     return (
-        <div className="bg-white dark:bg-white/5 p-6 rounded-2xl border border-slate-200 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/50 transition-all">
+        <div className="bg-white dark:bg-white/5 p-4 md:p-6 rounded-2xl border border-slate-200 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/50 transition-all">
             <div className="flex items-center gap-4">
                 <div className={`w-2 h-10 ${color} rounded-full`}></div>
-                <span className="text-xl font-black uppercase italic tracking-tighter text-slate-700 dark:text-slate-200">{name}</span>
+                <span className="text-lg md:text-xl font-black uppercase italic tracking-tighter text-slate-700 dark:text-slate-200">{name}</span>
             </div>
-            <div className="text-right text-blue-600 font-black text-2xl group-hover:scale-110 transition-transform">{power}</div>
+            <div className="text-right text-blue-600 font-black text-xl md:text-2xl group-hover:scale-110 transition-transform">{power}</div>
         </div>
     );
 }
 
 function YTCard({ title, videoSrc }) {
     return (
-        <div className="space-y-4 group">
-            <div className="flex justify-between items-center px-4">
-                <h3 className="text-sm font-black text-blue-600 uppercase tracking-widest italic">{title}</h3>
-                <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-tighter">Último Video</span>
+        <div className="space-y-4 group w-full">
+            <div className="flex justify-between items-center px-2 md:px-4">
+                <h3 className="text-xs md:text-sm font-black text-blue-600 uppercase tracking-widest italic">{title}</h3>
+                <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-1 rounded-lg text-[8px] md:text-[9px] font-black uppercase tracking-tighter">Último Video</span>
             </div>
-            <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-slate-200 dark:border-white/5 shadow-2xl bg-black group-hover:border-blue-500/30 transition-all">
-                <iframe width="100%" height="100%" src={videoSrc} frameBorder="0" allowFullScreen></iframe>
+            <div className="relative pt-[56.25%] w-full rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border-4 border-slate-200 dark:border-white/5 shadow-2xl bg-black group-hover:border-blue-500/30 transition-all">
+                <iframe 
+                    className="absolute top-0 left-0 w-full h-full"
+                    src={videoSrc} 
+                    frameBorder="0" 
+                    allowFullScreen
+                ></iframe>
             </div>
         </div>
     );
@@ -173,11 +179,11 @@ function YTCard({ title, videoSrc }) {
 
 function ResourceBox({ title, desc, icon, link, btnText }) {
     return (
-        <div className="p-10 bg-slate-50 dark:bg-slate-900/40 rounded-[3rem] border border-slate-200 dark:border-white/5 hover:border-blue-500/30 transition-all flex flex-col items-center text-center gap-6 group">
-            <div className="p-4 bg-white dark:bg-slate-800 rounded-2xl group-hover:scale-110 transition-transform duration-500 shadow-sm">{icon}</div>
-            <h3 className="text-3xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">{title}</h3>
-            <p className="text-slate-500 dark:text-slate-400 text-lg leading-relaxed italic">{desc}</p>
-            <a href={link} target="_blank" rel="noreferrer" className="px-10 py-4 bg-slate-900 dark:bg-slate-800 hover:bg-blue-600 text-white rounded-full font-black transition-all flex items-center gap-2 uppercase text-xs tracking-widest">
+        <div className="p-8 md:p-10 bg-slate-50 dark:bg-slate-900/40 rounded-[2rem] md:rounded-[3rem] border border-slate-200 dark:border-white/5 hover:border-blue-500/30 transition-all flex flex-col items-center text-center gap-4 md:gap-6 group">
+            <div className="p-3 md:p-4 bg-white dark:bg-slate-800 rounded-2xl group-hover:scale-110 transition-transform duration-500 shadow-sm">{icon}</div>
+            <h3 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">{title}</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-base md:text-lg leading-relaxed italic">{desc}</p>
+            <a href={link} target="_blank" rel="noreferrer" className="w-full sm:w-auto px-10 py-4 bg-slate-900 dark:bg-slate-800 hover:bg-blue-600 text-white rounded-full font-black transition-all flex items-center justify-center gap-2 uppercase text-xs tracking-widest">
                 {btnText} <ArrowRight size={14} />
             </a>
         </div>

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
     X, Star, Hammer, Users, FileText, Scale, Trophy, Zap, 
-    Sword, Instagram, Youtube, Twitter, Target, Crown, ChevronRight, PlayCircle, ArrowRight, Heart
+    Sword, Instagram, Youtube, Twitter, Target, Crown, ChevronRight, PlayCircle, ArrowRight, Heart, Layers
 } from "lucide-react";
 
 const fadeInUp = {
@@ -11,11 +11,6 @@ const fadeInUp = {
     whileInView: { opacity: 1, y: 0 },
     viewport: { once: true },
     transition: { duration: 0.6 }
-};
-
-const staggerContainer = {
-    initial: {},
-    animate: { transition: { staggerChildren: 0.1 } }
 };
 
 const MAIN_EDITIONS = [
@@ -47,43 +42,44 @@ export default function PrimerBloqueHome() {
                 />
             </div>
 
-            <section className="relative h-screen flex items-center justify-center border-b border-slate-200 dark:border-white/5 z-10 px-4">
-                <div className="text-center max-w-6xl">
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex justify-center mb-6">
+            <section className="relative min-h-screen flex items-center justify-center border-b border-slate-200 dark:border-white/5 z-10 px-4 py-20">
+                <div className="text-center w-full max-w-6xl mx-auto">
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex justify-center mb-4 md:mb-6">
                         <Star size={32} className="text-blue-600 animate-pulse" fill="currentColor" />
                     </motion.div>
                     
+                    {/* 📱 MEJORA RESPONSIVA: Título dinámico con vw y leading ajustado */}
                     <motion.h1 
                         initial={{ opacity: 0, y: 20 }} 
                         animate={{ opacity: 1, y: 0 }} 
-                        className="text-7xl md:text-[11rem] font-black text-slate-900 dark:text-white mb-6 uppercase tracking-tighter italic leading-none drop-shadow-sm"
+                        className="text-[13vw] sm:text-[11vw] md:text-[10rem] font-black text-slate-900 dark:text-white mb-6 uppercase tracking-tighter italic leading-[0.85] break-words drop-shadow-sm"
                     >
                         PRIMER<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">BLOQUE</span>
                     </motion.h1>
 
-                    <motion.p {...fadeInUp} className="text-lg md:text-3xl text-slate-500 dark:text-slate-300 mb-12 max-w-3xl mx-auto italic font-light leading-relaxed">
+                    <motion.p {...fadeInUp} className="text-base md:text-3xl text-slate-500 dark:text-slate-300 mb-10 md:mb-12 max-w-3xl mx-auto italic font-light leading-relaxed px-2">
                         Donde nació la leyenda. Revive las batallas ancestrales con el poder del código de <span className="text-blue-600 font-bold">ForjaDeck</span>.
                     </motion.p>
 
-                    <motion.div {...fadeInUp} className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                        <button onClick={() => setShowModal(true)} className="group relative px-14 py-7 bg-blue-600 text-white rounded-2xl transition-all hover:scale-110 active:scale-95 shadow-xl shadow-blue-600/20 overflow-hidden">
-                            <span className="relative z-10 font-black uppercase italic text-2xl flex items-center gap-3">
-                                <Sword size={28} /> ENTRAR A LA FORJA
+                    <motion.div {...fadeInUp} className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center items-center w-full px-4">
+                        <button onClick={() => setShowModal(true)} className="w-full sm:w-auto group relative px-8 md:px-14 py-5 md:py-7 bg-blue-600 text-white rounded-2xl transition-all hover:scale-105 active:scale-95 shadow-xl shadow-blue-600/20 overflow-hidden">
+                            <span className="relative z-10 font-black uppercase italic text-xl md:text-2xl flex items-center justify-center gap-3">
+                                <Sword size={24} /> ENTRAR A LA FORJA
                             </span>
                         </button>
-                        <Link to="/community" className="px-14 py-7 bg-white dark:bg-slate-900/60 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-2xl font-black transition-all hover:bg-blue-600/10 flex items-center justify-center gap-3 uppercase italic text-2xl text-slate-700 dark:text-slate-200 shadow-sm">
-                            <Users size={28} /> COMUNIDAD
+                        <Link to="/community" className="w-full sm:w-auto px-8 md:px-14 py-5 md:py-7 bg-white dark:bg-slate-900/60 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-2xl font-black transition-all hover:bg-blue-600/10 flex items-center justify-center gap-3 uppercase italic text-xl md:text-2xl text-slate-700 dark:text-slate-200 shadow-sm">
+                            <Users size={24} /> COMUNIDAD
                         </Link>
                     </motion.div>
                 </div>
             </section>
 
             {/* SECCIÓN TIER LIST */}
-            <section className="max-w-7xl mx-auto px-6 py-32 relative z-10">
+            <section className="max-w-7xl mx-auto px-6 py-20 md:py-32 relative z-10">
                 <motion.div {...fadeInUp} className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-center">
                     <div className="lg:col-span-1 text-left">
                         <Target className="text-blue-600 mb-6" size={48} />
-                        <h2 className="text-5xl font-black uppercase italic tracking-tighter leading-none mb-6">Tier List <span className="text-blue-600">Racial</span></h2>
+                        <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none mb-6">Tier List <span className="text-blue-600">Racial</span></h2>
                         <p className="text-slate-500 dark:text-slate-400 text-lg leading-relaxed italic font-medium">El estado del metajuego en las arenas según la comunidad.</p>
                     </div>
                     <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -95,11 +91,11 @@ export default function PrimerBloqueHome() {
                 </motion.div>
             </section>
 
-            {/* SECCIÓN YOUTUBE (MEJORADA PARA LIVE) */}
-            <section className="max-w-7xl mx-auto px-6 py-32 relative z-10 border-t border-slate-200 dark:border-white/5">
-                <motion.div {...fadeInUp} className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+            {/* SECCIÓN YOUTUBE */}
+            <section className="max-w-7xl mx-auto px-6 py-20 md:py-32 relative z-10 border-t border-slate-200 dark:border-white/5">
+                <motion.div {...fadeInUp} className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 md:mb-16 gap-6">
                     <div className="text-left">
-                        <h2 className="text-5xl font-black uppercase italic tracking-tighter leading-none">Sabios del <span className="text-blue-600">Relato</span></h2>
+                        <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">Sabios del <span className="text-blue-600">Relato</span></h2>
                         <p className="text-slate-500 mt-2 font-bold uppercase tracking-widest text-xs italic">Aprende de los cronistas legendarios</p>
                     </div>
                     <div className="flex items-center gap-4 text-red-600 font-black uppercase text-sm">
@@ -120,8 +116,8 @@ export default function PrimerBloqueHome() {
             </section>
 
             {/* RECURSOS */}
-            <section className="bg-white dark:bg-slate-950/50 py-32 border-y border-slate-200 dark:border-white/10 relative z-10 transition-colors">
-                <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12">
+            <section className="bg-white dark:bg-slate-950/50 py-20 md:py-32 border-y border-slate-200 dark:border-white/10 relative z-10 transition-colors">
+                <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                     <ResourceBox 
                         title="Banlist Racial"
                         desc="Revisa las restricciones de cartas para cada raza en PB Extendido."
@@ -140,7 +136,7 @@ export default function PrimerBloqueHome() {
             </section>
 
             {/* FOOTER */}
-            <footer className="bg-white dark:bg-black py-20 border-t border-slate-200 dark:border-white/5 relative z-10">
+            <footer className="bg-white dark:bg-black py-16 md:py-20 border-t border-slate-200 dark:border-white/5 relative z-10">
                 <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12">
                     <div className="text-center md:text-left">
                         <h2 className="text-4xl font-light italic uppercase tracking-tighter text-slate-900 dark:text-white">Forja<span className="text-blue-600 font-black">Deck</span></h2>
@@ -155,18 +151,19 @@ export default function PrimerBloqueHome() {
                 </div>
             </footer>
 
+            {/* MODAL RESPONSIVO */}
             <AnimatePresence>
                 {showModal && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm">
-                        <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white dark:bg-[#0c111d] border border-slate-200 dark:border-blue-500/30 w-full max-w-2xl rounded-[3rem] p-10 relative">
-                            <button onClick={() => setShowModal(false)} className="absolute top-6 right-6 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"><X size={32} /></button>
-                            <h3 className="text-4xl font-black uppercase italic tracking-tighter text-blue-600 text-center mb-10">Selecciona tu Edición</h3>
+                        <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white dark:bg-[#0c111d] border border-slate-200 dark:border-blue-500/30 w-full max-w-2xl rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 relative overflow-y-auto max-h-[90vh]">
+                            <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 md:top-6 md:right-6 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"><X size={28} /></button>
+                            <h3 className="text-2xl md:text-4xl font-black uppercase italic tracking-tighter text-blue-600 text-center mb-6 md:mb-10">Selecciona tu Edición</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {MAIN_EDITIONS.map((ed) => (
-                                    <button key={ed.id} onClick={() => navigate("/primer-bloque/builder", { state: { initialEdition: ed.id } })} className="relative h-32 rounded-2xl overflow-hidden group border border-slate-200 dark:border-white/10 hover:border-blue-500 transition-all">
+                                    <button key={ed.id} onClick={() => navigate("/primer-bloque/builder", { state: { initialEdition: ed.id } })} className="relative h-28 md:h-32 rounded-2xl overflow-hidden group border border-slate-200 dark:border-white/10 hover:border-blue-500 transition-all">
                                         <img src={ed.img} className="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:scale-110 transition-transform duration-700" alt={ed.label} />
                                         <div className={`absolute inset-0 bg-gradient-to-t ${ed.color} opacity-60`}></div>
-                                        <div className="relative h-full flex items-center justify-center font-black uppercase italic text-xl text-white">{ed.label}</div>
+                                        <div className="relative h-full flex items-center justify-center font-black uppercase italic text-lg md:text-xl text-white">{ed.label}</div>
                                     </button>
                                 ))}
                             </div>
@@ -181,35 +178,32 @@ export default function PrimerBloqueHome() {
 // SUBCOMPONENTES
 function RaceRank({ name, power, color }) {
     return (
-        <div className="bg-white dark:bg-white/5 p-6 rounded-2xl border border-slate-200 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/50 transition-all">
+        <div className="bg-white dark:bg-white/5 p-4 md:p-6 rounded-2xl border border-slate-200 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/50 transition-all">
             <div className="flex items-center gap-4">
                 <div className={`w-2 h-10 ${color} rounded-full`}></div>
-                <span className="text-xl font-black uppercase italic tracking-tighter text-slate-700 dark:text-slate-200">{name}</span>
+                <span className="text-lg md:text-xl font-black uppercase italic tracking-tighter text-slate-700 dark:text-slate-200">{name}</span>
             </div>
-            <div className="text-right text-blue-600 font-black text-2xl">{power}</div>
+            <div className="text-right text-blue-600 font-black text-xl md:text-2xl">{power}</div>
         </div>
     );
 }
 
-// ✅ YTCard ACTUALIZADO: Permite capturar "Live" o "Uploads"
 function YTCard({ title, channelId, mode = "uploads" }) {
-    // Si el modo es 'live', intentamos cargar el stream actual
-    // Si no hay stream activo, YouTube mostrará el último video o el canal
     const embedUrl = mode === "live" 
         ? `https://www.youtube.com/embed/live_stream?channel=${channelId}`
         : `https://www.youtube.com/embed?listType=user_uploads&list=${channelId}`;
 
     return (
-        <div className="space-y-4 group">
-            <div className="flex justify-between items-center px-4">
-                <h3 className="text-sm font-black text-blue-600 uppercase tracking-widest italic">{title}</h3>
+        <div className="space-y-4 group w-full">
+            <div className="flex justify-between items-center px-2 md:px-4">
+                <h3 className="text-xs md:text-sm font-black text-blue-600 uppercase tracking-widest italic">{title}</h3>
                 <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter text-white ${mode === 'live' ? 'bg-red-600 animate-pulse' : 'bg-slate-600'}`}>
-                    {mode === 'live' ? 'Capturando Vivo...' : 'Últimos Videos'}
+                    {mode === 'live' ? 'En Vivo' : 'Videos'}
                 </span>
             </div>
-            <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-slate-200 dark:border-white/5 shadow-2xl bg-black group-hover:border-blue-500/30 transition-all">
+            <div className="relative pt-[56.25%] w-full rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border-4 border-slate-200 dark:border-white/5 shadow-2xl bg-black group-hover:border-blue-500/30 transition-all">
                 <iframe 
-                    className="w-full h-full" 
+                    className="absolute top-0 left-0 w-full h-full" 
                     src={embedUrl} 
                     frameBorder="0" 
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -222,11 +216,11 @@ function YTCard({ title, channelId, mode = "uploads" }) {
 
 function ResourceBox({ title, desc, icon, link, btnText }) {
     return (
-        <div className="p-10 bg-slate-50 dark:bg-slate-900/40 rounded-[3rem] border border-slate-200 dark:border-white/5 hover:border-blue-500/30 transition-all flex flex-col items-center text-center gap-6 group">
+        <div className="p-8 md:p-10 bg-slate-50 dark:bg-slate-900/40 rounded-[2rem] md:rounded-[3rem] border border-slate-200 dark:border-white/5 hover:border-blue-500/30 transition-all flex flex-col items-center text-center gap-4 md:gap-6 group">
             <div className="group-hover:scale-125 transition-transform duration-500">{icon}</div>
-            <h3 className="text-3xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">{title}</h3>
-            <p className="text-slate-500 dark:text-slate-400 text-lg leading-relaxed italic">{desc}</p>
-            <a href={link} target="_blank" rel="noreferrer" className="px-10 py-3 bg-slate-900 dark:bg-slate-800 hover:bg-blue-600 text-white rounded-full font-black transition-all flex items-center gap-2 uppercase text-xs tracking-widest">
+            <h3 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">{title}</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-base md:text-lg leading-relaxed italic">{desc}</p>
+            <a href={link} target="_blank" rel="noreferrer" className="w-full sm:w-auto px-10 py-3 md:py-4 bg-slate-900 dark:bg-slate-800 hover:bg-blue-600 text-white rounded-full font-black transition-all flex items-center justify-center gap-2 uppercase text-xs tracking-widest">
                 {btnText} <ChevronRight size={14} />
             </a>
         </div>
