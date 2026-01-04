@@ -29,7 +29,7 @@ import { toast } from "sonner";
 export default function HomePortal() {
     const navigate = useNavigate();
     
-    // ✅ ESTADOS SEPARADOS POR FORMATO PARA EVITAR MEZCLAS
+    // ✅ ESTADOS TOTALMENTE INDEPENDIENTES PARA EVITAR MEZCLAS
     const [pbTrending, setPbTrending] = useState([]);
     const [impTrending, setImpTrending] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -53,14 +53,14 @@ export default function HomePortal() {
         const fetchTrendingData = async () => {
             setLoading(true);
             try {
-                // ✅ PETICIÓN FILTRADA PARA PRIMER BLOQUE
+                // ✅ PETICIÓN ESPECÍFICA PARA PRIMER BLOQUE
                 const resPb = await fetch(`${BACKEND_URL}/api/decks/stats/meta?format=primer_bloque`);
                 if (resPb.ok) {
                     const data = await resPb.json();
                     setPbTrending(data.slice(0, 10));
                 }
 
-                // ✅ PETICIÓN FILTRADA PARA IMPERIO
+                // ✅ PETICIÓN ESPECÍFICA PARA IMPERIO
                 const resImp = await fetch(`${BACKEND_URL}/api/decks/stats/meta?format=imperio`);
                 if (resImp.ok) {
                     const data = await resImp.json();
@@ -112,7 +112,7 @@ export default function HomePortal() {
         }
     };
 
-    // ✅ PREPARACIÓN DE DATOS PARA EL GRÁFICO DE PASTEL (Comparación local por pool)
+    // ✅ PREPARACIÓN DE DATOS PARA EL GRÁFICO (Compara solo contra su propio formato)
     const getChartData = (card) => {
         const pool = card.format === 'primer_bloque' ? pbTrending : impTrending;
         const totalOtherUsage = pool
@@ -189,12 +189,12 @@ export default function HomePortal() {
                 />
             </motion.main>
 
-            {/* --- ✅ SECCIÓN: TOP 10 PRIMER BLOQUE --- */}
+            {/* --- ✅ SECCIÓN: TOP 10 PRIMER BLOQUE (INDEPENDIENTE) --- */}
             <motion.section 
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
-                className="w-full max-w-7xl px-6 mb-20"
+                className="w-full max-w-7xl px-6 mb-24"
             >
                 <div className="flex flex-col md:flex-row items-center justify-between mb-10 border-b border-slate-200 dark:border-white/10 pb-6">
                     <div className="text-center md:text-left">
@@ -207,16 +207,16 @@ export default function HomePortal() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 md:gap-6">
                     {loading ? (
-                        [...Array(10)].map((_, n) => <div key={n} className="h-48 md:h-64 bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl animate-pulse"></div>)
+                        [...Array(5)].map((_, n) => <div key={n} className="h-48 md:h-64 bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl animate-pulse"></div>)
                     ) : (
                         pbTrending.map((card, idx) => (
-                            <MetaCard key={`pb-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
+                            <MetaCard key={`pb-meta-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
                         ))
                     )}
                 </div>
             </motion.section>
 
-            {/* --- ✅ SECCIÓN: TOP 10 IMPERIO --- */}
+            {/* --- ✅ SECCIÓN: TOP 10 IMPERIO (INDEPENDIENTE) --- */}
             <motion.section 
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
@@ -234,10 +234,10 @@ export default function HomePortal() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 md:gap-6">
                     {loading ? (
-                        [...Array(10)].map((_, n) => <div key={n} className="h-48 md:h-64 bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl animate-pulse"></div>)
+                        [...Array(5)].map((_, n) => <div key={n} className="h-48 md:h-64 bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl animate-pulse"></div>)
                     ) : (
                         impTrending.map((card, idx) => (
-                            <MetaCard key={`imp-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
+                            <MetaCard key={`imp-meta-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
                         ))
                     )}
                 </div>
@@ -269,12 +269,12 @@ export default function HomePortal() {
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4 mb-8">
-                                        <div className="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-2xl border border-blue-100 dark:border-blue-500/20 text-center md:text-left">
+                                        <div className="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-2xl border border-blue-100 dark:border-blue-500/20 text-center">
                                             <p className="text-[10px] font-bold text-blue-400 uppercase mb-1">Ocurrencias</p>
                                             <p className="text-2xl font-black text-blue-600 dark:text-blue-400">{selectedMetaCard.usageCount}</p>
                                         </div>
-                                        <div className="p-4 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl border border-indigo-100 dark:border-indigo-500/20 text-center md:text-left">
-                                            <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Meta Share</p>
+                                        <div className="p-4 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl border border-indigo-100 dark:border-indigo-500/20 text-center">
+                                            <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Impacto Top 10</p>
                                             <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
                                                 {((selectedMetaCard.usageCount / (selectedMetaCard.format === 'primer_bloque' ? pbTrending : impTrending).reduce((a,b)=>a+b.usageCount,0))*100).toFixed(1)}%
                                             </p>
@@ -301,7 +301,7 @@ export default function HomePortal() {
                                             </PieChart>
                                         </ResponsiveContainer>
                                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                            <p className="text-[8px] font-black uppercase text-slate-400 text-center leading-tight">Usage<br/>Distribution</p>
+                                            <p className="text-[8px] font-black uppercase text-slate-400 text-center leading-tight">Meta<br/>Share</p>
                                         </div>
                                     </div>
                                     
@@ -478,7 +478,7 @@ export default function HomePortal() {
     );
 }
 
-// ✅ COMPONENTE INTERNO DE TARJETA META (REUTILIZADO PARA PB E IMPERIO)
+// ✅ COMPONENTE INTERNO DE TARJETA META MEJORADO PARA SER INDEPENDIENTE
 function MetaCard({ card, index, onClick }) {
     return (
         <motion.div 
@@ -498,9 +498,9 @@ function MetaCard({ card, index, onClick }) {
                 </div>
             </div>
             <div className="text-center px-1">
-                <h4 className="text-[10px] md:text-xs font-black text-slate-900 dark:text-white truncate uppercase mb-1">{card.name}</h4>
+                <h4 className="text-[10px] md:text-xs font-black text-slate-900 dark:text-white truncate uppercase mb-1 leading-tight h-8 flex items-center justify-center">{card.name}</h4>
                 <div className="flex items-center justify-center gap-1 text-blue-600 dark:text-blue-400 font-black text-[9px] uppercase">
-                    <BarChart3 size={10} /> Ver Análisis
+                    <BarChart3 size={10} /> Análisis
                 </div>
             </div>
         </motion.div>
@@ -511,7 +511,7 @@ function FormatCard({ title, desc, img, icon, onClick, delay }) {
     return (
         <div 
             onClick={onClick}
-            className={`group cursor-pointer bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 overflow-hidden hover:shadow-2xl hover:border-blue-400 transition-all duration-500 flex flex-col animate-in fade-in slide-in-from-bottom-10 ${delay}`}
+            className={`group cursor-pointer bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 overflow-hidden hover:shadow-[0_20px_50px_rgba(37,99,235,0.15)] dark:hover:shadow-blue-500/10 hover:border-blue-400 dark:hover:border-blue-500/50 transition-all duration-500 flex flex-col animate-in fade-in slide-in-from-bottom-10 ${delay}`}
         >
             <div className="h-48 md:h-72 relative overflow-hidden">
                 <img src={img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-90 dark:opacity-60" alt={title} />
