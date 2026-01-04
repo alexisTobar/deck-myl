@@ -56,8 +56,6 @@ export default function PBBuilder() {
     const [cardToZoom, setCardToZoom] = useState(null);
     const [guardando, setGuardando] = useState(false);
     const [manoPrueba, setManoPrueba] = useState([]);
-    
-    // ✅ ESTADO PARA ORO INICIAL
     const [oroInicialSlug, setOroInicialSlug] = useState(null);
 
     const totalCartas = useMemo(() => mazo.reduce((acc, c) => acc + c.cantidad, 0), [mazo]);
@@ -68,28 +66,36 @@ export default function PBBuilder() {
         return { counts };
     }, [mazo]);
 
-    // ✅ SIMULADOR DE MANO ACTUALIZADO (Oro Inicial separado de las 8 Cartas)
+    // ✅ CORRECCIÓN: Filtrar el Oro Inicial de la Baraja antes de repartir
     const simularMano = () => {
         setManoPrueba([]);
-        const oroInicial = mazo.find(c => c.slug === oroInicialSlug);
-        
+        if (!oroInicialSlug) return alert("Selecciona un Oro Inicial primero.");
+
         setTimeout(() => {
-            let barajaParaBarajar = [];
+            let barajaCompleta = [];
+            // Crear el pool de cartas basado en sus cantidades
             mazo.forEach(c => {
-                let cant = c.cantidad;
-                // Si es el oro inicial, quitamos una copia de la baraja para el barajeo
-                if (c.slug === oroInicialSlug) cant = c.cantidad - 1;
-                for (let i = 0; i < cant; i++) barajaParaBarajar.push(c);
+                for (let i = 0; i < c.cantidad; i++) {
+                    barajaCompleta.push(c);
+                }
             });
 
-            // Barajar barajaParaBarajar
-            for (let i = barajaParaBarajar.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [barajaParaBarajar[i], barajaParaBarajar[j]] = [barajaParaBarajar[j], barajaParaBarajar[i]];
+            // 1. Encontrar el índice de la primera copia del Oro Inicial
+            const indexOro = barajaCompleta.findIndex(c => c.slug === oroInicialSlug);
+            
+            // 2. Si existe (siempre debería), lo removemos de la baraja que se va a barajar
+            if (indexOro !== -1) {
+                barajaCompleta.splice(indexOro, 1);
             }
 
-            const manoFinal = barajaParaBarajar.slice(0, 8);
-            // La mano siempre tendrá 8 cartas (o menos si el mazo es pequeño)
+            // 3. Barajar el resto (ahora tiene 49 cartas o menos)
+            for (let i = barajaCompleta.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [barajaCompleta[i], barajaCompleta[j]] = [barajaCompleta[j], barajaCompleta[i]];
+            }
+
+            // 4. Tomar las 8 cartas para la mano
+            const manoFinal = barajaCompleta.slice(0, 8);
             setManoPrueba(manoFinal);
         }, 50);
     };
@@ -107,7 +113,6 @@ export default function PBBuilder() {
                 setEditingDeckId(isCloning ? null : d._id);
                 setIsPublic(isCloning ? false : (d.isPublic || false));
                 setMazo(d.cards.map(c => ({ ...c, cantidad: c.quantity || 1, imgUrl: getImg(c) })));
-                // Si el mazo guardado tiene un oro inicial (usaremos el primer oro por defecto o lógica previa si existiera)
                 const firstGold = d.cards.find(c => c.type === "Oro");
                 if (firstGold) setOroInicialSlug(firstGold.slug);
             }
@@ -147,7 +152,6 @@ export default function PBBuilder() {
         if (ex) setMazo(mazo.map(x => x.slug === c.slug ? { ...x, cantidad: x.cantidad + 1 } : x));
         else {
             setMazo([...mazo, { ...c, cantidad: 1, imgUrl: getImg(c) }]);
-            // Si es el primer oro que agrega, ponerlo como inicial automáticamente
             if (c.type === "Oro" && !oroInicialSlug) setOroInicialSlug(c.slug);
         }
     };
@@ -362,7 +366,7 @@ export default function PBBuilder() {
                 <div className="flex gap-2">
                     <button onClick={simularMano} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Mano</button>
                     <button onClick={() => setShowMobileList(true)} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Lista</button>
-                    <button onClick={handleTakeScreenshot} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700 flex items-center justify-center"><Camera size={18} /></button>
+                    <button onClick={handleTakeScreenshot} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-submit-700"><Camera size={18} /></button>
                     <button onClick={() => setModalGuardarOpen(true)} className="bg-blue-600 dark:bg-yellow-600 text-white dark:text-black px-5 py-2 rounded-xl font-black text-xs shadow-lg flex items-center justify-center"><Save size={16} /></button>
                 </div>
             </div>
@@ -374,7 +378,7 @@ export default function PBBuilder() {
                         <motion.h3 initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-xl md:text-2xl font-black text-blue-500 dark:text-yellow-500 uppercase italic mb-8 tracking-widest text-center flex items-center gap-3"><Sparkles className="animate-pulse text-yellow-400" size={24} /> Mano Inicial PB</motion.h3>
                         
                         <div className="flex flex-col md:flex-row gap-8 items-center max-w-full">
-                            {/* SECCIÓN ORO INICIAL SEPARADA */}
+                            {/* ✅ SECCIÓN ORO INICIAL SEPARADA */}
                             {oroInicialSlug && mazo.find(c => c.slug === oroInicialSlug) && (
                                 <div className="flex flex-col items-center gap-2 border-r border-white/10 pr-8">
                                     <span className="text-[10px] font-black text-yellow-500 uppercase tracking-widest bg-yellow-500/10 px-3 py-1 rounded-full border border-yellow-500/20">Oro Inicial</span>
@@ -392,7 +396,7 @@ export default function PBBuilder() {
                                 </div>
                             )}
 
-                            {/* SECCIÓN MANO REPARTIDA */}
+                            {/* ✅ SECCIÓN MANO REPARTIDA (8 CARTAS SIN EL ORO INICIAL) */}
                             <div className="flex flex-col items-center gap-2">
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cartas Repartidas</span>
                                 <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-3">
@@ -421,14 +425,15 @@ export default function PBBuilder() {
                 )}
             </AnimatePresence>
 
+            {/* MODAL LISTA MÓVIL */}
             {showMobileList && (
                 <div className="md:hidden fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
                     <div className="bg-white dark:bg-slate-900 rounded-t-[3rem] h-[80vh] p-6 overflow-hidden border-t border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-black uppercase text-blue-600 dark:text-yellow-500 italic tracking-tighter">Mi Grimorio ({totalCartas}/50)</h3>
                             <div className="flex gap-2">
-                                <button onClick={handleTakeScreenshot} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-blue-600 dark:text-yellow-500 border border-slate-200 dark:border-submit-700"><Camera size={20}/></button>
-                                <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 border border-slate-200 dark:border-slate-700"><X size={24} /></button>
+                                <button onClick={handleTakeScreenshot} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-blue-600 dark:text-yellow-500 border border-slate-200 dark:border-slate-700"><Camera size={20}/></button>
+                                <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 border border-slate-200 dark:border-slate-700 transition-colors hover:text-red-500"><X size={24} /></button>
                             </div>
                         </div>
                         <div className="grid grid-cols-5 gap-1 mb-4">
