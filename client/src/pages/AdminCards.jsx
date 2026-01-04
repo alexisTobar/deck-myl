@@ -65,7 +65,11 @@ export default function AdminDashboard() {
     const [statsMeta, setStatsMeta] = useState([]);
     
     const [marketItems, setMarketItems] = useState([]);
-    const [isDark, setIsDark] = useState(true);
+    // ✅ MODO OSCURO CARGA PREFERENCIA O DEFECTO OSCURO
+    const [isDark, setIsDark] = useState(() => {
+        const saved = localStorage.getItem("adminTheme");
+        return saved ? saved === "dark" : true;
+    });
 
     const initialFormState = {
         name: "", slug: "", edition: "", edition_slug: "",
@@ -105,10 +109,16 @@ export default function AdminDashboard() {
         if (activeTab === "market" && step === "editor") fetchMarketItems();
     }, [edicionFiltro, formato, activeTab, step]);
 
+    // ✅ EFECTO PARA APLICAR TEMA CLARO/OSCURO AL HTML Y LOCALSTORAGE
     useEffect(() => {
         const root = window.document.documentElement;
-        if (isDark) root.classList.add("dark");
-        else root.classList.remove("dark");
+        if (isDark) {
+            root.classList.add("dark");
+            localStorage.setItem("adminTheme", "dark");
+        } else {
+            root.classList.remove("dark");
+            localStorage.setItem("adminTheme", "light");
+        }
     }, [isDark]);
 
     const cartasFiltradas = useMemo(() => {
@@ -165,19 +175,29 @@ export default function AdminDashboard() {
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Borrar',
+            cancelButtonText: 'Cancelar',
             ...swalDark
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
                     const res = await fetch(`${BACKEND_URL}/api/marketplace/${id}`, {
                         method: "DELETE",
-                        headers: { "auth-token": token }
+                        headers: { 
+                            "auth-token": token,
+                            "Content-Type": "application/json"
+                        }
                     });
                     if (res.ok) {
                         Swal.fire({ icon: 'success', title: 'Publicación eliminada', ...swalDark });
                         fetchMarketItems();
+                    } else {
+                        const errData = await res.json();
+                        Swal.fire({ icon: 'error', title: 'Error', text: errData.msg || 'No se pudo borrar', ...swalDark });
                     }
-                } catch (e) { console.error(e); }
+                } catch (e) { 
+                    console.error(e);
+                    Swal.fire({ icon: 'error', title: 'Error de red', ...swalDark });
+                }
             }
         });
     };
@@ -308,11 +328,16 @@ export default function AdminDashboard() {
                             </h1>
                         </div>
 
-                        <div className="flex bg-slate-100 dark:bg-slate-950 p-1.5 rounded-2xl border border-slate-200 dark:border-white/5 gap-2 overflow-x-auto max-w-full no-scrollbar">
-                            <TabBtn active={activeTab === 'cards'} label="Cartas" icon={<Layers size={14} />} color="bg-blue-600" onClick={() => setActiveTab("cards")} />
-                            <TabBtn active={activeTab === 'users'} label="Usuarios" icon={<Users size={14} />} color="bg-purple-600" onClick={() => setActiveTab("users")} />
-                            <TabBtn active={activeTab === 'market'} label="Market" icon={<ShoppingBag size={14} />} color="bg-pink-600" onClick={() => setActiveTab("market")} />
-                            <TabBtn active={activeTab === 'meta'} label="Analytics" icon={<BarChart3 size={14} />} color="bg-orange-600" onClick={() => setActiveTab("meta")} />
+                        <div className="flex items-center gap-4">
+                            <button onClick={() => setIsDark(!isDark)} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/5 transition-all">
+                                {isDark ? <Sun size={18} className="text-orange-400" /> : <Moon size={18} className="text-blue-600" />}
+                            </button>
+                            <div className="flex bg-slate-100 dark:bg-slate-950 p-1.5 rounded-2xl border border-slate-200 dark:border-white/5 gap-2 overflow-x-auto max-w-full no-scrollbar">
+                                <TabBtn active={activeTab === 'cards'} label="Cartas" icon={<Layers size={14} />} color="bg-blue-600" onClick={() => setActiveTab("cards")} />
+                                <TabBtn active={activeTab === 'users'} label="Usuarios" icon={<Users size={14} />} color="bg-purple-600" onClick={() => setActiveTab("users")} />
+                                <TabBtn active={activeTab === 'market'} label="Market" icon={<ShoppingBag size={14} />} color="bg-pink-600" onClick={() => setActiveTab("market")} />
+                                <TabBtn active={activeTab === 'meta'} label="Analytics" icon={<BarChart3 size={14} />} color="bg-orange-600" onClick={() => setActiveTab("meta")} />
+                            </div>
                         </div>
                     </div>
 
@@ -372,25 +397,15 @@ export default function AdminDashboard() {
                                         </select>
                                     </div>
                                 </div>
-
-                                {/* ✅ FORMULARIO DE RAZA DINÁMICO MEJORADO */}
                                 {( (formato === "imperio" && String(formData.type) === "1") || (formato === "primer_bloque" && formData.type === "Aliado") ) && (
                                     <div className="space-y-1 animate-in slide-in-from-top-2">
                                         <label className="text-[10px] font-black text-blue-500 dark:text-orange-500 uppercase ml-2">Raza de la Carta</label>
-                                        <select 
-                                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/5 outline-none text-[10px] font-black dark:text-white" 
-                                            value={formData.race || ""} 
-                                            onChange={e => setFormData({ ...formData, race: e.target.value })}
-                                        >
+                                        <select className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/5 outline-none text-[10px] font-black dark:text-white" value={formData.race || ""} onChange={e => setFormData({ ...formData, race: e.target.value })}>
                                             <option value="">Sin Raza / Otros</option>
-                                            {formato === "imperio" 
-                                                ? RAZAS_IMPERIO_LIST.map(r => <option key={r} value={r}>{r}</option>) 
-                                                : RAZAS_PB.map(r => <option key={r} value={r}>{r}</option>)
-                                            }
+                                            {formato === "imperio" ? RAZAS_IMPERIO_LIST.map(r => <option key={r} value={r}>{r}</option>) : RAZAS_PB.map(r => <option key={r} value={r}>{r}</option>)}
                                         </select>
                                     </div>
                                 )}
-
                                 <div className="grid grid-cols-2 gap-3">
                                     <input type="number" placeholder="Coste" className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/5 outline-none text-xs dark:text-white" value={formData.cost} onChange={e => setFormData({ ...formData, cost: parseInt(e.target.value) || 0 })} />
                                     <input type="number" placeholder="Fuerza" className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/5 outline-none text-xs dark:text-white" value={formData.strength} onChange={e => setFormData({ ...formData, strength: parseInt(e.target.value) || 0 })} />
@@ -405,7 +420,6 @@ export default function AdminDashboard() {
                                 </div>
                             </form>
                         </div>
-
                         <div className="lg:col-span-3">
                             {loading ? (
                                 <div className="flex flex-col items-center py-40 gap-4">
@@ -420,19 +434,12 @@ export default function AdminDashboard() {
                                             <div className="mt-2 text-center pb-2 px-1">
                                                 <p className="text-[10px] font-black truncate uppercase text-slate-900 dark:text-white tracking-tighter">{c.name}</p>
                                                 <p className="text-[8px] text-slate-500 font-bold uppercase">{c.edition_slug || c.edition}</p>
-                                                {/* ✅ VISUALIZACIÓN DE RAZA EN LA LISTA */}
-                                                {c.race && <p className="text-[7px] text-blue-500 font-black uppercase tracking-widest mt-1">{c.race}</p>}
+                                                {c.race && <p className="text-[7px] text-blue-500 font-black uppercase tracking-widest">{c.race}</p>}
                                             </div>
                                             <div className="absolute inset-0 bg-slate-950/90 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-all duration-300 backdrop-blur-sm">
                                                 <button onClick={() => {
                                                     setEditingCard(c);
-                                                    setFormData({ 
-                                                        ...c, 
-                                                        imgUrl: getImg(c), 
-                                                        restriction: c.restriction || "unrestricted", 
-                                                        edition: c.edition || c.edition_slug,
-                                                        race: c.race || "" // ✅ Carga de raza al editar
-                                                    });
+                                                    setFormData({ ...c, imgUrl: getImg(c), restriction: c.restriction || "unrestricted", edition: c.edition || c.edition_slug, race: c.race || "" });
                                                     window.scrollTo({ top: 0, behavior: 'smooth' });
                                                 }} className="bg-blue-600 p-3 rounded-full text-white shadow-xl hover:scale-110 transition-transform">
                                                     <Layout size={18} />
