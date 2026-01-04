@@ -44,31 +44,40 @@ export default function PrimerBloqueHome() {
 
             <section className="relative min-h-screen flex items-center justify-center border-b border-slate-200 dark:border-white/5 z-10 px-4 py-20">
                 <div className="text-center w-full max-w-6xl mx-auto">
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex justify-center mb-4 md:mb-6">
-                        <Star size={32} className="text-blue-600 animate-pulse" fill="currentColor" />
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex justify-center mb-10">
+                        <div className="p-3 rounded-full bg-blue-500/10 border border-blue-500/20">
+                            <Star size={28} className="text-blue-600 animate-pulse" fill="currentColor" />
+                        </div>
                     </motion.div>
                     
-                    {/* 📱 MEJORA RESPONSIVA: Título dinámico con vw y leading ajustado */}
-                    <motion.h1 
-                        initial={{ opacity: 0, y: 20 }} 
-                        animate={{ opacity: 1, y: 0 }} 
-                        className="text-[13vw] sm:text-[11vw] md:text-[10rem] font-black text-slate-900 dark:text-white mb-6 uppercase tracking-tighter italic leading-[0.85] break-words drop-shadow-sm"
+                    {/* 🛠️ MEJORA DE TÍTULO EXPERTO: Composición Minimalista Industrial */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-8"
                     >
-                        PRIMER<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">BLOQUE</span>
-                    </motion.h1>
+                        <h1 className="flex flex-col items-center leading-none">
+                            <span className="text-4xl md:text-6xl font-extralight uppercase tracking-[0.4em] text-slate-400 dark:text-slate-500 mb-2">
+                                Primer
+                            </span>
+                            <span className="text-[12vw] md:text-[11rem] font-black uppercase tracking-tighter italic text-slate-900 dark:text-white drop-shadow-2xl">
+                                BLOQUE<span className="text-blue-600">.</span>
+                            </span>
+                        </h1>
+                    </motion.div>
 
-                    <motion.p {...fadeInUp} className="text-base md:text-3xl text-slate-500 dark:text-slate-300 mb-10 md:mb-12 max-w-3xl mx-auto italic font-light leading-relaxed px-2">
+                    <motion.p {...fadeInUp} className="text-base md:text-2xl text-slate-500 dark:text-slate-300 mb-12 max-w-2xl mx-auto italic font-light leading-relaxed px-4 border-l-2 border-blue-600/30">
                         Donde nació la leyenda. Revive las batallas ancestrales con el poder del código de <span className="text-blue-600 font-bold">ForjaDeck</span>.
                     </motion.p>
 
-                    <motion.div {...fadeInUp} className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center items-center w-full px-4">
-                        <button onClick={() => setShowModal(true)} className="w-full sm:w-auto group relative px-8 md:px-14 py-5 md:py-7 bg-blue-600 text-white rounded-2xl transition-all hover:scale-105 active:scale-95 shadow-xl shadow-blue-600/20 overflow-hidden">
-                            <span className="relative z-10 font-black uppercase italic text-xl md:text-2xl flex items-center justify-center gap-3">
-                                <Sword size={24} /> ENTRAR A LA FORJA
+                    <motion.div {...fadeInUp} className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+                        <button onClick={() => setShowModal(true)} className="group w-full sm:w-auto relative px-14 py-6 bg-blue-600 text-white rounded-2xl transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-blue-600/40 overflow-hidden">
+                            <span className="relative z-10 font-black uppercase italic text-xl flex items-center justify-center gap-3">
+                                <Sword size={22} /> ENTRAR A LA FORJA
                             </span>
                         </button>
-                        <Link to="/community" className="w-full sm:w-auto px-8 md:px-14 py-5 md:py-7 bg-white dark:bg-slate-900/60 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-2xl font-black transition-all hover:bg-blue-600/10 flex items-center justify-center gap-3 uppercase italic text-xl md:text-2xl text-slate-700 dark:text-slate-200 shadow-sm">
-                            <Users size={24} /> COMUNIDAD
+                        <Link to="/community" className="w-full sm:w-auto px-14 py-6 bg-white dark:bg-slate-900/60 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-2xl font-black transition-all hover:bg-blue-600/10 flex items-center justify-center gap-3 uppercase italic text-xl text-slate-700 dark:text-slate-200 shadow-sm">
+                            <Users size={22} /> COMUNIDAD
                         </Link>
                     </motion.div>
                 </div>
@@ -91,9 +100,9 @@ export default function PrimerBloqueHome() {
                 </motion.div>
             </section>
 
-            {/* SECCIÓN YOUTUBE */}
+            {/* SECCIÓN YOUTUBE - OPTIMIZADA */}
             <section className="max-w-7xl mx-auto px-6 py-20 md:py-32 relative z-10 border-t border-slate-200 dark:border-white/5">
-                <motion.div {...fadeInUp} className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 md:mb-16 gap-6">
+                <motion.div {...fadeInUp} className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-6">
                     <div className="text-left">
                         <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">Sabios del <span className="text-blue-600">Relato</span></h2>
                         <p className="text-slate-500 mt-2 font-bold uppercase tracking-widest text-xs italic">Aprende de los cronistas legendarios</p>
@@ -103,15 +112,15 @@ export default function PrimerBloqueHome() {
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
                         </span>
-                        <Youtube size={24} /> En Vivo / Recientes
+                        <Youtube size={24} /> Análisis en Video
                     </div>
                 </motion.div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <YTCard title="Elevadoh" channelId="elevadoh" mode="live" />
-                    <YTCard title="Coliseo Mitero" channelId="coliseomitero" mode="live" />
-                    <YTCard title="Dragon Dorado" channelId="DragonDoradoMyL" mode="uploads" />
-                    <YTCard title="Mitos y Leyendas" channelId="myloficial" mode="live" />
+                    <YTCard title="Sombras y Oscuridad" videoId="z-hekxgmP2I" />
+                    <YTCard title="Mitos y Leyendas Oficial" videoId="u-am6kIUP_A" />
+                    <YTCard title="Elevadoh" videoId="K56XN5lB2-M" /> 
+                    <YTCard title="Coliseo Mitero" videoId="W1XU_vS0i1k" />
                 </div>
             </section>
 
@@ -151,7 +160,6 @@ export default function PrimerBloqueHome() {
                 </div>
             </footer>
 
-            {/* MODAL RESPONSIVO */}
             <AnimatePresence>
                 {showModal && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm">
@@ -188,23 +196,20 @@ function RaceRank({ name, power, color }) {
     );
 }
 
-function YTCard({ title, channelId, mode = "uploads" }) {
-    const embedUrl = mode === "live" 
-        ? `https://www.youtube.com/embed/live_stream?channel=${channelId}`
-        : `https://www.youtube.com/embed?listType=user_uploads&list=${channelId}`;
-
+// 🛠️ MEJORA DE YOUTUBE: Componente basado en VideoID para estabilidad total
+function YTCard({ title, videoId }) {
     return (
         <div className="space-y-4 group w-full">
             <div className="flex justify-between items-center px-2 md:px-4">
                 <h3 className="text-xs md:text-sm font-black text-blue-600 uppercase tracking-widest italic">{title}</h3>
-                <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter text-white ${mode === 'live' ? 'bg-red-600 animate-pulse' : 'bg-slate-600'}`}>
-                    {mode === 'live' ? 'En Vivo' : 'Videos'}
+                <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter text-white bg-slate-600">
+                    SABIO
                 </span>
             </div>
             <div className="relative pt-[56.25%] w-full rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border-4 border-slate-200 dark:border-white/5 shadow-2xl bg-black group-hover:border-blue-500/30 transition-all">
                 <iframe 
                     className="absolute top-0 left-0 w-full h-full" 
-                    src={embedUrl} 
+                    src={`https://www.youtube.com/embed/${videoId}`}
                     frameBorder="0" 
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                     allowFullScreen
