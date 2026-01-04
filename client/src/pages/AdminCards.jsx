@@ -63,13 +63,7 @@ export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState("cards");
     const [usuarios, setUsuarios] = useState([]);
     const [statsMeta, setStatsMeta] = useState([]);
-    
     const [marketItems, setMarketItems] = useState([]);
-    // ✅ MODO OSCURO CARGA PREFERENCIA O DEFECTO OSCURO
-    const [isDark, setIsDark] = useState(() => {
-        const saved = localStorage.getItem("adminTheme");
-        return saved ? saved === "dark" : true;
-    });
 
     const initialFormState = {
         name: "", slug: "", edition: "", edition_slug: "",
@@ -81,9 +75,9 @@ export default function AdminDashboard() {
     const [formData, setFormData] = useState(initialFormState);
     const token = localStorage.getItem("token");
 
-    const swalDark = {
-        background: isDark ? '#0F172A' : '#fff',
-        color: isDark ? '#fff' : '#000',
+    // Estilo para alertas adaptable (usa las clases del sistema)
+    const swalStyle = {
+        background: 'var(--tw-bg-opacity)',
         confirmButtonColor: '#2563eb',
         cancelButtonColor: '#ef4444',
     };
@@ -108,18 +102,6 @@ export default function AdminDashboard() {
         if (activeTab === "meta" && step === "editor") fetchMetaStats();
         if (activeTab === "market" && step === "editor") fetchMarketItems();
     }, [edicionFiltro, formato, activeTab, step]);
-
-    // ✅ EFECTO PARA APLICAR TEMA CLARO/OSCURO AL HTML Y LOCALSTORAGE
-    useEffect(() => {
-        const root = window.document.documentElement;
-        if (isDark) {
-            root.classList.add("dark");
-            localStorage.setItem("adminTheme", "dark");
-        } else {
-            root.classList.remove("dark");
-            localStorage.setItem("adminTheme", "light");
-        }
-    }, [isDark]);
 
     const cartasFiltradas = useMemo(() => {
         return cartas.filter(c =>
@@ -176,7 +158,7 @@ export default function AdminDashboard() {
             showCancelButton: true,
             confirmButtonText: 'Borrar',
             cancelButtonText: 'Cancelar',
-            ...swalDark
+            ...swalStyle
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
@@ -188,15 +170,15 @@ export default function AdminDashboard() {
                         }
                     });
                     if (res.ok) {
-                        Swal.fire({ icon: 'success', title: 'Publicación eliminada', ...swalDark });
+                        Swal.fire({ icon: 'success', title: 'Publicación eliminada', ...swalStyle });
                         fetchMarketItems();
                     } else {
                         const errData = await res.json();
-                        Swal.fire({ icon: 'error', title: 'Error', text: errData.msg || 'No se pudo borrar', ...swalDark });
+                        Swal.fire({ icon: 'error', title: 'Error', text: errData.msg || 'No se pudo borrar', ...swalStyle });
                     }
                 } catch (e) { 
                     console.error(e);
-                    Swal.fire({ icon: 'error', title: 'Error de red', ...swalDark });
+                    Swal.fire({ icon: 'error', title: 'Error de red', ...swalStyle });
                 }
             }
         });
@@ -210,7 +192,7 @@ export default function AdminDashboard() {
             showCancelButton: true,
             confirmButtonText: 'Sí, eliminar',
             cancelButtonText: 'Cancelar',
-            ...swalDark
+            ...swalStyle
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
@@ -219,11 +201,11 @@ export default function AdminDashboard() {
                         headers: { "auth-token": token }
                     });
                     if (res.ok) {
-                        Swal.fire({ icon: 'success', title: 'Usuario purgado', ...swalDark });
+                        Swal.fire({ icon: 'success', title: 'Usuario purgado', ...swalStyle });
                         fetchUsuarios();
                     }
                 } catch (e) {
-                    Swal.fire({ icon: 'error', title: 'Error de conexión', ...swalDark });
+                    Swal.fire({ icon: 'error', title: 'Error de conexión', ...swalStyle });
                 }
             }
         });
@@ -244,7 +226,6 @@ export default function AdminDashboard() {
                     title: `Rango: ${newRole.toUpperCase()}`,
                     showConfirmButton: false,
                     timer: 3000,
-                    ...swalDark
                 });
                 fetchUsuarios();
             }
@@ -276,15 +257,14 @@ export default function AdminDashboard() {
                     icon: 'success',
                     title: editingCard ? 'Carta Actualizada' : 'Carta Inyectada',
                     text: 'Los cambios se guardaron en la base de datos ✅',
-                    ...swalDark
                 });
                 fetchCartas();
                 resetForm();
             } else {
-                Swal.fire({ icon: 'error', title: 'Error al guardar', ...swalDark });
+                Swal.fire({ icon: 'error', title: 'Error al guardar' });
             }
         } catch (e) {
-            Swal.fire({ icon: 'error', title: 'Error de red', ...swalDark });
+            Swal.fire({ icon: 'error', title: 'Error de red' });
         }
     };
 
@@ -292,14 +272,11 @@ export default function AdminDashboard() {
         return (
             <div className="min-h-screen bg-slate-50 dark:bg-[#0B1120] p-8 md:p-16 text-slate-900 dark:text-white transition-colors duration-500">
                 <div className="max-w-7xl mx-auto">
-                    <header className="mb-16 flex justify-between items-start">
+                    <header className="mb-16">
                         <div>
                             <h1 className="text-5xl font-black italic tracking-tighter uppercase mb-2">Warning <span className="text-orange-500">Admin</span></h1>
                             <p className="text-slate-500 font-bold uppercase text-xs tracking-widest flex items-center gap-2"><Activity size={14} /> Estación Central de Monitoreo</p>
                         </div>
-                        <button onClick={() => setIsDark(!isDark)} className="p-4 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl border border-slate-200 dark:border-white/5 transition-all active:scale-95">
-                            {isDark ? <Sun className="text-orange-400" /> : <Moon className="text-blue-600" />}
-                        </button>
                     </header>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
@@ -318,7 +295,6 @@ export default function AdminDashboard() {
         <div className="min-h-screen bg-slate-50 dark:bg-[#0B1120] text-slate-900 dark:text-white pb-32 transition-colors duration-500">
             <div className="max-w-[1600px] mx-auto p-8 flex flex-col gap-6">
 
-                {/* CABECERA Y NAVEGACIÓN */}
                 <div className="flex flex-col gap-6 bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-xl sticky top-4 z-40">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                         <div className="flex items-center gap-4">
@@ -328,16 +304,11 @@ export default function AdminDashboard() {
                             </h1>
                         </div>
 
-                        <div className="flex items-center gap-4">
-                            <button onClick={() => setIsDark(!isDark)} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/5 transition-all">
-                                {isDark ? <Sun size={18} className="text-orange-400" /> : <Moon size={18} className="text-blue-600" />}
-                            </button>
-                            <div className="flex bg-slate-100 dark:bg-slate-950 p-1.5 rounded-2xl border border-slate-200 dark:border-white/5 gap-2 overflow-x-auto max-w-full no-scrollbar">
-                                <TabBtn active={activeTab === 'cards'} label="Cartas" icon={<Layers size={14} />} color="bg-blue-600" onClick={() => setActiveTab("cards")} />
-                                <TabBtn active={activeTab === 'users'} label="Usuarios" icon={<Users size={14} />} color="bg-purple-600" onClick={() => setActiveTab("users")} />
-                                <TabBtn active={activeTab === 'market'} label="Market" icon={<ShoppingBag size={14} />} color="bg-pink-600" onClick={() => setActiveTab("market")} />
-                                <TabBtn active={activeTab === 'meta'} label="Analytics" icon={<BarChart3 size={14} />} color="bg-orange-600" onClick={() => setActiveTab("meta")} />
-                            </div>
+                        <div className="flex bg-slate-100 dark:bg-slate-950 p-1.5 rounded-2xl border border-slate-200 dark:border-white/5 gap-2 overflow-x-auto max-w-full no-scrollbar">
+                            <TabBtn active={activeTab === 'cards'} label="Cartas" icon={<Layers size={14} />} color="bg-blue-600" onClick={() => setActiveTab("cards")} />
+                            <TabBtn active={activeTab === 'users'} label="Usuarios" icon={<Users size={14} />} color="bg-purple-600" onClick={() => setActiveTab("users")} />
+                            <TabBtn active={activeTab === 'market'} label="Market" icon={<ShoppingBag size={14} />} color="bg-pink-600" onClick={() => setActiveTab("market")} />
+                            <TabBtn active={activeTab === 'meta'} label="Analytics" icon={<BarChart3 size={14} />} color="bg-orange-600" onClick={() => setActiveTab("meta")} />
                         </div>
                     </div>
 
@@ -357,7 +328,6 @@ export default function AdminDashboard() {
                     )}
                 </div>
 
-                {/* TAB: CARTAS */}
                 {activeTab === "cards" && (
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                         <div className="lg:col-span-1 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-2xl h-fit sticky top-48">
@@ -453,7 +423,6 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {/* TAB: USUARIOS */}
                 {activeTab === "users" && (
                     <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/5 p-8 shadow-2xl">
                         <h2 className="text-2xl font-black uppercase italic mb-8 text-purple-500 flex items-center gap-3">
@@ -483,7 +452,6 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {/* TAB: MARKETPLACE */}
                 {activeTab === "market" && (
                     <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/5 p-8 shadow-2xl">
                         <h2 className="text-2xl font-black uppercase italic mb-8 text-pink-500 flex items-center gap-3">
@@ -509,7 +477,6 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {/* TAB: META REPORT */}
                 {activeTab === "meta" && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/5 p-8 shadow-2xl">
