@@ -266,7 +266,6 @@ export default function PBBuilder() {
                         <div className="flex items-center gap-2"><Layout size={18} /><span className="italic">Grimorio PB</span></div>
                         <div className={`px-3 py-1 rounded-full text-xs font-black border ${totalCartas === 50 ? 'bg-blue-600 dark:bg-yellow-500/10 border-blue-600 dark:border-yellow-500 text-white dark:text-yellow-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>{totalCartas} / 50</div>
                     </div>
-                    {/* ✅ NUEVOS CONTADORES POR TIPO WEB */}
                     <div className="grid grid-cols-5 gap-1 pt-1">
                         {ORDER_TYPES.map(type => (
                             <div key={type} className="flex flex-col items-center bg-slate-100 dark:bg-slate-800/50 rounded-lg p-1 border border-slate-200 dark:border-white/5">
@@ -310,6 +309,8 @@ export default function PBBuilder() {
                 <div className="flex gap-2">
                     <button onClick={simularMano} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Mano</button>
                     <button onClick={() => setShowMobileList(true)} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Lista</button>
+                    {/* ✅ BOTÓN DESCARGAR IMAGEN EN MÓVIL AGREGADO */}
+                    <button onClick={handleTakeScreenshot} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700 flex items-center justify-center"><Camera size={18} /></button>
                     <button onClick={() => setModalGuardarOpen(true)} className="bg-blue-600 dark:bg-yellow-600 text-white dark:text-black px-5 py-2 rounded-xl font-black text-xs shadow-lg flex items-center justify-center"><Save size={16} /></button>
                 </div>
             </div>
@@ -336,9 +337,12 @@ export default function PBBuilder() {
                     <div className="bg-white dark:bg-slate-900 rounded-t-[3rem] h-[80vh] p-6 overflow-hidden border-t border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-black uppercase text-blue-600 dark:text-yellow-500 italic tracking-tighter">Mi Grimorio ({totalCartas}/50)</h3>
-                            <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400"><X size={24} /></button>
+                            <div className="flex gap-2">
+                                {/* ✅ BOTÓN DESCARGAR IMAGEN EN LISTA MÓVIL AGREGADO */}
+                                <button onClick={handleTakeScreenshot} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-blue-600 dark:text-yellow-500 border border-slate-200 dark:border-slate-700"><Camera size={20}/></button>
+                                <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 border border-slate-200 dark:border-slate-700"><X size={24} /></button>
+                            </div>
                         </div>
-                        {/* ✅ CONTADORES MÓVIL */}
                         <div className="grid grid-cols-5 gap-1 mb-4">
                             {ORDER_TYPES.map(type => (
                                 <div key={type} className="flex flex-col items-center bg-slate-50 dark:bg-slate-800 rounded-lg p-2 border border-slate-100 dark:border-white/5">

@@ -114,7 +114,7 @@ export default function ImperioBuilder() {
         }
     }, [location.state]);
 
-    // ✅ EFECTO DE BÚSQUEDA CORREGIDO: Soporta Edición, Tipo y Raza juntos
+    // ✅ EFECTO DE BÚSQUEDA CORREGIDO
     useEffect(() => {
         const fetchCartas = async () => {
             setLoading(true);
@@ -128,7 +128,6 @@ export default function ImperioBuilder() {
                     params.append("edition", edicionSeleccionada);
                 }
                 
-                // Prioridad a la Raza: Si hay raza, forzamos tipo Aliado (1)
                 if (razaSeleccionada) {
                     params.append("type", "1");
                     params.append("race", razaSeleccionada);
@@ -337,7 +336,6 @@ export default function ImperioBuilder() {
                         <div className="flex items-center gap-2"><Layout size={18}/><span className="italic">Grimorio Imperio</span></div>
                         <div className={`px-3 py-1 rounded-full text-xs font-black transition-all duration-500 border ${totalCartas === 50 ? 'bg-blue-600 dark:bg-orange-500/10 border-blue-600 dark:border-orange-500 text-white dark:text-yellow-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>{totalCartas} / 50</div>
                     </div>
-                    {/* ✅ NUEVOS CONTADORES POR TIPO WEB */}
                     <div className="grid grid-cols-5 gap-1 pt-1">
                         {ORDER_TYPES.map(type => (
                             <div key={type} className="flex flex-col items-center bg-slate-100 dark:bg-slate-800/50 rounded-lg p-1 border border-slate-200 dark:border-white/5">
@@ -379,8 +377,10 @@ export default function ImperioBuilder() {
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-2 pb-6 z-50 flex items-center justify-between shadow-2xl transition-colors">
                 <div className="flex flex-col px-3"><span className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">TOTAL</span><span className={`text-xl font-black leading-none ${totalCartas === 50 ? 'text-green-600 dark:text-green-500' : 'text-slate-900 dark:text-white'}`}>{totalCartas}/50</span></div>
                 <div className="flex gap-2">
-                    <button onClick={simularMano} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Mano</button>
-                    <button onClick={() => setShowMobileList(true)} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Lista</button>
+                    <button onClick={simularMano} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Mano</button>
+                    <button onClick={() => setShowMobileList(true)} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Lista</button>
+                    {/* ✅ BOTÓN DESCARGAR IMAGEN EN MÓVIL */}
+                    <button onClick={handleTakeScreenshot} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700 flex items-center justify-center"><Camera size={18} /></button>
                     <button onClick={() => setModalGuardarOpen(true)} className="bg-blue-600 dark:bg-orange-600 text-white px-5 py-2 rounded-xl font-black text-xs shadow-lg flex items-center justify-center"><Save size={16} /></button>
                 </div>
             </div>
@@ -407,8 +407,12 @@ export default function ImperioBuilder() {
                 <div className="md:hidden fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
                     <div className="bg-white dark:bg-slate-900 rounded-t-[3rem] h-[80vh] p-6 overflow-hidden border-t border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-black uppercase text-blue-600 dark:text-orange-500 italic tracking-tighter">Grimorio ({totalCartas}/50)</h3>
-                            <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 transition-colors hover:text-red-500"><X size={24} /></button>
+                            <h3 className="text-xl font-black uppercase text-blue-600 dark:text-orange-500 italic tracking-tighter">Mi Grimorio ({totalCartas}/50)</h3>
+                            <div className="flex gap-2">
+                                {/* ✅ BOTÓN DESCARGAR IMAGEN EN LISTA MÓVIL */}
+                                <button onClick={handleTakeScreenshot} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-blue-600 dark:text-orange-500 border border-slate-200 dark:border-slate-700"><Camera size={20}/></button>
+                                <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 transition-colors hover:text-red-500"><X size={24} /></button>
+                            </div>
                         </div>
                         {/* ✅ CONTADORES MÓVIL */}
                         <div className="grid grid-cols-5 gap-1 mb-4">
