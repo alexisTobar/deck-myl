@@ -28,6 +28,7 @@ export default function Marketplace() {
     const [previews, setPreviews] = useState([]);
     const [uploading, setUploading] = useState(false);
 
+    // ✅ OBTENER TOKEN PARA VALIDACIÓN
     const token = localStorage.getItem("token");
 
     useEffect(() => {
@@ -45,6 +46,18 @@ export default function Marketplace() {
         } finally { setLoading(false); }
     };
 
+    // ✅ FUNCIÓN PARA ABRIR MODAL DE PUBLICACIÓN (VALIDA LOGIN)
+    const handleOpenPublishModal = () => {
+        if (!token) {
+            toast.error("¡Alto ahí, Invocador! Debes iniciar sesión para poder vender.", {
+                description: "Crea una cuenta para inyectar tus mazos al mercado.",
+                icon: <AlertCircle className="text-red-500" />
+            });
+            return;
+        }
+        setShowModal(true);
+    };
+
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files);
         if (files.length > 3) {
@@ -58,8 +71,8 @@ export default function Marketplace() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!token) return toast.error("Sesión expirada. Ingresa de nuevo.");
         if (selectedFiles.length === 0) return toast.error("¡Sube al menos una foto real del mazo!");
-        if (!token) return toast.error("Debes iniciar sesión para publicar");
 
         setUploading(true);
         const data = new FormData();
@@ -94,7 +107,7 @@ export default function Marketplace() {
                 toast.error(errData.error || "Error al publicar");
             }
         } catch (e) { 
-            toast.error("Chuta, falló la conexión con el servidor");
+            toast.error("Fallo la conexión con el servidor");
         } finally { setUploading(false); }
     };
 
@@ -111,7 +124,7 @@ export default function Marketplace() {
                         Market<span className="text-blue-500">Place</span>
                     </h1>
                     <div className="flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px] md:text-xs">
-                        <ShieldCheck size={14} className="text-blue-500" /> Comercio Seguro de Invocadores
+                        <ShieldCheck size={14} className="text-blue-500" /> Mercado Oficial de Jugadores
                     </div>
                 </motion.div>
             </div>
@@ -127,7 +140,7 @@ export default function Marketplace() {
                         ))}
                     </div>
                     
-                    <button onClick={() => token ? setShowModal(true) : toast.error("Inicia sesión para vender")} className="group w-full md:w-auto px-10 py-5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:scale-105 text-white rounded-[2rem] font-black uppercase italic tracking-widest flex items-center justify-center gap-3 shadow-[0_10px_40px_rgba(37,99,235,0.3)] transition-all active:scale-95">
+                    <button onClick={handleOpenPublishModal} className="group w-full md:w-auto px-10 py-5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:scale-105 text-white rounded-[2rem] font-black uppercase italic tracking-widest flex items-center justify-center gap-3 shadow-[0_10px_40px_rgba(37,99,235,0.3)] transition-all active:scale-95">
                         <Plus size={24} strokeWidth={3} /> Publicar Mazo
                     </button>
                 </div>
@@ -144,14 +157,14 @@ export default function Marketplace() {
                 )}
             </div>
 
-            {/* --- MODAL PUBLICAR --- */}
+            {/* --- MODAL PUBLICAR (Protegido) --- */}
             <AnimatePresence>
                 {showModal && (
                     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
                         <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onClick={() => !uploading && setShowModal(false)} className="absolute inset-0 bg-slate-900/60 dark:bg-[#02040a]/95 backdrop-blur-md" />
                         <motion.div initial={{scale:0.9, opacity:0, y: 50}} animate={{scale:1, opacity:1, y: 0}} exit={{scale:0.9, opacity:0, y: 50}} className="relative w-full max-w-4xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/10 rounded-[3.5rem] p-8 shadow-2xl max-h-[95vh] overflow-y-auto custom-scrollbar">
                             <div className="flex justify-between items-start mb-10">
-                                <div><h2 className="text-4xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">Publicar <span className="text-blue-500">Mazo</span></h2></div>
+                                <div><h2 className="text-4xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">Inyectar <span className="text-blue-500">Mazo</span></h2></div>
                                 <button onClick={() => setShowModal(false)} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-2xl text-slate-500 hover:text-blue-600 transition-colors"><X size={24} /></button>
                             </div>
 
@@ -165,35 +178,35 @@ export default function Marketplace() {
                                     <input type="number" required className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 p-4 rounded-3xl outline-none focus:border-blue-600 font-bold" placeholder="45000" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-4">Estado del Mazo</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-4">Estado de las Cartas</label>
                                     <select className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 p-4 rounded-3xl outline-none focus:border-blue-600 font-bold appearance-none" value={formData.condition} onChange={e => setFormData({...formData, condition: e.target.value})}>
-                                        <option value="Nuevo">Nuevo / NM</option>
-                                        <option value="Usado">Usado / SP</option>
+                                        <option value="Nuevo">Impecable / NM</option>
+                                        <option value="Usado">Usado / Jugado</option>
                                         <option value="Colección">Colección / Sellado</option>
                                     </select>
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black uppercase text-blue-500 tracking-widest ml-4">Comuna / Ciudad</label>
-                                    <input type="text" required className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 p-4 rounded-3xl outline-none focus:border-blue-600 font-bold" placeholder="Ej: Maipú" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} />
+                                    <input type="text" required className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 p-4 rounded-3xl outline-none focus:border-blue-600 font-bold" placeholder="Ej: Providencia, Santiago" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black uppercase text-blue-500 tracking-widest ml-4">Lugar de Entrega</label>
-                                    <input type="text" required className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 p-4 rounded-3xl outline-none focus:border-blue-600 font-bold" placeholder="Ej: Metro Moneda" value={formData.deliveryPoint} onChange={e => setFormData({...formData, deliveryPoint: e.target.value})} />
+                                    <input type="text" required className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 p-4 rounded-3xl outline-none focus:border-blue-600 font-bold" placeholder="Ej: Metro Baquedano" value={formData.deliveryPoint} onChange={e => setFormData({...formData, deliveryPoint: e.target.value})} />
                                 </div>
                                 <div className="md:col-span-2 space-y-1">
-                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-4">Descripción / Detalles del Mazo</label>
-                                    <textarea className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 p-4 rounded-3xl outline-none focus:border-blue-600 font-bold h-32" placeholder="Describe que incluye el mazo..." value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-4">Detalles Adicionales</label>
+                                    <textarea className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 p-4 rounded-3xl outline-none focus:border-blue-600 font-bold h-32" placeholder="Ej: Incluye protector de mazo y oros base..." value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase text-green-600 tracking-widest ml-4">WhatsApp (Sin +)</label>
+                                    <label className="text-[10px] font-black uppercase text-green-600 tracking-widest ml-4">WhatsApp (569...)</label>
                                     <input type="text" required className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 p-4 rounded-3xl outline-none focus:border-green-600 font-bold" placeholder="56912345678" value={formData.whatsapp} onChange={e => setFormData({...formData, whatsapp: e.target.value})} />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase text-pink-600 tracking-widest ml-4">Instagram User</label>
-                                    <input type="text" required className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 p-4 rounded-3xl outline-none focus:border-pink-600 font-bold" placeholder="@usuario" value={formData.instagram} onChange={e => setFormData({...formData, instagram: e.target.value})} />
+                                    <label className="text-[10px] font-black uppercase text-pink-600 tracking-widest ml-4">Usuario Instagram</label>
+                                    <input type="text" required className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 p-4 rounded-3xl outline-none focus:border-pink-600 font-bold" placeholder="@tu_cuenta" value={formData.instagram} onChange={e => setFormData({...formData, instagram: e.target.value})} />
                                 </div>
                                 <div className="md:col-span-2 space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-4">Fotos Reales (Máximo 3)</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-4">Fotos del Mazo (Máx 3)</label>
                                     <div className="grid grid-cols-4 gap-4">
                                         <label className="aspect-square border-2 border-dashed border-slate-300 dark:border-white/10 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer hover:border-blue-500/50 transition-all">
                                             <Camera className="text-slate-400" size={32} />
@@ -206,8 +219,8 @@ export default function Marketplace() {
                                         ))}
                                     </div>
                                 </div>
-                                <button disabled={uploading} className="md:col-span-2 py-6 bg-blue-600 hover:bg-blue-500 text-white rounded-3xl font-black uppercase tracking-widest shadow-2xl transition-all">
-                                    {uploading ? "Publicando..." : "Inyectar al Mercado"}
+                                <button disabled={uploading} className="md:col-span-2 py-6 bg-blue-600 hover:bg-blue-500 text-white rounded-3xl font-black uppercase tracking-widest shadow-2xl disabled:opacity-50 transition-all">
+                                    {uploading ? "Subiendo Estrategia..." : "Lanzar al Mercado"}
                                 </button>
                             </form>
                         </motion.div>
@@ -215,37 +228,35 @@ export default function Marketplace() {
                 )}
             </AnimatePresence>
 
-            {/* --- ✅ MODAL DETALLES DEL PRODUCTO --- */}
+            {/* --- MODAL DETALLES --- */}
             <AnimatePresence>
                 {selectedItem && (
                     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
                         <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onClick={() => setSelectedItem(null)} className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl" />
                         <motion.div initial={{y: 100, opacity: 0}} animate={{y: 0, opacity: 1}} exit={{y: 100, opacity: 0}} className="relative w-full max-w-5xl bg-white dark:bg-[#0f172a] rounded-[4rem] overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10 flex flex-col md:flex-row max-h-[90vh]">
-                            {/* GALERIA */}
                             <div className="flex-1 bg-black p-4 flex items-center justify-center relative">
                                 <button onClick={() => setSelectedItem(null)} className="absolute top-6 left-6 z-10 p-4 bg-white/10 hover:bg-red-500 text-white rounded-full backdrop-blur-md transition-all"><X size={24} /></button>
                                 <img src={selectedItem.images[0]} className="max-w-full max-h-full object-contain rounded-2xl cursor-zoom-in" onClick={() => setSelectedImage(selectedItem.images[0])} />
                             </div>
-                            {/* INFO */}
                             <div className="w-full md:w-[450px] p-8 md:p-12 overflow-y-auto custom-scrollbar flex flex-col">
                                 <div className="flex gap-2 mb-6">
                                     <span className="px-4 py-1.5 bg-blue-600 rounded-full text-[10px] font-black uppercase text-white tracking-widest">{selectedItem.format.replace('_',' ')}</span>
                                     <span className="px-4 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-full text-[10px] font-black uppercase text-slate-500 tracking-widest">{selectedItem.condition}</span>
                                 </div>
-                                <h2 className="text-4xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white mb-2">{selectedItem.title}</h2>
+                                <h2 className="text-4xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white mb-2 leading-none">{selectedItem.title}</h2>
                                 <p className="text-3xl font-black text-blue-500 mb-8">${new Intl.NumberFormat('es-CL').format(selectedItem.price)}</p>
                                 
                                 <div className="space-y-6 mb-10 text-slate-600 dark:text-slate-300">
-                                    <div className="flex items-center gap-4"><MapPin className="text-blue-500" size={24}/> <div><p className="text-[10px] font-black uppercase text-slate-400">Ubicación</p><p className="font-bold">{selectedItem.location}</p></div></div>
-                                    <div className="flex items-center gap-4"><Truck className="text-blue-500" size={24}/> <div><p className="text-[10px] font-black uppercase text-slate-400">Entrega</p><p className="font-bold">{selectedItem.deliveryPoint}</p></div></div>
-                                    <div className="flex items-start gap-4"><Info className="text-blue-500" size={24}/> <div><p className="text-[10px] font-black uppercase text-slate-400">Descripción</p><p className="font-medium leading-relaxed">{selectedItem.description || "Sin descripción adicional."}</p></div></div>
+                                    <div className="flex items-center gap-4"><MapPin className="text-blue-500" size={24}/> <div><p className="text-[10px] font-black uppercase text-slate-400">Comuna</p><p className="font-bold">{selectedItem.location}</p></div></div>
+                                    <div className="flex items-center gap-4"><Truck className="text-blue-500" size={24}/> <div><p className="text-[10px] font-black uppercase text-slate-400">Entrega / Envío</p><p className="font-bold">{selectedItem.deliveryPoint}</p></div></div>
+                                    <div className="flex items-start gap-4"><Info className="text-blue-500" size={24}/> <div><p className="text-[10px] font-black uppercase text-slate-400">Descripción</p><p className="font-medium leading-relaxed">{selectedItem.description || "Sin descripción."}</p></div></div>
                                 </div>
 
                                 <div className="mt-auto pt-8 border-t border-slate-100 dark:border-white/5">
                                     <p className="text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest flex items-center gap-2"><User size={14}/> Vendedor: @{selectedItem.seller?.username}</p>
                                     <div className="grid grid-cols-1 gap-4">
-                                        <a href={`https://wa.me/${selectedItem.whatsapp}`} target="_blank" className="w-full py-5 bg-green-500 hover:bg-green-600 text-white rounded-3xl font-black uppercase italic tracking-widest flex items-center justify-center gap-3 transition-all"><MessageCircle size={24}/> Contactar WhatsApp</a>
-                                        <a href={`https://instagram.com/${selectedItem.instagram?.replace('@','')}`} target="_blank" className="w-full py-5 border-2 border-pink-500 text-pink-500 hover:bg-pink-500 hover:text-white rounded-3xl font-black uppercase italic tracking-widest flex items-center justify-center gap-3 transition-all"><Instagram size={24}/> Perfil Instagram</a>
+                                        <a href={`https://wa.me/${selectedItem.whatsapp}`} target="_blank" className="w-full py-5 bg-green-500 hover:bg-green-600 text-white rounded-3xl font-black uppercase italic tracking-widest flex items-center justify-center gap-3 transition-all shadow-xl"><MessageCircle size={24}/> WhatsApp</a>
+                                        <a href={`https://instagram.com/${selectedItem.instagram?.replace('@','')}`} target="_blank" className="w-full py-5 border-2 border-pink-500 text-pink-500 hover:bg-pink-500 hover:text-white rounded-3xl font-black uppercase italic tracking-widest flex items-center justify-center gap-3 transition-all"><Instagram size={24}/> Instagram</a>
                                     </div>
                                 </div>
                             </div>
@@ -254,12 +265,12 @@ export default function Marketplace() {
                 )}
             </AnimatePresence>
 
-            {/* LIGHTBOX ZOOM */}
+            {/* ZOOM LIGHTBOX */}
             <AnimatePresence>
                 {selectedImage && (
                     <div className="fixed inset-0 z-[500] flex items-center justify-center p-4" onClick={() => setSelectedImage(null)}>
                         <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="absolute inset-0 bg-black/95" />
-                        <motion.img initial={{scale:0.8}} animate={{scale:1}} src={selectedImage} className="relative max-w-full max-h-full rounded-xl z-[510]" />
+                        <motion.img initial={{scale:0.8}} animate={{scale:1}} src={selectedImage} className="relative max-w-full max-h-full rounded-xl z-[510] shadow-2xl" />
                     </div>
                 )}
             </AnimatePresence>
@@ -289,7 +300,7 @@ function MarketCard({ item, onOpen }) {
             
             <div className="p-5 md:p-10 flex flex-col flex-grow">
                 <div className="mb-4">
-                    <h3 className="text-sm md:text-2xl font-black uppercase italic tracking-tighter truncate text-slate-900 dark:text-white">{item.title}</h3>
+                    <h3 className="text-sm md:text-2xl font-black uppercase italic tracking-tighter truncate text-slate-900 dark:text-white leading-tight">{item.title}</h3>
                     <p className="text-blue-500 font-black text-lg md:text-3xl mt-1">${formattedPrice}</p>
                 </div>
 
@@ -305,8 +316,8 @@ function MarketCard({ item, onOpen }) {
                 </div>
                 
                 <div className="mt-auto pt-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-blue-500/10 flex items-center justify-center text-[10px] font-black text-blue-500">@</div>
+                    <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-6 h-6 rounded-full bg-blue-500/10 flex items-center justify-center text-[10px] font-black text-blue-500 shrink-0">@</div>
                         <span className="text-[9px] md:text-[10px] font-black uppercase text-slate-500 truncate max-w-[80px]">@{item.seller?.username}</span>
                     </div>
                     <div className="flex gap-2">
