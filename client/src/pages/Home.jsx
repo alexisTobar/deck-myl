@@ -207,7 +207,7 @@ export default function HomePortal() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 md:gap-6">
                     {loading ? (
-                        [...Array(5)].map((_, n) => <div key={n} className="h-48 md:h-64 bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl animate-pulse"></div>)
+                        [...Array(5)].map((_, n) => <div key={`pb-load-${n}`} className="h-48 md:h-64 bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl animate-pulse"></div>)
                     ) : (
                         pbTrending.map((card, idx) => (
                             <MetaCard key={`pb-meta-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
@@ -234,7 +234,7 @@ export default function HomePortal() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 md:gap-6">
                     {loading ? (
-                        [...Array(5)].map((_, n) => <div key={n} className="h-48 md:h-64 bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl animate-pulse"></div>)
+                        [...Array(5)].map((_, n) => <div key={`imp-load-${n}`} className="h-48 md:h-64 bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl animate-pulse"></div>)
                     ) : (
                         impTrending.map((card, idx) => (
                             <MetaCard key={`imp-meta-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
@@ -463,9 +463,10 @@ export default function HomePortal() {
                         <img src={LOGO_BLANCO} className="h-10 md:h-12 w-auto mb-4 object-contain hidden dark:block" alt="ForjaDeck Footer Dark" />
                         <p className="text-[11px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-[0.4em]">Intelligence Database for Invocadores</p>
                     </div>
+
                     <div className="flex flex-col items-center md:items-end">
                         <div className="flex items-center gap-2 text-sm font-black text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 px-4 py-2 rounded-2xl border border-slate-100 dark:border-white/10 shadow-sm">
-                            Hecho con <Heart size={16} className="text-red-500 fill-red-500 animate-pulse" /> por <span className="text-blue-600 dark:text-blue-400 ml-1">Alexis Tobar</span>
+                            Hecho con <Heart size={16} className="text-red-500 fill-red-500 animate-pulse" /> por <span className="text-blue-600 dark:text-blue-400 border-b-2 border-blue-600/20 ml-1">Alexis Tobar</span>
                         </div>
                         <div className="mt-6 flex items-center gap-4">
                             <span className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">Powered by</span>
@@ -486,7 +487,7 @@ function MetaCard({ card, index, onClick }) {
             onClick={onClick}
             className="cursor-pointer group bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 p-3 rounded-[1.5rem] hover:shadow-2xl transition-all duration-500"
         >
-            <div className="aspect-[3/4] bg-slate-100 dark:bg-slate-800 rounded-xl mb-3 overflow-hidden relative shadow-inner">
+            <div className="aspect-[3/4] bg-slate-100 dark:bg-slate-800 rounded-xl mb-3 overflow-hidden relative shadow-inner text-center">
                 <img 
                     src={card.imgUrl || card.img} 
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
