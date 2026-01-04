@@ -115,14 +115,23 @@ export default function Marketplace() {
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-[#060912] text-slate-900 dark:text-white pb-32 font-sans transition-colors duration-500 selection:bg-blue-500/30">
             
-            {/* --- HEADER RESPONSIVO --- */}
-            <div className="w-full bg-white dark:bg-slate-900/40 backdrop-blur-2xl border-b border-slate-200 dark:border-white/5 py-12 md:py-20 px-4 text-center relative overflow-hidden">
+            {/* --- HEADER MEJORADO ESTILO FORJA --- */}
+            <div className="w-full bg-white dark:bg-slate-900/40 backdrop-blur-2xl border-b border-slate-200 dark:border-white/5 py-16 md:py-24 px-4 text-center relative overflow-hidden">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-blue-600/10 blur-[80px] md:blur-[150px] rounded-full"></div>
+                
                 <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                    {/* Título adaptable con clamp/vw */}
-                    <h1 className="text-[14vw] md:text-8xl font-black italic tracking-tighter uppercase mb-4 relative z-10 leading-none">
-                        Market<span className="text-blue-500">Place</span>
-                    </h1>
+                    {/* 🛠️ MEJORA DE TÍTULO EXPERTO: Composición Minimalista Industrial */}
+                    <div className="mb-6">
+                        <h1 className="flex flex-col items-center leading-none">
+                            <span className="text-4xl md:text-6xl font-extralight uppercase tracking-[0.4em] text-slate-400 dark:text-slate-500 mb-2">
+                                Market
+                            </span>
+                            <span className="text-[12vw] md:text-9xl font-black uppercase tracking-tighter italic text-slate-900 dark:text-white drop-shadow-2xl">
+                                PLACE<span className="text-blue-500">.</span>
+                            </span>
+                        </h1>
+                    </div>
+
                     <div className="flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.2em] md:tracking-[0.3em] text-[9px] md:text-xs">
                         <ShieldCheck size={14} className="text-blue-500" /> Comercio Seguro de Invocadores
                     </div>
@@ -145,7 +154,7 @@ export default function Marketplace() {
                     </button>
                 </div>
 
-                {/* --- LISTADO (2 Columnas en móvil forzado) --- */}
+                {/* --- LISTADO --- */}
                 {loading ? (
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-10">
                         {[1,2,3,4,5,6].map(n => <div key={n} className="h-[280px] md:h-[450px] bg-slate-200 dark:bg-slate-900/50 animate-pulse rounded-2xl md:rounded-[3rem] border border-slate-300 dark:border-white/5"></div>)}

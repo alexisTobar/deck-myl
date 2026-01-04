@@ -36,31 +36,40 @@ export default function ImperioHome() {
 
             <section className="relative min-h-screen flex items-center justify-center border-b border-slate-200 dark:border-white/5 z-10 px-4 py-20">
                 <div className="text-center w-full max-w-6xl mx-auto">
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex justify-center mb-4 md:mb-6">
-                        <Zap size={32} className="text-blue-600 animate-pulse" fill="currentColor" />
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex justify-center mb-10">
+                        <div className="p-3 rounded-full bg-blue-500/10 border border-blue-500/20">
+                            <Zap size={28} className="text-blue-600 animate-pulse" fill="currentColor" />
+                        </div>
                     </motion.div>
                     
-                    {/* 📱 MEJORA: Título con clamp para evitar desbordamiento en móvil */}
-                    <motion.h1 
-                        initial={{ opacity: 0, y: 20 }} 
-                        animate={{ opacity: 1, y: 0 }} 
-                        className="text-[14vw] sm:text-[12vw] md:text-[10rem] font-black text-slate-900 dark:text-white mb-6 uppercase tracking-tighter italic leading-[0.9] break-words"
+                    {/* 🛠️ MEJORA DE TÍTULO EXPERTO: Composición Minimalista Industrial */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-8"
                     >
-                        ERA<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">IMPERIO</span>
-                    </motion.h1>
+                        <h1 className="flex flex-col items-center leading-none">
+                            <span className="text-4xl md:text-6xl font-extralight uppercase tracking-[0.4em] text-slate-400 dark:text-slate-500 mb-2">
+                                Era
+                            </span>
+                            <span className="text-[14vw] md:text-[11rem] font-black uppercase tracking-tighter italic text-slate-900 dark:text-white drop-shadow-2xl">
+                                IMPERIO<span className="text-blue-600">.</span>
+                            </span>
+                        </h1>
+                    </motion.div>
 
-                    <motion.p {...fadeInUp} className="text-base md:text-3xl text-slate-500 dark:text-slate-300 mb-10 md:mb-12 max-w-3xl mx-auto italic font-medium leading-relaxed px-2">
+                    <motion.p {...fadeInUp} className="text-base md:text-2xl text-slate-500 dark:text-slate-300 mb-12 max-w-2xl mx-auto italic font-medium leading-relaxed px-4 border-l-2 border-blue-600/30">
                         Domina el poder del presente. El campo de batalla oficial analizado por <span className="text-blue-600 font-bold">ForjaDeck</span>.
                     </motion.p>
 
-                    <motion.div {...fadeInUp} className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center items-center w-full px-4">
-                        <Link to="/imperio/builder" className="w-full sm:w-auto group relative px-8 md:px-14 py-5 md:py-7 bg-blue-600 text-white rounded-2xl transition-all hover:scale-105 active:scale-95 shadow-xl shadow-blue-600/20 overflow-hidden text-center">
-                            <span className="relative z-10 font-black uppercase italic text-xl md:text-2xl flex items-center justify-center gap-3">
-                                <Sword size={24} /> FORJAR MAZO
+                    <motion.div {...fadeInUp} className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+                        <Link to="/imperio/builder" className="group w-full sm:w-auto relative px-14 py-6 bg-blue-600 text-white rounded-2xl transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-blue-600/40 overflow-hidden text-center">
+                            <span className="relative z-10 font-black uppercase italic text-xl flex items-center justify-center gap-3">
+                                <Sword size={22} /> FORJAR MAZO
                             </span>
                         </Link>
-                        <Link to="/community" className="w-full sm:w-auto px-8 md:px-14 py-5 md:py-7 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-2xl font-black transition-all hover:bg-blue-600/10 flex items-center justify-center gap-3 uppercase italic text-xl md:text-2xl text-slate-700 dark:text-slate-200 shadow-sm text-center">
-                            <Users size={24} /> COMUNIDAD
+                        <Link to="/community" className="w-full sm:w-auto px-14 py-6 bg-white dark:bg-slate-900/60 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-2xl font-black transition-all hover:bg-blue-600/10 flex items-center justify-center gap-3 uppercase italic text-xl text-slate-700 dark:text-slate-200 shadow-sm text-center">
+                            <Users size={22} /> COMUNIDAD
                         </Link>
                     </motion.div>
                 </div>
@@ -83,9 +92,9 @@ export default function ImperioHome() {
                 </motion.div>
             </section>
 
-            {/* SECCIÓN ANALISTAS */}
+            {/* SECCIÓN ANALISTAS - OPTIMIZADA */}
             <section className="max-w-7xl mx-auto px-6 py-20 md:py-32 relative z-10 border-t border-slate-200 dark:border-white/5">
-                <motion.div {...fadeInUp} className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 md:after:mb-16 gap-6">
+                <motion.div {...fadeInUp} className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-6">
                     <div className="text-left">
                         <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">Analistas del <span className="text-blue-600">Meta</span></h2>
                         <p className="text-slate-400 mt-2 font-bold uppercase tracking-widest text-[10px] italic">Contenido destacado de la comunidad</p>
@@ -96,8 +105,8 @@ export default function ImperioHome() {
                 </motion.div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <YTCard title="Sombras y Oscuridad" videoSrc="https://www.youtube.com/embed/z-hekxgmP2I?si=AnbR17cXSuxJfvv9" />
-                    <YTCard title="Mitos y Leyendas Oficial" videoSrc="https://www.youtube.com/embed/u-am6kIUP_A?si=2oN8E5WCMWwAzN4a" />
+                    <YTCard title="Sombras y Oscuridad" videoId="z-hekxgmP2I" />
+                    <YTCard title="Mitos y Leyendas Oficial" videoId="u-am6kIUP_A" />
                 </div>
             </section>
 
@@ -158,18 +167,22 @@ function RaceRank({ name, power, color }) {
     );
 }
 
-function YTCard({ title, videoSrc }) {
+// 🛠️ MEJORA DE YOUTUBE: Componente basado en VideoID para estabilidad total
+function YTCard({ title, videoId }) {
     return (
         <div className="space-y-4 group w-full">
             <div className="flex justify-between items-center px-2 md:px-4">
                 <h3 className="text-xs md:text-sm font-black text-blue-600 uppercase tracking-widest italic">{title}</h3>
-                <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-1 rounded-lg text-[8px] md:text-[9px] font-black uppercase tracking-tighter">Último Video</span>
+                <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter text-white bg-slate-600">
+                    SABIO
+                </span>
             </div>
             <div className="relative pt-[56.25%] w-full rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border-4 border-slate-200 dark:border-white/5 shadow-2xl bg-black group-hover:border-blue-500/30 transition-all">
                 <iframe 
-                    className="absolute top-0 left-0 w-full h-full"
-                    src={videoSrc} 
+                    className="absolute top-0 left-0 w-full h-full" 
+                    src={`https://www.youtube.com/embed/${videoId}`}
                     frameBorder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                     allowFullScreen
                 ></iframe>
             </div>
