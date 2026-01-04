@@ -267,7 +267,6 @@ function MarketCard({ item, onZoom }) {
                     <span className="text-4xl font-black text-slate-900 dark:text-white">${item.price.toLocaleString()}</span>
                 </div>
 
-                {/* ✅ BOTONES DE CONTACTO MINIMALISTAS (BORDE NEÓN) */}
                 <div className="grid grid-cols-2 gap-4">
                     <a 
                         href={waLink} 
