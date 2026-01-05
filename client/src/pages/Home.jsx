@@ -120,13 +120,13 @@ export default function HomePortal() {
         }
     };
 
-    // ✅ LÓGICA DE GRÁFICO: DISTRIBUCIÓN DE RAZAS
+    // ✅ LÓGICA DE GRÁFICO: DISTRIBUCIÓN DE RAZAS (Corregida para Recharts)
     const getChartData = (card) => {
         if (!card || !card.races || Object.keys(card.races).length === 0) return [];
         return Object.entries(card.races).map(([name, value]) => ({
-            name,
-            value,
-            color: RACE_COLORS[name] || "#" + Math.floor(Math.random()*16777215).toString(16)
+            name: name,
+            value: Number(value),
+            color: RACE_COLORS[name] || `#${Math.floor(Math.random()*16777215).toString(16)}`
         }));
     };
 
@@ -269,7 +269,7 @@ export default function HomePortal() {
                                 <div className="mb-6">
                                     <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Racial Distribution Analysis</span>
                                     <h3 className="text-3xl font-black uppercase italic text-slate-900 dark:text-white leading-none mb-2">{selectedMetaCard.name}</h3>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{selectedMetaCard.format.replace('_',' ')}</p>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{selectedMetaCard.format?.replace('_',' ')}</p>
                                 </div>
 
                                 <div className="p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10 mb-6 text-center">
@@ -300,8 +300,9 @@ export default function HomePortal() {
                                             </PieChart>
                                         </ResponsiveContainer>
                                     ) : (
-                                        <div className="h-full flex items-center justify-center text-slate-500 italic text-xs uppercase tracking-widest">
-                                            Sin datos de raza disponibles
+                                        <div className="h-full flex flex-col items-center justify-center text-slate-500 italic text-xs uppercase tracking-widest text-center">
+                                            <BarChart3 size={40} className="mb-2 opacity-20" />
+                                            Sin datos de raza detectados
                                         </div>
                                     )}
                                 </div>
@@ -336,9 +337,6 @@ export default function HomePortal() {
                             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
                                 <a href="https://www.juegosvikingos.cl" target="_blank" rel="noreferrer" className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase italic tracking-widest flex items-center justify-center gap-3 hover:bg-blue-700 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-blue-600/30">
                                     Visitar Tienda <ExternalLink size={18} />
-                                </a>
-                                <a href="https://www.instagram.com/juegosvikingos" target="_blank" rel="noreferrer" className="px-8 py-4 bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white rounded-2xl font-black uppercase italic tracking-widest flex items-center justify-center gap-3 hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
-                                    <Instagram size={18} /> Ver Instagram
                                 </a>
                             </div>
                         </div>
@@ -484,7 +482,7 @@ function MetaCard({ card, index, onClick }) {
         <motion.div 
             whileHover={{ y: -8, scale: 1.02 }}
             onClick={onClick}
-            className="cursor-pointer group bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 p-3 rounded-[1.5rem] hover:shadow-2xl transition-all duration-500"
+            className="cursor-pointer group bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 p-3 rounded-[1.5rem] hover:shadow-2xl transition-all duration-500 shadow-xl shadow-black/5"
         >
             <div className="aspect-[3/4] bg-slate-100 dark:bg-slate-800 rounded-xl mb-3 overflow-hidden relative shadow-inner text-center">
                 <img 
