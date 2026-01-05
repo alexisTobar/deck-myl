@@ -6,7 +6,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, L
 import BACKEND_URL from "../config";
 import { 
     Sword, ScrollText, Zap, TrendingUp, ShieldCheck, Users, ArrowRight, Heart, Star, 
-    ShoppingBag, Instagram, ExternalLink, PlusCircle, X, Camera, Sparkles, UserPlus, BarChart3, LayoutList
+    ShoppingBag, Instagram, ExternalLink, PlusCircle, X, Camera, Sparkles, UserPlus, BarChart3, LayoutList, Lock
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -107,28 +107,33 @@ export default function HomePortal() {
             
             {/* HERO SECTION */}
             <header className="w-full max-w-7xl px-4 md:px-6 pt-16 md:pt-24 pb-12 text-center animate-in fade-in slide-in-from-top-10 duration-1000">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/5 dark:bg-blue-400/10 border border-blue-600/10 dark:border-blue-400/20 rounded-full mb-8 shadow-sm">
-                    <Star size={12} className="text-blue-600 dark:text-blue-400 fill-blue-600" />
-                    <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-blue-600 dark:text-blue-400">Versión Meta v3.5</span>
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/5 dark:bg-blue-400/10 border border-blue-600/10 dark:border-blue-400/20 rounded-full mb-8 shadow-sm hover:scale-105 transition-transform cursor-default">
+                    <Star size={12} className="text-blue-600 dark:text-blue-400 fill-blue-600 dark:fill-blue-400" />
+                    <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-blue-600 dark:text-blue-400">Nueva Versión ForjaDeck v3.0</span>
                 </div>
+                
                 <div className="flex justify-center mb-8 px-4">
                     <img src={LOGO_NEGRO} alt="Logo" className="w-[85vw] max-w-[500px] md:max-w-[650px] h-auto object-contain dark:hidden" />
                     <img src={LOGO_BLANCO} alt="Logo" className="w-[85vw] max-w-[500px] md:max-w-[650px] h-auto object-contain hidden dark:block" />
                 </div>
-                <p className="text-slate-500 dark:text-slate-400 text-base md:text-xl max-w-2xl mx-auto font-medium leading-relaxed opacity-80 px-4 text-center">Optimización de estrategias basada en el análisis de datos masivos de la comunidad.</p>
+                
+                <p className="text-slate-500 dark:text-slate-400 text-base md:text-xl max-w-2xl mx-auto font-medium leading-relaxed opacity-80 px-4 text-center">
+                    La plataforma técnica para la forja de estrategias. 
+                    Optimización de mazos basada en el análisis de datos masivos.
+                </p>
             </header>
 
-            {/* BOTONES FORMATO */}
+            {/* --- SELECTOR DE FORMATOS --- */}
             <motion.main initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }} className="w-full max-w-7xl px-6 grid grid-cols-1 md:grid-cols-2 gap-8 mb-32 z-10">
-                <FormatCard title="Primer Bloque" desc="Relatos clásicos y dioses antiguos." img="https://los40.cl/resizer/v2/RGW3O7B6EBMJTOG3663Q63HYUM.jpg?auth=c2cc267add0246b4d52e7e6ba39dac28c0c11ebe4c806e386358c4a65968d094&quality=70&width=1200&height=544&smart=true" icon={<ScrollText size={28} className="text-blue-500" />} onClick={() => navigate("/primer-bloque")} delay="delay-150" />
-                <FormatCard title="Imperio" desc="Metajuego actual y competitivo oficial." img="https://cdn.shopify.com/s/files/1/0103/3601/0303/files/bannerpreventakvm_177c3b4b-7d62-4fd8-8f0a-fa243f85e590.jpg?v=1761336400" icon={<Sword size={28} className="text-blue-600" />} onClick={() => navigate("/imperio")} delay="delay-300" />
+                <FormatCard title="Primer Bloque" desc="Domina el formato de los dioses antiguos y leyendas clásicas." img="https://los40.cl/resizer/v2/RGW3O7B6EBMJTOG3663Q63HYUM.jpg?auth=c2cc267add0246b4d52e7e6ba39dac28c0c11ebe4c806e386358c4a65968d094&quality=70&width=1200&height=544&smart=true" icon={<ScrollText size={28} className="text-blue-500" />} onClick={() => navigate("/primer-bloque")} delay="delay-150" />
+                <FormatCard title="Imperio" desc="Metajuego actual y el pináculo del circuito competitivo." img="https://cdn.shopify.com/s/files/1/0103/3601/0303/files/bannerpreventakvm_177c3b4b-7d62-4fd8-8f0a-fa243f85e590.jpg?v=1761336400" icon={<Sword size={28} className="text-blue-600" />} onClick={() => navigate("/imperio")} delay="delay-300" />
             </motion.main>
 
             {/* SECCIÓN TOP 10 PB */}
             <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="w-full max-w-7xl px-6 mb-24">
                 <div className="flex items-center gap-3 mb-10 border-b border-slate-200 dark:border-white/10 pb-6">
                     <TrendingUp className="text-blue-600" />
-                    <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Top 10 Primer Bloque</h3>
+                    <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic flex items-center justify-center md:justify-start gap-3">Top 10 Primer Bloque</h3>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 md:gap-6">
                     {loading ? [...Array(10)].map((_, n) => <div key={`pbl-${n}`} className="h-48 md:h-64 bg-slate-800/20 rounded-3xl animate-pulse" />) : 
@@ -141,7 +146,7 @@ export default function HomePortal() {
             <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="w-full max-w-7xl px-6 mb-32">
                 <div className="flex items-center gap-3 mb-10 border-b border-slate-200 dark:border-white/10 pb-6">
                     <TrendingUp className="text-blue-500" />
-                    <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Top 10 Imperio</h3>
+                    <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic flex items-center justify-center md:justify-start gap-3">Top 10 Imperio</h3>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 md:gap-6">
                     {loading ? [...Array(10)].map((_, n) => <div key={`iml-${n}`} className="h-48 md:h-64 bg-slate-800/20 rounded-3xl animate-pulse" />) : 
@@ -150,11 +155,11 @@ export default function HomePortal() {
                 </div>
             </motion.section>
 
-            {/* ✅ MODAL DE ANÁLISIS PROFESIONAL */}
+            {/* ✅ MODAL DE ANÁLISIS PROFESIONAL RESTAURADO */}
             <AnimatePresence>
                 {showMetaModal && selectedMetaCard && (
                     <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowMetaModal(false)} className="absolute inset-0 bg-black/90 backdrop-blur-xl" />
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowMetaModal(false)} className="absolute inset-0 bg-[#060912]/95 backdrop-blur-xl" />
                         <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} className="relative w-full max-w-4xl bg-white dark:bg-[#0f172a] border border-white/10 rounded-[3.5rem] overflow-hidden shadow-2xl flex flex-col md:flex-row">
                             <button onClick={() => setShowMetaModal(false)} className="absolute top-6 right-6 z-20 p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-blue-500 transition-colors">
                                 <X size={20} />
@@ -166,7 +171,7 @@ export default function HomePortal() {
 
                             <div className="w-full md:w-1/2 p-8 md:p-10 flex flex-col justify-center overflow-y-auto max-h-[90vh]">
                                 <div className="mb-6 text-left">
-                                    <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Racial Distribution Analysis</span>
+                                    <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Deep Scan Analysis</span>
                                     <h3 className="text-3xl font-black uppercase italic text-slate-900 dark:text-white leading-none mb-2">{selectedMetaCard.name}</h3>
                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{selectedMetaCard.format?.replace('_',' ')}</p>
                                 </div>
@@ -299,7 +304,7 @@ export default function HomePortal() {
             </AnimatePresence>
 
             {/* CARACTERÍSTICAS */}
-            <motion.section initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="w-full bg-white/60 dark:bg-[#0A0C10]/60 backdrop-blur-xl border-y dark:border-white/10 py-24 mb-20 transition-all">
+            <motion.section initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="w-full bg-white/60 dark:bg-[#0A0C10]/60 backdrop-blur-xl border-y dark:border-white/10 py-24 mb-20 transition-all text-center">
                 <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-16">
                     <Feature icon={<ShieldCheck size={32} className="text-blue-500" />} title="Validación DAR" text="Arquitectura de mazos protegida bajo las reglas vigentes." />
                     <Feature icon={<Zap size={32} className="text-blue-400" />} title="Motor Forja" text="Procesamiento en tiempo real de estadísticas y win-rates." />
