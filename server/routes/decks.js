@@ -214,33 +214,39 @@ router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
     }
 });
 
-// 10. META REPORT: CARTAS MÁS POPULARES
+// 10. ✅ META REPORT CORREGIDO: INDEPENDIENTE POR FORMATO
 router.get('/stats/meta', async (req, res) => {
     try {
-        // Obtenemos todos los mazos guardados en la base de datos
-        const allDecks = await Deck.find();
+        const { format } = req.query; // Capturamos el formato enviado por el Home
+
+        // 1. Filtramos los mazos por formato si viene en la URL
+        const queryFilter = format ? { format: format } : {};
+        const allDecks = await Deck.find(queryFilter);
+        
         const cardUsage = {};
 
         allDecks.forEach(deck => {
             deck.cards.forEach(card => {
                 const key = card.slug || card.name;
                 if (cardUsage[key]) {
-                    cardUsage[key].usageCount += (card.quantity || 1);
+                    // Contamos frecuencia de aparición en mazos (no cantidad de copias, 
+                    // para saber qué tan "popular" es la carta en diferentes estrategias)
+                    cardUsage[key].usageCount += 1;
                 } else {
                     cardUsage[key] = {
                         name: card.name,
                         imgUrl: card.imgUrl || card.img,
                         format: deck.format,
-                        usageCount: card.quantity || 1
+                        usageCount: 1
                     };
                 }
             });
         });
 
-        // Convertimos el objeto en array y ordenamos por las más usadas
+        // 2. Convertimos el objeto en array y ordenamos por las más usadas
         const sortedMeta = Object.values(cardUsage)
             .sort((a, b) => b.usageCount - a.usageCount)
-            .slice(0, 15); // Top 15 cartas
+            .slice(0, 10); // Top 10 independiente
 
         res.json(sortedMeta);
     } catch (error) {

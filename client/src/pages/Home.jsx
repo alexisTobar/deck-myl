@@ -53,18 +53,20 @@ export default function HomePortal() {
         const fetchTrendingData = async () => {
             setLoading(true);
             try {
-                // ✅ PETICIÓN ESPECÍFICA PARA PRIMER BLOQUE
+                // ✅ PETICIÓN Y FILTRADO ESTRICTO PARA PRIMER BLOQUE
                 const resPb = await fetch(`${BACKEND_URL}/api/decks/stats/meta?format=primer_bloque`);
                 if (resPb.ok) {
                     const data = await resPb.json();
-                    setPbTrending(data.slice(0, 10));
+                    const onlyPb = data.filter(c => c.format === 'primer_bloque');
+                    setPbTrending(onlyPb.slice(0, 10));
                 }
 
-                // ✅ PETICIÓN ESPECÍFICA PARA IMPERIO
+                // ✅ PETICIÓN Y FILTRADO ESTRICTO PARA IMPERIO
                 const resImp = await fetch(`${BACKEND_URL}/api/decks/stats/meta?format=imperio`);
                 if (resImp.ok) {
                     const data = await resImp.json();
-                    setImpTrending(data.slice(0, 10));
+                    const onlyImp = data.filter(c => c.format === 'imperio');
+                    setImpTrending(onlyImp.slice(0, 10));
                 }
             } catch (error) {
                 console.error("Error cargando tendencias:", error);
@@ -112,7 +114,7 @@ export default function HomePortal() {
         }
     };
 
-    // ✅ PREPARACIÓN DE DATOS PARA EL GRÁFICO (Compara solo contra su propio formato)
+    // ✅ PREPARACIÓN DE DATOS PARA EL GRÁFICO (Comparación local por pool de formato)
     const getChartData = (card) => {
         const pool = card.format === 'primer_bloque' ? pbTrending : impTrending;
         const totalOtherUsage = pool
@@ -207,7 +209,7 @@ export default function HomePortal() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 md:gap-6">
                     {loading ? (
-                        [...Array(5)].map((_, n) => <div key={`pb-load-${n}`} className="h-48 md:h-64 bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl animate-pulse"></div>)
+                        [...Array(10)].map((_, n) => <div key={`pb-load-${n}`} className="h-48 md:h-64 bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl animate-pulse"></div>)
                     ) : (
                         pbTrending.map((card, idx) => (
                             <MetaCard key={`pb-meta-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
@@ -234,7 +236,7 @@ export default function HomePortal() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 md:gap-6">
                     {loading ? (
-                        [...Array(5)].map((_, n) => <div key={`imp-load-${n}`} className="h-48 md:h-64 bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl animate-pulse"></div>)
+                        [...Array(10)].map((_, n) => <div key={`imp-load-${n}`} className="h-48 md:h-64 bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl animate-pulse"></div>)
                     ) : (
                         impTrending.map((card, idx) => (
                             <MetaCard key={`imp-meta-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
@@ -479,7 +481,7 @@ export default function HomePortal() {
     );
 }
 
-// ✅ COMPONENTE INTERNO DE TARJETA META MEJORADO PARA SER INDEPENDIENTE
+// ✅ TARJETA META MEJORADA
 function MetaCard({ card, index, onClick }) {
     return (
         <motion.div 
