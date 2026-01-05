@@ -75,6 +75,7 @@ export default function AdminDashboard() {
     const [formData, setFormData] = useState(initialFormState);
     const token = localStorage.getItem("token");
 
+    // Estilo para alertas adaptable (usa las clases del sistema)
     const swalStyle = {
         background: 'var(--tw-bg-opacity)',
         confirmButtonColor: '#2563eb',
@@ -102,14 +103,11 @@ export default function AdminDashboard() {
         if (activeTab === "market" && step === "editor") fetchMarketItems();
     }, [edicionFiltro, formato, activeTab, step]);
 
-    // ✅ MEJORA: ORDENAMIENTO DESCENDENTE (LAS NUEVAS PRIMERO)
     const cartasFiltradas = useMemo(() => {
-        const filtradas = cartas.filter(c =>
+        return cartas.filter(c =>
             c.name?.toLowerCase().includes(busquedaInterna.toLowerCase()) ||
             c.slug?.toLowerCase().includes(busquedaInterna.toLowerCase())
         );
-        // Ordenamos por ID de MongoDB (el cual contiene la fecha de creación) de forma descendente
-        return filtradas.sort((a, b) => b._id.localeCompare(a._id));
     }, [cartas, busquedaInterna]);
 
     const fetchCartas = async () => {
