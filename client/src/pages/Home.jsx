@@ -86,7 +86,6 @@ export default function HomePortal() {
         return Object.entries(card.races).map(([name, value]) => ({
             name: name, 
             value: Number(value), 
-            percentage: ((value / total) * 100).toFixed(1),
             color: RACE_COLORS[name] || `#${Math.floor(Math.random()*16777215).toString(16)}`
         }));
     };
@@ -105,26 +104,30 @@ export default function HomePortal() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-[#0A0C10] dark:via-[#0f172a] dark:to-[#0A0C10] flex flex-col items-center font-sans text-slate-900 dark:text-white selection:bg-blue-100 dark:selection:bg-blue-900/30 overflow-x-hidden transition-colors duration-500">
             
-            {/* HERO SECTION */}
+            {/* --- HERO SECTION --- */}
             <header className="w-full max-w-7xl px-4 md:px-6 pt-16 md:pt-24 pb-12 text-center animate-in fade-in slide-in-from-top-10 duration-1000">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/5 dark:bg-blue-400/10 border border-blue-600/10 dark:border-blue-400/20 rounded-full mb-8 shadow-sm">
-                    <Star size={12} className="text-blue-600 dark:text-blue-400 fill-blue-600" />
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/5 dark:bg-blue-400/10 border border-blue-600/10 dark:border-blue-400/20 rounded-full mb-8 shadow-sm hover:scale-105 transition-transform cursor-default">
+                    <Star size={12} className="text-blue-600 dark:text-blue-400 fill-blue-600 dark:fill-blue-400" />
                     <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-blue-600 dark:text-blue-400">Versión Meta v3.5</span>
                 </div>
+                
                 <div className="flex justify-center mb-8 px-4">
                     <img src={LOGO_NEGRO} alt="Logo" className="w-[85vw] max-w-[500px] md:max-w-[650px] h-auto object-contain dark:hidden" />
                     <img src={LOGO_BLANCO} alt="Logo" className="w-[85vw] max-w-[500px] md:max-w-[650px] h-auto object-contain hidden dark:block" />
                 </div>
-                <p className="text-slate-500 dark:text-slate-400 text-base md:text-xl max-w-2xl mx-auto font-medium leading-relaxed opacity-80 px-4 text-center">Optimización de estrategias basada en el análisis de datos masivos de la comunidad.</p>
+                
+                <p className="text-slate-500 dark:text-slate-400 text-base md:text-xl max-w-2xl mx-auto font-medium leading-relaxed opacity-80 px-4 text-center">
+                    Análisis de datos para la forja de estrategias ganadoras. Optimización masiva basada en la comunidad.
+                </p>
             </header>
 
-            {/* BOTONES FORMATO */}
+            {/* --- SELECTOR DE FORMATOS --- */}
             <motion.main initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }} className="w-full max-w-7xl px-6 grid grid-cols-1 md:grid-cols-2 gap-8 mb-32 z-10">
-                <FormatCard title="Primer Bloque" desc="Domina el formato de los relatos clásicos." img="https://los40.cl/resizer/v2/RGW3O7B6EBMJTOG3663Q63HYUM.jpg?auth=c2cc267add0246b4d52e7e6ba39dac28c0c11ebe4c806e386358c4a65968d094&quality=70&width=1200&height=544&smart=true" icon={<ScrollText size={28} className="text-blue-500" />} onClick={() => navigate("/primer-bloque")} delay="delay-150" />
-                <FormatCard title="Imperio" desc="Metajuego actual y circuito competitivo." img="https://cdn.shopify.com/s/files/1/0103/3601/0303/files/bannerpreventakvm_177c3b4b-7d62-4fd8-8f0a-fa243f85e590.jpg?v=1761336400" icon={<Sword size={28} className="text-blue-600" />} onClick={() => navigate("/imperio")} delay="delay-300" />
+                <FormatCard title="Primer Bloque" desc="Domina el formato de los relatos clásicos y dioses antiguos." img="https://los40.cl/resizer/v2/RGW3O7B6EBMJTOG3663Q63HYUM.jpg?auth=c2cc267add0246b4d52e7e6ba39dac28c0c11ebe4c806e386358c4a65968d094&quality=70&width=1200&height=544&smart=true" icon={<ScrollText size={28} className="text-blue-500" />} onClick={() => navigate("/primer-bloque")} delay="delay-150" />
+                <FormatCard title="Imperio" desc="Metajuego actual y el pináculo del circuito competitivo." img="https://cdn.shopify.com/s/files/1/0103/3601/0303/files/bannerpreventakvm_177c3b4b-7d62-4fd8-8f0a-fa243f85e590.jpg?v=1761336400" icon={<Sword size={28} className="text-blue-600" />} onClick={() => navigate("/imperio")} delay="delay-300" />
             </motion.main>
 
-            {/* SECCIÓN TOP 10 PB */}
+            {/* TOP 10 PB */}
             <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="w-full max-w-7xl px-6 mb-24 text-center md:text-left">
                 <div className="flex items-center gap-3 mb-10 border-b border-slate-200 dark:border-white/10 pb-6">
                     <TrendingUp className="text-blue-600" />
@@ -137,7 +140,7 @@ export default function HomePortal() {
                 </div>
             </motion.section>
 
-            {/* SECCIÓN TOP 10 IMPERIO */}
+            {/* TOP 10 IMPERIO */}
             <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="w-full max-w-7xl px-6 mb-32 text-center md:text-left">
                 <div className="flex items-center gap-3 mb-10 border-b border-slate-200 dark:border-white/10 pb-6">
                     <TrendingUp className="text-blue-500" />
@@ -150,7 +153,7 @@ export default function HomePortal() {
                 </div>
             </motion.section>
 
-            {/* ✅ MODAL DE ANÁLISIS PROFESIONAL RESTAURADO */}
+            {/* ✅ MODAL DE ANÁLISIS PROFESIONAL CORREGIDO */}
             <AnimatePresence>
                 {showMetaModal && selectedMetaCard && (
                     <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
