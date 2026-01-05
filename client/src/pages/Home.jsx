@@ -6,7 +6,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, L
 import BACKEND_URL from "../config";
 import { 
     Sword, ScrollText, Zap, TrendingUp, ShieldCheck, Users, ArrowRight, Heart, Star, 
-    ShoppingBag, Instagram, ExternalLink, PlusCircle, X, Camera, Sparkles, UserPlus, BarChart3, LayoutList, Lock
+    ShoppingBag, Instagram, ExternalLink, PlusCircle, X, Camera, Sparkles, UserPlus, BarChart3, LayoutList
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -91,7 +91,6 @@ export default function HomePortal() {
         }));
     };
 
-    // ✅ Renderizado de porcentajes dentro del gráfico
     const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
         const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
         const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
@@ -109,7 +108,7 @@ export default function HomePortal() {
             {/* HERO SECTION */}
             <header className="w-full max-w-7xl px-4 md:px-6 pt-16 md:pt-24 pb-12 text-center animate-in fade-in slide-in-from-top-10 duration-1000">
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/5 dark:bg-blue-400/10 border border-blue-600/10 dark:border-blue-400/20 rounded-full mb-8 shadow-sm">
-                    <Star size={12} className="text-blue-600 dark:text-blue-400 fill-blue-600 dark:fill-blue-400" />
+                    <Star size={12} className="text-blue-600 dark:text-blue-400 fill-blue-600" />
                     <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-blue-600 dark:text-blue-400">Versión Meta v3.5</span>
                 </div>
                 <div className="flex justify-center mb-8 px-4">
@@ -151,11 +150,11 @@ export default function HomePortal() {
                 </div>
             </motion.section>
 
-            {/* ✅ MODAL DE ANÁLISIS PROFESIONAL (ESTE ES EL QUE FALTABA) */}
+            {/* ✅ MODAL DE ANÁLISIS PROFESIONAL */}
             <AnimatePresence>
                 {showMetaModal && selectedMetaCard && (
                     <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowMetaModal(false)} className="absolute inset-0 bg-[#060912]/95 backdrop-blur-xl" />
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowMetaModal(false)} className="absolute inset-0 bg-black/90 backdrop-blur-xl" />
                         <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} className="relative w-full max-w-4xl bg-white dark:bg-[#0f172a] border border-white/10 rounded-[3.5rem] overflow-hidden shadow-2xl flex flex-col md:flex-row">
                             <button onClick={() => setShowMetaModal(false)} className="absolute top-6 right-6 z-20 p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-blue-500 transition-colors">
                                 <X size={20} />
@@ -211,14 +210,13 @@ export default function HomePortal() {
                                         {selectedMetaCard.featuredDecks?.map((deck, i) => (
                                             <button 
                                                 key={i} 
-                                                disabled={!deck.isPublic}
                                                 onClick={() => deck.isPublic && navigate(`/community/deck/${deck._id}`)}
                                                 className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase italic transition-all border flex items-center gap-2
                                                     ${deck.isPublic 
-                                                        ? 'bg-green-500/10 border-green-500/30 text-green-500 hover:bg-green-600 hover:text-white cursor-pointer' 
-                                                        : 'bg-slate-500/10 border-slate-500/20 text-slate-500 cursor-not-allowed opacity-60'}`}
+                                                        ? 'bg-blue-600/10 border-blue-600/30 text-blue-600 hover:bg-blue-600 hover:text-white cursor-pointer' 
+                                                        : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 cursor-default'}`}
                                             >
-                                                {deck.name} {!deck.isPublic && <Lock size={10} />}
+                                                {deck.name} {deck.isPublic && <ArrowRight size={10} />}
                                             </button>
                                         )) || <p className="text-[9px] text-slate-600 italic">No hay mazos vinculados</p>}
                                     </div>
@@ -239,9 +237,12 @@ export default function HomePortal() {
                                 <span className="text-[10px] font-black uppercase text-orange-500">Official Store</span>
                             </div>
                             <h2 className="text-4xl md:text-7xl font-black uppercase italic tracking-tighter mb-4 leading-none">Juegos <span className="text-blue-600">Vikingos</span></h2>
-                            <p className="text-slate-500 dark:text-slate-400 text-lg mb-8 max-w-lg font-medium italic mx-auto md:mx-0">Encuentra las cartas más codiciadas y los últimos lanzamientos de Mitos y Leyendas.</p>
+                            <p className="text-slate-500 dark:text-slate-400 text-lg mb-8 max-w-lg font-medium italic mx-auto md:mx-0">Encuentra las cartas más codiciadas y los últimos lanzamientos de Mitos y Leyendas. Calidad legendaria para invocadores reales.</p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
                                 <a href="https://www.juegosvikingos.cl" target="_blank" rel="noreferrer" className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase italic text-xs flex gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/30 active:scale-95">Visitar Tienda <ExternalLink size={18} /></a>
+                                <a href="https://www.instagram.com/juegosvikingos" target="_blank" rel="noreferrer" className="px-8 py-4 bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white rounded-2xl font-black uppercase italic text-xs flex gap-2 hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
+                                    <Instagram size={18} /> Instagram
+                                </a>
                             </div>
                         </div>
                         <div className="flex-1 order-1 md:order-2 flex justify-center">
