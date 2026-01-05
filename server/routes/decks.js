@@ -51,7 +51,7 @@ router.get('/my-decks', verifyToken, async (req, res) => {
 // 3. GUARDAR UN MAZO NUEVO (POST)
 router.post('/', verifyToken, async (req, res) => {
     try {
-        const { name, cards, format, isPublic, race } = req.body; // ✅ Se añade race del body
+        const { name, cards, format, isPublic, race } = req.body; 
 
         if (!name || !cards || cards.length === 0) {
             return res.status(400).json({ error: "El mazo debe tener nombre y cartas" });
@@ -63,7 +63,8 @@ router.post('/', verifyToken, async (req, res) => {
             name: c.name,
             slug: c.slug,
             type: c.type,
-            imgUrl: c.imgUrl || c.imageUrl || c.img
+            imgUrl: c.imgUrl || c.imageUrl || c.img,
+            race: c.race // ✅ Guardamos la raza individual de la carta para el conteo posterior
         }));
 
         const newDeck = new Deck({
@@ -71,7 +72,7 @@ router.post('/', verifyToken, async (req, res) => {
             name: name,
             cards: formattedCards,
             format: format || 'imperio',
-            race: race || 'Híbrido', // ✅ Guardamos la raza predominante
+            race: race || 'Híbrido', 
             isPublic: isPublic || false,
             likes: []
         });
@@ -136,13 +137,14 @@ router.put('/:id', verifyToken, async (req, res) => {
             name: c.name,
             slug: c.slug,
             type: c.type,
-            imgUrl: c.imgUrl || c.imageUrl || c.img
+            imgUrl: c.imgUrl || c.imageUrl || c.img,
+            race: c.race
         }));
 
         deck.name = name;
         deck.cards = formattedCards;
         if (format) deck.format = format;
-        if (race) deck.race = race; // ✅ Actualizamos raza
+        if (race) deck.race = race; 
         if (isPublic !== undefined) deck.isPublic = isPublic;
 
         await deck.save();
@@ -190,7 +192,6 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
         deck.comments.push(newComment);
         await deck.save();
 
-        // Retornamos el mazo actualizado con el nick del dueño para el modal
         const updatedDeck = await Deck.findById(req.params.id).populate('user', 'username');
         res.json(updatedDeck);
     } catch (error) {
@@ -216,20 +217,30 @@ router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
     }
 });
 
-// 10. ✅ META REPORT MEJORADO: INDEPENDIENTE POR FORMATO Y DESGLOSE POR RAZA
+// 10. ✅ META REPORT PROFESIONAL: INDEPENDIENTE POR FORMATO Y DETECTOR DE RAZAS
 router.get('/stats/meta', async (req, res) => {
     try {
         const { format } = req.query; 
 
-        // 1. Filtramos los mazos por formato
         const queryFilter = format ? { format: format } : {};
         const allDecks = await Deck.find(queryFilter);
         
         const cardUsage = {};
 
         allDecks.forEach(deck => {
-            // Intentamos obtener la raza del mazo (campo 'race' o desde el nombre)
-            let currentRace = deck.race || "Híbrido";
+            // ✅ DETECTOR DINÁMICO DE RAZA
+            // Si el mazo no tiene raza o es Híbrido, analizamos sus Aliados para ver cuál domina
+            let deckRace = deck.race;
+            if (!deckRace || deckRace === "Híbrido") {
+                const raceCounts = {};
+                deck.cards.forEach(c => {
+                    if (c.race && c.race !== "Sin Raza") {
+                        raceCounts[c.race] = (raceCounts[c.race] || 0) + 1;
+                    }
+                });
+                const sorted = Object.entries(raceCounts).sort((a, b) => b[1] - a[1]);
+                deckRace = sorted.length > 0 ? sorted[0][0] : "Híbrido";
+            }
 
             deck.cards.forEach(card => {
                 const key = card.slug || card.name;
@@ -240,22 +251,20 @@ router.get('/stats/meta', async (req, res) => {
                         imgUrl: card.imgUrl || card.img,
                         format: deck.format,
                         usageCount: 0,
-                        races: {} // ✅ Objeto para mapear: { "Caballero": 5, "Sombra": 2 }
+                        races: {} 
                     };
                 }
 
-                // Sumamos frecuencia de aparición en mazos (no cantidad de copias)
                 cardUsage[key].usageCount += 1;
 
-                // ✅ Mapeamos el uso por raza
-                if (!cardUsage[key].races[currentRace]) {
-                    cardUsage[key].races[currentRace] = 0;
+                // ✅ Mapeamos el uso por la raza detectada
+                if (!cardUsage[key].races[deckRace]) {
+                    cardUsage[key].races[deckRace] = 0;
                 }
-                cardUsage[key].races[currentRace] += 1;
+                cardUsage[key].races[deckRace] += 1;
             });
         });
 
-        // 2. Ordenamos por las 10 más usadas
         const sortedMeta = Object.values(cardUsage)
             .sort((a, b) => b.usageCount - a.usageCount)
             .slice(0, 10);
