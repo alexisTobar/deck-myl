@@ -75,7 +75,7 @@ export default function AdminDashboard() {
     const [formData, setFormData] = useState(initialFormState);
     const token = localStorage.getItem("token");
 
-    // Estilo para alertas adaptable (usa las clases del sistema)
+    // Estilo para alertas adaptable
     const swalStyle = {
         background: 'var(--tw-bg-opacity)',
         confirmButtonColor: '#2563eb',
@@ -103,11 +103,15 @@ export default function AdminDashboard() {
         if (activeTab === "market" && step === "editor") fetchMarketItems();
     }, [edicionFiltro, formato, activeTab, step]);
 
+    // ✅ MEJORA: PRIORIDAD A LO NUEVO (Desde hoy en adelante arriba)
     const cartasFiltradas = useMemo(() => {
-        return cartas.filter(c =>
+        const filtered = cartas.filter(c =>
             c.name?.toLowerCase().includes(busquedaInterna.toLowerCase()) ||
             c.slug?.toLowerCase().includes(busquedaInterna.toLowerCase())
         );
+
+        // Ordenamos: Lo más nuevo (por ID de MongoDB o fecha) siempre arriba
+        return [...filtered].sort((a, b) => b._id.localeCompare(a._id));
     }, [cartas, busquedaInterna]);
 
     const fetchCartas = async () => {
@@ -509,7 +513,7 @@ export default function AdminDashboard() {
     );
 }
 
-// ✅ SUBCOMPONENTES AUXILIARES
+// Subcomponentes
 function MenuCard({ icon, color, borderColor, hoverColor, title, sub, onClick }) {
     return (
         <div onClick={onClick} className={`bg-white dark:bg-slate-900 border-2 ${borderColor} p-10 rounded-[3rem] cursor-pointer ${hoverColor} transition-all group shadow-2xl relative overflow-hidden active:scale-95`}>
