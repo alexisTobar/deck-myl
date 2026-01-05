@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"; // ✅ Añadido para an
 import BACKEND_URL from "../config";
 import { 
     Plus, Minus, Eye, Save, Search, X, Camera, Globe, Layout, 
-    Users, Star, Sword, ChevronDown, ShieldAlert, Filter, Sparkles, Anchor
+    Users, Star, Sword, ChevronDown, ShieldAlert, Filter, Sparkles, Anchor, Swords
 } from "lucide-react";
 
 const TYPE_MAP = { "1": "Aliado", "2": "Talismán", "3": "Arma", "4": "Tótem", "5": "Oro" };
@@ -42,32 +42,13 @@ const TIPOS_IMPERIO = [
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 const getImg = (c) => c?.imgUrl || c?.imageUrl || c?.img || "https://via.placeholder.com/250x350?text=No+Image";
 
-// ✅ VARIANTES DE ANIMACIÓN PARA EL REPARTO
 const cardDealingVariants = {
-    hidden: { 
-        opacity: 0, 
-        x: 300, 
-        y: 300, 
-        rotate: 45, 
-        scale: 0.5 
-    },
+    hidden: { opacity: 0, x: 300, y: 300, rotate: 45, scale: 0.5 },
     visible: (i) => ({
-        opacity: 1, 
-        x: 0, 
-        y: 0, 
-        rotate: 0, 
-        scale: 1,
-        transition: { 
-            delay: i * 0.1, 
-            duration: 0.5, 
-            ease: "easeOut" 
-        }
+        opacity: 1, x: 0, y: 0, rotate: 0, scale: 1,
+        transition: { delay: i * 0.1, duration: 0.5, ease: "easeOut" }
     }),
-    exit: { 
-        opacity: 0, 
-        scale: 0.8, 
-        transition: { duration: 0.2 } 
-    }
+    exit: { opacity: 0, scale: 0.8, transition: { duration: 0.2 } }
 };
 
 export default function ImperioBuilder() {
@@ -84,6 +65,10 @@ export default function ImperioBuilder() {
     const [loading, setLoading] = useState(false);
     const [mazo, setMazo] = useState([]);
     const [nombreMazo, setNombreMazo] = useState("");
+    
+    // ✅ NUEVO ESTADO PARA LA RAZA DEL MAZO
+    const [razaMazo, setRazaMazo] = useState("");
+
     const [editingDeckId, setEditingDeckId] = useState(null);
     const [isPublic, setIsPublic] = useState(false);
     const [modalGuardarOpen, setModalGuardarOpen] = useState(false);
@@ -91,11 +76,8 @@ export default function ImperioBuilder() {
     const [cardToZoom, setCardToZoom] = useState(null);
     const [guardando, setGuardando] = useState(false);
     const [manoPrueba, setManoPrueba] = useState([]);
-    
-    // ✅ ESTADO PARA ORO INICIAL
     const [oroInicialSlug, setOroInicialSlug] = useState(null);
 
-    // ✅ Cálculo de totalCartas al inicio para evitar ReferenceError
     const totalCartas = useMemo(() => mazo.reduce((acc, c) => acc + c.cantidad, 0), [mazo]);
 
     const mazoAgrupado = useMemo(() => {
@@ -117,27 +99,23 @@ export default function ImperioBuilder() {
         return { counts };
     }, [mazo]);
 
-    // ✅ FUNCIÓN SIMULADOR DE MANO MEJORADA CON ANIMACIÓN Y ORO INICIAL SEPARADO
     const simularMano = () => {
         setManoPrueba([]);
         if (!oroInicialSlug) return alert("Selecciona un Oro Inicial primero.");
         
         setTimeout(() => {
             let barajaParaBarajar = [];
-            // Crear pool de cartas
             mazo.forEach(c => {
                 for (let i = 0; i < c.cantidad; i++) {
                     barajaParaBarajar.push(c);
                 }
             });
 
-            // Separar una copia del Oro Inicial
             const indexOro = barajaParaBarajar.findIndex(c => c.slug === oroInicialSlug);
             if (indexOro !== -1) {
                 barajaParaBarajar.splice(indexOro, 1);
             }
 
-            // Barajar el resto
             for (let i = barajaParaBarajar.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [barajaParaBarajar[i], barajaParaBarajar[j]] = [barajaParaBarajar[j], barajaParaBarajar[i]];
@@ -153,19 +131,18 @@ export default function ImperioBuilder() {
             setNombreMazo(location.state.isCloning ? `${d.name} (Copia)` : d.name || "");
             setEditingDeckId(location.state.isCloning ? null : d._id);
             setIsPublic(d.isPublic || false);
+            setRazaMazo(d.race || ""); // ✅ Cargar raza si existe
             setMazo(d.cards.map(c => ({ 
                 ...c, 
                 cantidad: c.quantity || c.cantidad || 1, 
                 imgUrl: getImg(c),
                 type: String(c.type)
             })));
-            // Intentar cargar oro inicial si existe
             const firstGold = d.cards.find(c => String(c.type) === "5");
             if (firstGold) setOroInicialSlug(firstGold.slug);
         }
     }, [location.state]);
 
-    // ✅ EFECTO DE BÚSQUEDA CORREGIDO
     useEffect(() => {
         const fetchCartas = async () => {
             setLoading(true);
@@ -189,11 +166,7 @@ export default function ImperioBuilder() {
                 const res = await fetch(`${BACKEND_URL}/api/cards/search?${params.toString()}`);
                 const data = await res.json();
                 setCartas(Array.isArray(data) ? data : (data.results || []));
-            } catch (e) { 
-                console.error("Error fetching cards:", e); 
-            } finally { 
-                setLoading(false); 
-            }
+            } catch (e) { console.error("Error fetching cards:", e); } finally { setLoading(false); }
         };
         const timer = setTimeout(fetchCartas, 300);
         return () => clearTimeout(timer);
@@ -216,10 +189,7 @@ export default function ImperioBuilder() {
         setMazo(prevMazo => {
             const ex = prevMazo.find(x => x.slug === c.slug);
             if (ex) return prevMazo.map(x => x.slug === c.slug ? { ...x, cantidad: x.cantidad + 1 } : x);
-            
-            // Si es el primer oro que se agrega, marcarlo como inicial automáticamente
             if (String(c.type) === "5" && !oroInicialSlug) setOroInicialSlug(c.slug);
-
             return [...prevMazo, { ...c, cantidad: 1, imgUrl: getImg(c), type: String(c.type) }];
         });
     };
@@ -231,7 +201,9 @@ export default function ImperioBuilder() {
 
     const handleSaveDeck = async () => {
         if (!nombreMazo.trim()) return alert("Nombre requerido");
+        if (!razaMazo) return alert("Debes seleccionar la Raza de tu mazo para el análisis profesional.");
         if (!oroInicialSlug) return alert("Debes seleccionar un Oro Inicial para Imperio");
+        
         const token = localStorage.getItem("token");
         if (!token) return navigate("/login");
         setGuardando(true);
@@ -243,6 +215,7 @@ export default function ImperioBuilder() {
                 name: nombreMazo,
                 cards: mazo.map(c => ({ ...c, quantity: c.cantidad })),
                 format: "imperio", 
+                race: razaMazo, // ✅ Enviado al backend
                 isPublic: isPublic
             };
 
@@ -432,9 +405,8 @@ export default function ImperioBuilder() {
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-2 pb-6 z-50 flex items-center justify-between shadow-2xl transition-colors">
                 <div className="flex flex-col px-3"><span className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">TOTAL</span><span className={`text-xl font-black leading-none ${totalCartas === 50 ? 'text-green-600 dark:text-green-500' : 'text-slate-900 dark:text-white'}`}>{totalCartas}/50</span></div>
                 <div className="flex gap-2">
-                    <button onClick={simularMano} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Mano</button>
-                    <button onClick={() => setShowMobileList(true)} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Lista</button>
-                    <button onClick={handleTakeScreenshot} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-3 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700 flex items-center justify-center"><Camera size={18} /></button>
+                    <button onClick={simularMano} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Mano</button>
+                    <button onClick={() => setShowMobileList(true)} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 dark:border-slate-700">Lista</button>
                     <button onClick={() => setModalGuardarOpen(true)} className="bg-blue-600 dark:bg-orange-600 text-white px-5 py-2 rounded-xl font-black text-xs shadow-lg flex items-center justify-center"><Save size={16} /></button>
                 </div>
             </div>
@@ -494,15 +466,13 @@ export default function ImperioBuilder() {
                 )}
             </AnimatePresence>
 
+            {/* MODAL LISTA MÓVIL */}
             {showMobileList && (
                 <div className="md:hidden fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
                     <div className="bg-white dark:bg-slate-900 rounded-t-[3rem] h-[80vh] p-6 overflow-hidden border-t border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-black uppercase text-blue-600 dark:text-orange-500 italic tracking-tighter">Grimorio ({totalCartas}/50)</h3>
-                            <div className="flex gap-2">
-                                <button onClick={handleTakeScreenshot} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-blue-600 dark:text-orange-500 border border-slate-200 dark:border-slate-700"><Camera size={20}/></button>
-                                <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 border border-slate-200 dark:border-slate-700 transition-colors hover:text-red-500"><X size={24} /></button>
-                            </div>
+                            <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400"><X size={24} /></button>
                         </div>
                         <div className="grid grid-cols-5 gap-1 mb-4">
                             {ORDER_TYPES.map(type => (
@@ -561,17 +531,49 @@ export default function ImperioBuilder() {
                 </div>
             )}
 
+            {/* ✅ MODAL GUARDAR MEJORADO CON SELECCIÓN DE RAZA */}
             {modalGuardarOpen && (
                 <div className="fixed inset-0 bg-slate-950/90 z-[500] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in" onClick={() => setModalGuardarOpen(false)}>
                     <div className="bg-white dark:bg-slate-800 p-8 rounded-[3rem] w-full max-w-sm border border-slate-200 dark:border-slate-700 shadow-2xl" onClick={e => e.stopPropagation()}>
                         <h3 className="text-2xl font-black mb-8 uppercase text-blue-600 dark:text-orange-500 tracking-tighter italic text-center leading-none">Archivar<br/>Estrategia Imperio</h3>
-                        <input value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-blue-500 dark:focus:border-orange-500 mb-4 transition-all text-slate-900 dark:text-white font-black uppercase text-sm tracking-widest" placeholder="NOMBRE DEL MAZO..." />
-                        <label className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl cursor-pointer hover:bg-blue-50 dark:hover:bg-slate-950 transition-colors border border-slate-200 dark:border-slate-700">
-                            <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-6 h-6 rounded-lg accent-blue-600 dark:accent-orange-600" />
-                            <span className="text-xs font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest italic">Publicar en Arena <Globe size={14} className="inline ml-1 text-blue-600 dark:text-orange-500" /></span>
-                        </label>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <span className="text-[10px] font-black text-slate-400 uppercase ml-2">Nombre del Mazo</span>
+                                <input value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-blue-500 dark:focus:border-orange-500 transition-all text-slate-900 dark:text-white font-black uppercase text-sm tracking-widest" placeholder="NOMBRE..." />
+                            </div>
+
+                            {/* ✅ NUEVO SELECTOR DE RAZA PREDOMINANTE */}
+                            <div>
+                                <span className="text-[10px] font-black text-slate-400 uppercase ml-2">Raza Predominante (Para Análisis)</span>
+                                <div className="relative">
+                                    <select 
+                                        value={razaMazo} 
+                                        onChange={(e) => setRazaMazo(e.target.value)} 
+                                        className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-blue-500 dark:focus:border-orange-500 transition-all text-slate-900 dark:text-white font-black uppercase text-sm appearance-none cursor-pointer"
+                                    >
+                                        <option value="">Selecciona Raza...</option>
+                                        {RAZAS_IMPERIO.map(r => <option key={r} value={r}>{r}</option>)}
+                                        <option value="Híbrido">Híbrido / Mix</option>
+                                    </select>
+                                    <Swords size={18} className="absolute right-4 top-4 text-slate-500 pointer-events-none" />
+                                </div>
+                            </div>
+
+                            <label className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl cursor-pointer hover:bg-blue-50 dark:hover:bg-slate-950 transition-colors border border-slate-200 dark:border-slate-700">
+                                <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-6 h-6 rounded-lg accent-blue-600 dark:accent-orange-600" />
+                                <span className="text-xs font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest italic">Publicar en Arena <Globe size={14} className="inline ml-1 text-blue-600 dark:text-orange-500" /></span>
+                            </label>
+                        </div>
+
                         <div className="flex flex-col gap-2 mt-10">
-                            <button onClick={handleSaveDeck} disabled={guardando || !nombreMazo.trim()} className="w-full bg-blue-600 dark:bg-orange-600 text-white dark:text-black py-4 rounded-2xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-3 italic"><Save size={18} /> CONFIRMAR</button>
+                            <button 
+                                onClick={handleSaveDeck} 
+                                disabled={guardando || !nombreMazo.trim() || !razaMazo} 
+                                className={`w-full py-4 rounded-2xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-3 italic ${(!nombreMazo.trim() || !razaMazo) ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-blue-600 dark:bg-orange-600 text-white dark:text-black'}`}
+                            >
+                                <Save size={18} /> CONFIRMAR
+                            </button>
                             <button onClick={() => setModalGuardarOpen(false)} className="w-full text-slate-400 font-black py-2 hover:text-slate-600 dark:hover:text-white transition-colors uppercase italic text-[10px] tracking-[0.2em]">CANCELAR</button>
                         </div>
                     </div>

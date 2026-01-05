@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import BACKEND_URL from "../config";
 import {
     Plus, Minus, Eye, Save, Search, X, Camera, Globe, Layout,
-    Users, Star, ShieldAlert, Sparkles, Anchor
+    Users, Star, ShieldAlert, Sparkles, Anchor, Swords
 } from "lucide-react";
 
 const MAIN_EDITIONS = [
@@ -49,6 +49,10 @@ export default function PBBuilder() {
     const [loading, setLoading] = useState(false);
     const [mazo, setMazo] = useState([]);
     const [nombreMazo, setNombreMazo] = useState("");
+    
+    // ✅ NUEVO ESTADO PARA LA RAZA DEL MAZO
+    const [razaMazo, setRazaMazo] = useState("");
+
     const [editingDeckId, setEditingDeckId] = useState(null);
     const [isPublic, setIsPublic] = useState(false);
     const [modalGuardarOpen, setModalGuardarOpen] = useState(false);
@@ -66,35 +70,28 @@ export default function PBBuilder() {
         return { counts };
     }, [mazo]);
 
-    // ✅ CORRECCIÓN: Filtrar el Oro Inicial de la Baraja antes de repartir
     const simularMano = () => {
         setManoPrueba([]);
         if (!oroInicialSlug) return alert("Selecciona un Oro Inicial primero.");
 
         setTimeout(() => {
             let barajaCompleta = [];
-            // Crear el pool de cartas basado en sus cantidades
             mazo.forEach(c => {
                 for (let i = 0; i < c.cantidad; i++) {
                     barajaCompleta.push(c);
                 }
             });
 
-            // 1. Encontrar el índice de la primera copia del Oro Inicial
             const indexOro = barajaCompleta.findIndex(c => c.slug === oroInicialSlug);
-            
-            // 2. Si existe (siempre debería), lo removemos de la baraja que se va a barajar
             if (indexOro !== -1) {
                 barajaCompleta.splice(indexOro, 1);
             }
 
-            // 3. Barajar el resto (ahora tiene 49 cartas o menos)
             for (let i = barajaCompleta.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [barajaCompleta[i], barajaCompleta[j]] = [barajaCompleta[j], barajaCompleta[i]];
             }
 
-            // 4. Tomar las 8 cartas para la mano
             const manoFinal = barajaCompleta.slice(0, 8);
             setManoPrueba(manoFinal);
         }, 50);
@@ -112,6 +109,7 @@ export default function PBBuilder() {
                 setNombreMazo(isCloning ? `Copia de ${d.name}` : d.name);
                 setEditingDeckId(isCloning ? null : d._id);
                 setIsPublic(isCloning ? false : (d.isPublic || false));
+                setRazaMazo(d.race || "");
                 setMazo(d.cards.map(c => ({ ...c, cantidad: c.quantity || 1, imgUrl: getImg(c) })));
                 const firstGold = d.cards.find(c => c.type === "Oro");
                 if (firstGold) setOroInicialSlug(firstGold.slug);
@@ -163,7 +161,9 @@ export default function PBBuilder() {
 
     const handleSaveDeck = async () => {
         if (!nombreMazo.trim()) return alert("Nombre requerido");
+        if (!razaMazo) return alert("Debes seleccionar la Raza de tu mazo para el análisis.");
         if (!oroInicialSlug) return alert("Debes seleccionar un Oro Inicial para Primer Bloque");
+        
         const token = localStorage.getItem("token");
         if (!token) return navigate("/login");
         setGuardando(true);
@@ -172,7 +172,13 @@ export default function PBBuilder() {
             const method = editingDeckId ? "PUT" : "POST";
             const res = await fetch(url, {
                 method, headers: { "Content-Type": "application/json", "auth-token": token },
-                body: JSON.stringify({ name: nombreMazo, cards: mazo.map(c => ({ ...c, quantity: c.cantidad })), format: formato, isPublic: isPublic })
+                body: JSON.stringify({ 
+                    name: nombreMazo, 
+                    cards: mazo.map(c => ({ ...c, quantity: c.cantidad })), 
+                    format: formato, 
+                    isPublic: isPublic,
+                    race: razaMazo // ✅ Enviamos la raza a la BD
+                })
             });
             if (res.ok) navigate("/my-decks");
         } catch (e) { alert("Error"); } finally { setGuardando(false); }
@@ -269,7 +275,7 @@ export default function PBBuilder() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <input type="text" placeholder="Búsqueda..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="flex-1 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:border-blue-500 dark:focus:border-yellow-500 font-bold transition-all" />
-                        <select value={razaSeleccionada} onChange={(e) => setRazaSeleccionada(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-yellow-500/30 p-2 rounded-xl text-[11px] font-black text-slate-700 dark:text-yellow-400 outline-none"><option value="">Raza...</option>{RAZAS_PB.map(r => <option key={r} value={r}>{r}</option>)}</select>
+                        <select value={razaSeleccionada} onChange={(e) => setRazaSeleccionada(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-yellow-500/30 p-2 rounded-xl text-[11px] font-black text-slate-700 dark:text-yellow-400 outline-none"><option value="">Filtrar Raza...</option>{RAZAS_PB.map(r => <option key={r} value={r}>{r}</option>)}</select>
                     </div>
                     <div className="flex flex-wrap gap-2 justify-center">
                         {TIPOS_PB.map((tipo) => (
@@ -378,7 +384,6 @@ export default function PBBuilder() {
                         <motion.h3 initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-xl md:text-2xl font-black text-blue-500 dark:text-yellow-500 uppercase italic mb-8 tracking-widest text-center flex items-center gap-3"><Sparkles className="animate-pulse text-yellow-400" size={24} /> Mano Inicial PB</motion.h3>
                         
                         <div className="flex flex-col md:flex-row gap-8 items-center max-w-full">
-                            {/* ✅ SECCIÓN ORO INICIAL SEPARADA */}
                             {oroInicialSlug && mazo.find(c => c.slug === oroInicialSlug) && (
                                 <div className="flex flex-col items-center gap-2 border-r border-white/10 pr-8">
                                     <span className="text-[10px] font-black text-yellow-500 uppercase tracking-widest bg-yellow-500/10 px-3 py-1 rounded-full border border-yellow-500/20">Oro Inicial</span>
@@ -396,7 +401,6 @@ export default function PBBuilder() {
                                 </div>
                             )}
 
-                            {/* ✅ SECCIÓN MANO REPARTIDA (8 CARTAS SIN EL ORO INICIAL) */}
                             <div className="flex flex-col items-center gap-2">
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cartas Repartidas</span>
                                 <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-3">
@@ -493,17 +497,49 @@ export default function PBBuilder() {
                 </div>
             )}
 
+            {/* ✅ MODAL GUARDAR MEJORADO CON SELECCIÓN DE RAZA */}
             {modalGuardarOpen && (
                 <div className="fixed inset-0 bg-slate-950/90 z-[500] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in" onClick={() => setModalGuardarOpen(false)}>
                     <div className="bg-white dark:bg-slate-800 p-8 rounded-[3rem] w-full max-w-sm border border-slate-200 dark:border-slate-700 shadow-2xl" onClick={e => e.stopPropagation()}>
                         <h3 className="text-2xl font-black mb-8 uppercase text-blue-600 dark:text-yellow-500 tracking-tighter italic text-center leading-none">Archivar<br/>Estrategia PB</h3>
-                        <input value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-blue-500 dark:focus:border-yellow-500 mb-4 transition-all text-slate-900 dark:text-white font-black uppercase text-sm tracking-widest" placeholder="NOMBRE DEL MAZO..." />
-                        <label className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl cursor-pointer hover:bg-blue-50 dark:hover:bg-slate-950 transition-colors border border-slate-200 dark:border-slate-700">
-                            <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-6 h-6 rounded-lg accent-blue-600 dark:accent-yellow-600" />
-                            <span className="text-xs font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest italic">Publicar en Arena <Globe size={14} className="inline ml-1 text-blue-600 dark:text-orange-500" /></span>
-                        </label>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <span className="text-[10px] font-black text-slate-400 uppercase ml-2">Nombre del Mazo</span>
+                                <input value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-blue-500 dark:focus:border-yellow-500 transition-all text-slate-900 dark:text-white font-black uppercase text-sm tracking-widest" placeholder="NOMBRE..." />
+                            </div>
+
+                            {/* ✅ NUEVO SELECTOR DE RAZA PREDOMINANTE */}
+                            <div>
+                                <span className="text-[10px] font-black text-slate-400 uppercase ml-2">Raza Predominante (Para Análisis)</span>
+                                <div className="relative">
+                                    <select 
+                                        value={razaMazo} 
+                                        onChange={(e) => setRazaMazo(e.target.value)} 
+                                        className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-blue-500 dark:focus:border-yellow-500 transition-all text-slate-900 dark:text-white font-black uppercase text-sm appearance-none cursor-pointer"
+                                    >
+                                        <option value="">Selecciona Raza...</option>
+                                        {RAZAS_PB.map(r => <option key={r} value={r}>{r}</option>)}
+                                        <option value="Híbrido">Híbrido / Mix</option>
+                                    </select>
+                                    <Swords size={18} className="absolute right-4 top-4 text-slate-500 pointer-events-none" />
+                                </div>
+                            </div>
+
+                            <label className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl cursor-pointer hover:bg-blue-50 dark:hover:bg-slate-950 transition-colors border border-slate-200 dark:border-slate-700">
+                                <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-6 h-6 rounded-lg accent-blue-600 dark:accent-yellow-600" />
+                                <span className="text-xs font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest italic">Publicar en Arena <Globe size={14} className="inline ml-1 text-blue-600 dark:text-orange-500" /></span>
+                            </label>
+                        </div>
+
                         <div className="flex flex-col gap-2 mt-10">
-                            <button onClick={handleSaveDeck} disabled={guardando || !nombreMazo.trim()} className="w-full bg-blue-600 dark:bg-yellow-600 text-white dark:text-black py-4 rounded-2xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-3 italic"><Save size={18} /> CONFIRMAR</button>
+                            <button 
+                                onClick={handleSaveDeck} 
+                                disabled={guardando || !nombreMazo.trim() || !razaMazo} 
+                                className={`w-full py-4 rounded-2xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-3 italic ${(!nombreMazo.trim() || !razaMazo) ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-blue-600 dark:bg-yellow-600 text-white dark:text-black'}`}
+                            >
+                                <Save size={18} /> CONFIRMAR
+                            </button>
                             <button onClick={() => setModalGuardarOpen(false)} className="w-full text-slate-400 font-black py-2 hover:text-slate-600 dark:hover:text-white transition-colors uppercase italic text-[10px] tracking-[0.2em]">CANCELAR</button>
                         </div>
                     </div>

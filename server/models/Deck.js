@@ -27,6 +27,7 @@ const CardSchema = new mongoose.Schema({
     quantity: { type: Number, default: 1 },
     type: String,
     cost: Number,
+    race: String, // ✅ Guardamos la raza de la carta para facilitar el conteo
 });
 
 const DeckSchema = new mongoose.Schema({
@@ -46,6 +47,11 @@ const DeckSchema = new mongoose.Schema({
         enum: ['imperio', 'primer_bloque'],
         default: 'imperio'
     },
+    // ✅ NUEVO: Campo de Raza para el Mazo
+    race: {
+        type: String,
+        default: 'Híbrido'
+    },
     isPublic: {
         type: Boolean,
         default: false
@@ -54,7 +60,7 @@ const DeckSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }],
-    // ✅ NUEVO: Array de comentarios vinculados al mazo
+    // Array de comentarios vinculados al mazo
     comments: [CommentSchema],
     createdAt: {
         type: Date,

@@ -3,16 +3,21 @@ const Deck = require('../models/Deck');
 const User = require('../models/User'); 
 const verifyToken = require('../middleware/verifyToken');
 
-// ... (Rutas 1 a 9 se mantienen igual) ...
+// ==========================================
+//  RUTAS DE COMUNIDAD (PÚBLICAS O SOCIALES)
+// ==========================================
 
 // 1. OBTENER MAZOS DE LA COMUNIDAD (GET)
 router.get('/community/all', async (req, res) => {
     try {
         const isTop = req.query.top === 'true';
         let query = Deck.find({ isPublic: true }).populate('user', 'username');
+
         if (isTop) {
             const allPublic = await query;
-            const top3 = allPublic.sort((a, b) => (b.likes ? b.likes.length : 0) - (a.likes ? a.likes.length : 0)).slice(0, 3);
+            const top3 = allPublic
+                .sort((a, b) => (b.likes ? b.likes.length : 0) - (a.likes ? a.likes.length : 0))
+                .slice(0, 3);
             return res.json(top3);
         } else {
             query = query.sort({ createdAt: -1 });
@@ -24,6 +29,10 @@ router.get('/community/all', async (req, res) => {
         res.status(500).json({ error: "Error al cargar mazos de la comunidad" });
     }
 });
+
+// ==========================================
+//  RUTAS DE GESTIÓN (PRIVADAS - REQUIEREN TOKEN)
+// ==========================================
 
 // 2. OBTENER MIS MAZOS (GET)
 router.get('/my-decks', verifyToken, async (req, res) => {
@@ -40,7 +49,11 @@ router.get('/my-decks', verifyToken, async (req, res) => {
 router.post('/', verifyToken, async (req, res) => {
     try {
         const { name, cards, format, isPublic, race } = req.body; 
-        if (!name || !cards || cards.length === 0) return res.status(400).json({ error: "El mazo debe tener nombre y cartas" });
+
+        if (!name || !cards || cards.length === 0) {
+            return res.status(400).json({ error: "El mazo debe tener nombre y cartas" });
+        }
+
         const formattedCards = cards.map(c => ({
             cardId: c._id || c.cardId,
             quantity: c.cantidad || c.quantity || 1,
@@ -50,15 +63,17 @@ router.post('/', verifyToken, async (req, res) => {
             imgUrl: c.imgUrl || c.imageUrl || c.img,
             race: c.race 
         }));
+
         const newDeck = new Deck({
             user: req.user.id,
             name: name,
             cards: formattedCards,
             format: format || 'imperio',
-            race: race || 'Híbrido', 
+            race: race || 'Híbrido', // ✅ Se guarda la raza enviada desde el front
             isPublic: isPublic || false,
             likes: []
         });
+
         const savedDeck = await newDeck.save();
         res.status(201).json(savedDeck);
     } catch (error) {
@@ -79,24 +94,28 @@ router.put('/privacy/:id', verifyToken, async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Error al cambiar privacidad' }); }
 });
 
-// 5. LIKE (PUT)
+// 5. DAR O QUITAR LIKE (PUT)
 router.put('/like/:id', verifyToken, async (req, res) => {
     try {
         const deck = await Deck.findById(req.params.id);
         if (!deck) return res.status(404).json({ error: 'Mazo no encontrado' });
-        if (deck.likes.includes(req.user.id)) { deck.likes = deck.likes.filter(id => id.toString() !== req.user.id); }
-        else { deck.likes.push(req.user.id); }
+        if (deck.likes.includes(req.user.id)) {
+            deck.likes = deck.likes.filter(id => id.toString() !== req.user.id);
+        } else {
+            deck.likes.push(req.user.id);
+        }
         await deck.save();
         res.json(deck.likes);
     } catch (err) { res.status(500).json({ error: 'Error al dar like' }); }
 });
 
-// 6. ACTUALIZAR CONTENIDO (PUT)
+// 6. ACTUALIZAR CONTENIDO DEL MAZO (PUT)
 router.put('/:id', verifyToken, async (req, res) => {
     try {
         const { name, cards, format, isPublic, race } = req.body;
         const deck = await Deck.findOne({ _id: req.params.id, user: req.user.id });
         if (!deck) return res.status(404).json({ error: "No encontrado" });
+
         const formattedCards = cards.map(c => ({
             cardId: c.cardId || c._id,
             quantity: c.quantity || c.cantidad,
@@ -106,17 +125,22 @@ router.put('/:id', verifyToken, async (req, res) => {
             imgUrl: c.imgUrl || c.imageUrl || c.img,
             race: c.race
         }));
+
         deck.name = name;
         deck.cards = formattedCards;
         if (format) deck.format = format;
         if (race) deck.race = race; 
         if (isPublic !== undefined) deck.isPublic = isPublic;
+
         await deck.save();
         res.json(deck);
-    } catch (error) { console.error(error); res.status(500).json({ error: "Error al actualizar" }); }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al actualizar" });
+    }
 });
 
-// 7. ELIMINAR (DELETE)
+// 7. ELIMINAR UN MAZO (DELETE)
 router.delete('/:id', verifyToken, async (req, res) => {
     try {
         const deck = await Deck.findOne({ _id: req.params.id, user: req.user.id });
@@ -126,14 +150,24 @@ router.delete('/:id', verifyToken, async (req, res) => {
     } catch (error) { res.status(500).json({ error: "Error al eliminar" }); }
 });
 
-// 8. COMENTARIO (POST)
+// ==========================================
+//  RUTAS DE COMENTARIOS
+// ==========================================
+
+// 8. AGREGAR UN COMENTARIO
 router.post('/:id/comment', verifyToken, async (req, res) => {
     try {
         const { text } = req.body;
         const deck = await Deck.findById(req.params.id);
         const user = await User.findById(req.user.id);
         if (!deck) return res.status(404).json({ error: "Mazo no encontrado" });
-        const newComment = { userId: user._id, username: user.username, text: text, createdAt: new Date() };
+
+        const newComment = {
+            userId: user._id,
+            username: user.username,
+            text: text,
+            createdAt: new Date()
+        };
         deck.comments.push(newComment);
         await deck.save();
         const updatedDeck = await Deck.findById(req.params.id).populate('user', 'username');
@@ -141,7 +175,7 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
     } catch (error) { res.status(500).json({ error: "Error al agregar comentario" }); }
 });
 
-// 9. ELIMINAR COMENTARIO (DELETE)
+// 9. ELIMINAR UN COMENTARIO
 router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
     try {
         const deck = await Deck.findById(req.params.id);
@@ -153,12 +187,13 @@ router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
     } catch (error) { res.status(500).json({ error: "Error al eliminar comentario" }); }
 });
 
-// 10. ✅ META REPORT DEFINITIVO (ANALISIS POR RAZAS Y MAZOS)
+// 10. ✅ META REPORT PROFESIONAL ACTUALIZADO
 router.get('/stats/meta', async (req, res) => {
     try {
         const { format } = req.query; 
         const queryFilter = format ? { format: format } : {};
         const allDecks = await Deck.find(queryFilter);
+        
         const cardUsage = {};
 
         allDecks.forEach(deck => {
@@ -177,31 +212,39 @@ router.get('/stats/meta', async (req, res) => {
 
             deck.cards.forEach(card => {
                 const key = card.slug || card.name;
+                
                 if (!cardUsage[key]) {
                     cardUsage[key] = {
                         name: card.name,
                         imgUrl: card.imgUrl || card.img,
                         format: deck.format,
                         usageCount: 0,
-                        races: {}, 
-                        featuredDecks: [] // ✅ Lista de mazos donde aparece
+                        races: {},
+                        featuredDecks: [] // ✅ Nombres de mazos para mostrar en el modal
                     };
                 }
+
                 cardUsage[key].usageCount += 1;
-                // Contar por raza
-                cardUsage[key].races[deckRace] = (cardUsage[key].races[deckRace] || 0) + 1;
-                // Guardar nombre del mazo (máximo 5 para el modal)
+
+                // Conteo por raza
+                if (!cardUsage[key].races[deckRace]) cardUsage[key].races[deckRace] = 0;
+                cardUsage[key].races[deckRace] += 1;
+
+                // ✅ Guardamos el nombre del mazo (top 5)
                 if (cardUsage[key].featuredDecks.length < 5 && !cardUsage[key].featuredDecks.includes(deck.name)) {
                     cardUsage[key].featuredDecks.push(deck.name);
                 }
             });
         });
 
-        const sortedMeta = Object.values(cardUsage).sort((a, b) => b.usageCount - a.usageCount).slice(0, 10);
+        const sortedMeta = Object.values(cardUsage)
+            .sort((a, b) => b.usageCount - a.usageCount)
+            .slice(0, 10);
+
         res.json(sortedMeta);
     } catch (error) {
-        console.error("Error en Meta Report:", error);
-        res.status(500).json({ error: "Error al calcular estadísticas" });
+        console.error("Error en Meta Report Profesional:", error);
+        res.status(500).json({ error: "Error al calcular estadísticas detalladas" });
     }
 });
 
