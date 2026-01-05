@@ -11,8 +11,6 @@ const verifyToken = require('../middleware/verifyToken');
 router.get('/community/all', async (req, res) => {
     try {
         const isTop = req.query.top === 'true';
-
-        // ✅ MEJORA: .populate('user', 'username') para traer el nick
         let query = Deck.find({ isPublic: true }).populate('user', 'username');
 
         if (isTop) {
@@ -20,7 +18,6 @@ router.get('/community/all', async (req, res) => {
             const top3 = allPublic
                 .sort((a, b) => (b.likes ? b.likes.length : 0) - (a.likes ? a.likes.length : 0))
                 .slice(0, 3);
-
             return res.json(top3);
         } else {
             query = query.sort({ createdAt: -1 });
@@ -72,7 +69,7 @@ router.post('/', verifyToken, async (req, res) => {
             name: name,
             cards: formattedCards,
             format: format || 'imperio',
-            race: race || 'Híbrido', // ✅ Se guarda la raza enviada desde el front
+            race: race || 'Híbrido',
             isPublic: isPublic || false,
             likes: []
         });
@@ -90,11 +87,7 @@ router.put('/privacy/:id', verifyToken, async (req, res) => {
     try {
         const deck = await Deck.findById(req.params.id);
         if (!deck) return res.status(404).json({ error: 'Mazo no encontrado' });
-
-        if (deck.user.toString() !== req.user.id) {
-            return res.status(401).json({ error: 'No autorizado' });
-        }
-
+        if (deck.user.toString() !== req.user.id) return res.status(401).json({ error: 'No autorizado' });
         deck.isPublic = !deck.isPublic;
         await deck.save();
         res.json(deck);
@@ -106,13 +99,11 @@ router.put('/like/:id', verifyToken, async (req, res) => {
     try {
         const deck = await Deck.findById(req.params.id);
         if (!deck) return res.status(404).json({ error: 'Mazo no encontrado' });
-
         if (deck.likes.includes(req.user.id)) {
             deck.likes = deck.likes.filter(id => id.toString() !== req.user.id);
         } else {
             deck.likes.push(req.user.id);
         }
-
         await deck.save();
         res.json(deck.likes);
     } catch (err) { res.status(500).json({ error: 'Error al dar like' }); }
@@ -154,7 +145,6 @@ router.delete('/:id', verifyToken, async (req, res) => {
     try {
         const deck = await Deck.findOne({ _id: req.params.id, user: req.user.id });
         if (!deck) return res.status(404).json({ error: "No autorizado" });
-
         await Deck.findByIdAndDelete(req.params.id);
         res.json({ message: "Eliminado" });
     } catch (error) { res.status(500).json({ error: "Error al eliminar" }); }
@@ -180,7 +170,6 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
         };
         deck.comments.push(newComment);
         await deck.save();
-
         const updatedDeck = await Deck.findById(req.params.id).populate('user', 'username');
         res.json(updatedDeck);
     } catch (error) { res.status(500).json({ error: "Error al agregar comentario" }); }
@@ -193,75 +182,101 @@ router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
         if (!deck) return res.status(404).json({ error: "Mazo no encontrado" });
         deck.comments = deck.comments.filter(c => c._id.toString() !== req.params.commentId);
         await deck.save();
-
         const updatedDeck = await Deck.findById(req.params.id).populate('user', 'username');
         res.json(updatedDeck);
     } catch (error) { res.status(500).json({ error: "Error al eliminar comentario" }); }
 });
 
-// 10. ✅ META REPORT DEFINITIVO CON OBJETOS DE MAZO COMPLETOS
+// ==========================================
+//  ESTADÍSTICAS Y TIER LIST REAL
+// ==========================================
+
+// 10. META REPORT: CARTAS MÁS USADAS + PROMEDIO DE COPIAS
 router.get('/stats/meta', async (req, res) => {
     try {
         const { format } = req.query; 
         const queryFilter = format ? { format: format } : {};
         const allDecks = await Deck.find(queryFilter);
-        
         const cardUsage = {};
 
         allDecks.forEach(deck => {
-            // DETECTOR DINÁMICO DE RAZA
-            let deckRace = deck.race;
-            if (!deckRace || deckRace === "Híbrido") {
-                const raceCounts = {};
-                deck.cards.forEach(c => {
-                    if (c.race && c.race !== "Sin Raza") {
-                        raceCounts[c.race] = (raceCounts[c.race] || 0) + 1;
-                    }
-                });
-                const sorted = Object.entries(raceCounts).sort((a, b) => b[1] - a[1]);
-                deckRace = sorted.length > 0 ? sorted[0][0] : "Híbrido";
-            }
+            let deckRace = deck.race || "Híbrido";
 
             deck.cards.forEach(card => {
                 const key = card.slug || card.name;
-                
                 if (!cardUsage[key]) {
                     cardUsage[key] = {
                         name: card.name,
                         imgUrl: card.imgUrl || card.img,
                         format: deck.format,
-                        usageCount: 0,
+                        usageCount: 0, // En cuántos mazos diferentes aparece
+                        totalCopies: 0, // Acumulado de copias de esta carta
                         races: {},
-                        featuredDecks: [] // ✅ Lista de objetos con ID y estado público
+                        featuredDecks: [] 
                     };
                 }
-
                 cardUsage[key].usageCount += 1;
+                cardUsage[key].totalCopies += (card.quantity || 1); // Suma las copias (1, 2 o 3)
+                cardUsage[key].races[deckRace] = (cardUsage[key].races[deckRace] || 0) + 1;
 
-                // Conteo por raza
-                if (!cardUsage[key].races[deckRace]) cardUsage[key].races[deckRace] = 0;
-                cardUsage[key].races[deckRace] += 1;
-
-                // ✅ Guardamos el objeto del mazo completo (Límite 5 para el modal)
                 const alreadyAdded = cardUsage[key].featuredDecks.some(d => d._id.toString() === deck._id.toString());
                 if (cardUsage[key].featuredDecks.length < 5 && !alreadyAdded) {
                     cardUsage[key].featuredDecks.push({
                         _id: deck._id,
                         name: deck.name,
-                        isPublic: deck.isPublic // Dato vital para los colores en el front
+                        isPublic: deck.isPublic
                     });
                 }
             });
         });
 
+        // Calculamos el promedio y formateamos la salida
         const sortedMeta = Object.values(cardUsage)
+            .map(item => ({
+                ...item,
+                avgCopies: item.usageCount > 0 ? (item.totalCopies / item.usageCount).toFixed(1) : 0
+            }))
             .sort((a, b) => b.usageCount - a.usageCount)
             .slice(0, 10);
 
         res.json(sortedMeta);
     } catch (error) {
-        console.error("Error en Meta Report Profesional:", error);
-        res.status(500).json({ error: "Error al calcular estadísticas detalladas" });
+        console.error("Error meta report:", error);
+        res.status(500).json({ error: "Error al calcular meta report" });
+    }
+});
+
+// 11. TIER LIST RACIAL BASADA EN DATOS REALES
+router.get('/stats/tier-list', async (req, res) => {
+    try {
+        const { format } = req.query; 
+        const query = format ? { format } : {};
+        
+        const allDecks = await Deck.find(query);
+        const raceCounts = {};
+
+        allDecks.forEach(deck => {
+            const race = deck.race || "Híbrido";
+            if (race !== "Sin Raza") {
+                raceCounts[race] = (raceCounts[race] || 0) + 1;
+            }
+        });
+
+        const totalDecks = allDecks.length;
+        
+        const sortedTierList = Object.entries(raceCounts)
+            .map(([name, count]) => ({
+                name,
+                power: totalDecks > 0 ? `${Math.round((count / totalDecks) * 100)}%` : "0%",
+                count
+            }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 4);
+
+        res.json(sortedTierList);
+    } catch (error) {
+        console.error("Error tier list real:", error);
+        res.status(500).json({ error: "Error al calcular Tier List real" });
     }
 });
 

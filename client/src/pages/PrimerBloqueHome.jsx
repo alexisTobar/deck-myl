@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import BACKEND_URL from "../config"; // ✅ Importación de tu URL de backend
 import { 
     X, Star, Hammer, Users, FileText, Scale, Trophy, Zap, 
     Sword, Instagram, Youtube, Twitter, Target, Crown, ChevronRight, PlayCircle, ArrowRight, Heart, Layers
@@ -22,7 +23,27 @@ const MAIN_EDITIONS = [
 
 export default function PrimerBloqueHome() {
     const [showModal, setShowModal] = useState(false);
+    const [tierList, setTierList] = useState([]); // ✅ Estado para Tier List real
     const navigate = useNavigate();
+
+    // ✅ FETCH DE DATOS REALES BASADOS EN MAZOS CREADOS
+    useEffect(() => {
+        const fetchTierList = async () => {
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/decks/stats/tier-list?format=primer_bloque`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setTierList(data);
+                }
+            } catch (error) {
+                console.error("Error cargando Tier List real:", error);
+            }
+        };
+        fetchTierList();
+    }, []);
+
+    // Colores dinámicos para el ranking racial
+    const rankColors = ["bg-blue-600", "bg-indigo-600", "bg-blue-400", "bg-slate-400"];
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#060912] text-slate-900 dark:text-white font-sans overflow-x-hidden transition-colors duration-500 relative">
@@ -82,19 +103,27 @@ export default function PrimerBloqueHome() {
                 </div>
             </section>
 
-            {/* SECCIÓN TIER LIST */}
+            {/* ✅ SECCIÓN TIER LIST DINÁMICA MEJORADA */}
             <section className="max-w-7xl mx-auto px-6 py-20 md:py-32 relative z-10">
                 <motion.div {...fadeInUp} className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-center">
                     <div className="lg:col-span-1 text-left">
                         <Target className="text-blue-600 mb-6" size={48} />
-                        <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none mb-6">Tier List <span className="text-blue-600">Racial</span></h2>
-                        <p className="text-slate-500 dark:text-slate-400 text-lg leading-relaxed italic font-medium">El estado del metajuego en las arenas según la comunidad.</p>
+                        <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none mb-6">Tier List <span className="text-blue-600">Comunidad</span></h2>
+                        <p className="text-slate-500 dark:text-slate-400 text-lg leading-relaxed italic font-medium">Dominancia real de razas basada en los mazos creados por nuestra comunidad de Primer Bloque.</p>
                     </div>
                     <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <RaceRank name="Defensor" power="95%" color="bg-blue-600" />
-                        <RaceRank name="Héroe" power="93%" color="bg-indigo-600" />
-                        <RaceRank name="Faerie" power="88%" color="bg-blue-400" />
-                        <RaceRank name="Titán" power="82%" color="bg-slate-400" />
+                        {tierList.length > 0 ? (
+                            tierList.map((race, index) => (
+                                <RaceRank 
+                                    key={race.name} 
+                                    name={race.name} 
+                                    power={race.power} 
+                                    color={rankColors[index] || "bg-slate-500"} 
+                                />
+                            ))
+                        ) : (
+                            <p className="text-slate-400 italic">Sincronizando datos de la Arena...</p>
+                        )}
                     </div>
                 </motion.div>
             </section>
@@ -149,17 +178,14 @@ export default function PrimerBloqueHome() {
 
             {/* FOOTER */}
             <footer className="bg-white dark:bg-black py-16 md:py-20 border-t border-slate-200 dark:border-white/5 relative z-10">
-                <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12">
-                    <div className="text-center md:text-left">
+                <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12 text-center md:text-left">
+                    <div>
                         <h2 className="text-4xl font-light italic uppercase tracking-tighter text-slate-900 dark:text-white">Forja<span className="text-blue-600 font-black">Deck</span></h2>
                         <p className="text-slate-400 text-sm font-bold uppercase tracking-[0.3em] mt-2 italic">Resguardando la Llama Clásica</p>
                     </div>
-                    <div className="flex flex-col items-center md:items-end gap-3">
-                        <p className="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-bold text-base bg-slate-50 dark:bg-slate-900 px-5 py-2.5 rounded-2xl border border-slate-100 dark:border-white/5">
-                            Hecho con <Heart size={18} className="text-red-500 fill-red-500 animate-pulse" /> por <span className="text-blue-600 font-bold">Alexis Tobar</span>
-                        </p>
-                        <p className="text-[11px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest italic border-l-4 border-blue-600 pl-4">Colaboración: Juegos Vikingos</p>
-                    </div>
+                    <p className="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-bold text-base bg-slate-50 dark:bg-slate-900 px-5 py-2.5 rounded-2xl border border-slate-100 dark:border-white/5">
+                        Hecho con <Heart size={18} className="text-red-500 fill-red-500 animate-pulse" /> por <span className="text-blue-600 font-bold">Alexis Tobar</span>
+                    </p>
                 </div>
             </footer>
 
@@ -199,10 +225,9 @@ function RaceRank({ name, power, color }) {
     );
 }
 
-// 🛠️ COMPONENTE YOUTUBE OPTIMIZADO
 function YTCard({ title, videoId }) {
     return (
-        <div className="space-y-4 group w-full">
+        <div className="space-y-4 group w-full text-center md:text-left">
             <div className="flex justify-between items-center px-2 md:px-4">
                 <h3 className="text-xs md:text-sm font-black text-blue-600 uppercase tracking-widest italic">{title}</h3>
                 <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter text-white bg-slate-600">
