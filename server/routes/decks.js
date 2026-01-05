@@ -11,6 +11,8 @@ const verifyToken = require('../middleware/verifyToken');
 router.get('/community/all', async (req, res) => {
     try {
         const isTop = req.query.top === 'true';
+
+        // ✅ MEJORA: .populate('user', 'username') para traer el nick
         let query = Deck.find({ isPublic: true }).populate('user', 'username');
 
         if (isTop) {
@@ -18,6 +20,7 @@ router.get('/community/all', async (req, res) => {
             const top3 = allPublic
                 .sort((a, b) => (b.likes ? b.likes.length : 0) - (a.likes ? a.likes.length : 0))
                 .slice(0, 3);
+
             return res.json(top3);
         } else {
             query = query.sort({ createdAt: -1 });
@@ -87,7 +90,11 @@ router.put('/privacy/:id', verifyToken, async (req, res) => {
     try {
         const deck = await Deck.findById(req.params.id);
         if (!deck) return res.status(404).json({ error: 'Mazo no encontrado' });
-        if (deck.user.toString() !== req.user.id) return res.status(401).json({ error: 'No autorizado' });
+
+        if (deck.user.toString() !== req.user.id) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
         deck.isPublic = !deck.isPublic;
         await deck.save();
         res.json(deck);
@@ -99,11 +106,13 @@ router.put('/like/:id', verifyToken, async (req, res) => {
     try {
         const deck = await Deck.findById(req.params.id);
         if (!deck) return res.status(404).json({ error: 'Mazo no encontrado' });
+
         if (deck.likes.includes(req.user.id)) {
             deck.likes = deck.likes.filter(id => id.toString() !== req.user.id);
         } else {
             deck.likes.push(req.user.id);
         }
+
         await deck.save();
         res.json(deck.likes);
     } catch (err) { res.status(500).json({ error: 'Error al dar like' }); }
@@ -145,6 +154,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
     try {
         const deck = await Deck.findOne({ _id: req.params.id, user: req.user.id });
         if (!deck) return res.status(404).json({ error: "No autorizado" });
+
         await Deck.findByIdAndDelete(req.params.id);
         res.json({ message: "Eliminado" });
     } catch (error) { res.status(500).json({ error: "Error al eliminar" }); }
@@ -170,6 +180,7 @@ router.post('/:id/comment', verifyToken, async (req, res) => {
         };
         deck.comments.push(newComment);
         await deck.save();
+
         const updatedDeck = await Deck.findById(req.params.id).populate('user', 'username');
         res.json(updatedDeck);
     } catch (error) { res.status(500).json({ error: "Error al agregar comentario" }); }
@@ -182,12 +193,13 @@ router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
         if (!deck) return res.status(404).json({ error: "Mazo no encontrado" });
         deck.comments = deck.comments.filter(c => c._id.toString() !== req.params.commentId);
         await deck.save();
+
         const updatedDeck = await Deck.findById(req.params.id).populate('user', 'username');
         res.json(updatedDeck);
     } catch (error) { res.status(500).json({ error: "Error al eliminar comentario" }); }
 });
 
-// 10. ✅ META REPORT PROFESIONAL ACTUALIZADO
+// 10. ✅ META REPORT DEFINITIVO CON OBJETOS DE MAZO COMPLETOS
 router.get('/stats/meta', async (req, res) => {
     try {
         const { format } = req.query; 
@@ -220,7 +232,7 @@ router.get('/stats/meta', async (req, res) => {
                         format: deck.format,
                         usageCount: 0,
                         races: {},
-                        featuredDecks: [] // ✅ Nombres de mazos para mostrar en el modal
+                        featuredDecks: [] // ✅ Lista de objetos con ID y estado público
                     };
                 }
 
@@ -230,9 +242,14 @@ router.get('/stats/meta', async (req, res) => {
                 if (!cardUsage[key].races[deckRace]) cardUsage[key].races[deckRace] = 0;
                 cardUsage[key].races[deckRace] += 1;
 
-                // ✅ Guardamos el nombre del mazo (top 5)
-                if (cardUsage[key].featuredDecks.length < 5 && !cardUsage[key].featuredDecks.includes(deck.name)) {
-                    cardUsage[key].featuredDecks.push(deck.name);
+                // ✅ Guardamos el objeto del mazo completo (Límite 5 para el modal)
+                const alreadyAdded = cardUsage[key].featuredDecks.some(d => d._id.toString() === deck._id.toString());
+                if (cardUsage[key].featuredDecks.length < 5 && !alreadyAdded) {
+                    cardUsage[key].featuredDecks.push({
+                        _id: deck._id,
+                        name: deck.name,
+                        isPublic: deck.isPublic // Dato vital para los colores en el front
+                    });
                 }
             });
         });

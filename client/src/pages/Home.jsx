@@ -86,6 +86,7 @@ export default function HomePortal() {
         return Object.entries(card.races).map(([name, value]) => ({
             name: name, 
             value: Number(value), 
+            percentage: ((value / total) * 100).toFixed(1),
             color: RACE_COLORS[name] || `#${Math.floor(Math.random()*16777215).toString(16)}`
         }));
     };
@@ -149,7 +150,7 @@ export default function HomePortal() {
                 </div>
             </motion.section>
 
-            {/* ✅ MODAL DE ANÁLISIS PROFESIONAL CORREGIDO (Nombres de mazos + Gráfico) */}
+            {/* ✅ MODAL DE ANÁLISIS PROFESIONAL */}
             <AnimatePresence>
                 {showMetaModal && selectedMetaCard && (
                     <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
@@ -165,7 +166,7 @@ export default function HomePortal() {
 
                             <div className="w-full md:w-1/2 p-8 md:p-10 flex flex-col justify-center overflow-y-auto max-h-[90vh]">
                                 <div className="mb-6 text-left">
-                                    <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Deep Scan Analysis</span>
+                                    <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Racial Distribution Analysis</span>
                                     <h3 className="text-3xl font-black uppercase italic text-slate-900 dark:text-white leading-none mb-2">{selectedMetaCard.name}</h3>
                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{selectedMetaCard.format?.replace('_',' ')}</p>
                                 </div>
@@ -201,20 +202,23 @@ export default function HomePortal() {
                                     ) : <div className="h-full flex items-center justify-center text-slate-500 italic text-xs uppercase">Sin datos de raza</div>}
                                 </div>
 
-                                {/* ✅ SECCIÓN DE NOMBRES DE MAZOS CORREGIDA */}
                                 <div className="space-y-3 text-left">
                                     <div className="flex items-center gap-2 text-slate-400 mb-2 border-t border-white/5 pt-4">
-                                        <LayoutList size={14} /> <span className="text-[10px] font-black uppercase tracking-widest">Aparece en estos Mazos:</span>
+                                        <LayoutList size={14} /> <span className="text-[10px] font-black uppercase tracking-widest">Fuentes Estratégicas:</span>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
-                                        {selectedMetaCard.featuredDecks?.map((deckName, i) => (
-                                            <div 
+                                        {selectedMetaCard.featuredDecks?.map((deck, i) => (
+                                            <button 
                                                 key={i} 
-                                                className="px-4 py-2 rounded-xl text-[10px] font-black uppercase italic bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"
+                                                onClick={() => deck.isPublic && navigate(`/community/deck/${deck._id}`)}
+                                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase italic transition-all border flex items-center gap-2
+                                                    ${deck.isPublic 
+                                                        ? 'bg-blue-600/10 border-blue-600/30 text-blue-600 hover:bg-blue-600 hover:text-white cursor-pointer' 
+                                                        : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 cursor-default'}`}
                                             >
-                                                {deckName}
-                                            </div>
-                                        )) || <p className="text-[9px] text-slate-600 italic">No hay datos de mazos vinculados</p>}
+                                                {deck.name} {deck.isPublic && <ArrowRight size={10} />}
+                                            </button>
+                                        )) || <p className="text-[9px] text-slate-600 italic">No hay mazos vinculados</p>}
                                     </div>
                                 </div>
                             </div>
