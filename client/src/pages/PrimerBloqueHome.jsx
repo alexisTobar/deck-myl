@@ -50,7 +50,6 @@ export default function PrimerBloqueHome() {
                         </div>
                     </motion.div>
                     
-                    {/* 🛠️ MEJORA DE TÍTULO EXPERTO: Composición Minimalista Industrial */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -196,7 +195,7 @@ function RaceRank({ name, power, color }) {
     );
 }
 
-// 🛠️ MEJORA DE YOUTUBE: Componente basado en VideoID para estabilidad total
+// COMPONENTE DE YOUTUBE RESPONSIVO
 function YTCard({ title, videoId }) {
     return (
         <div className="space-y-4 group w-full">
@@ -206,10 +205,12 @@ function YTCard({ title, videoId }) {
                     SABIO
                 </span>
             </div>
+            {/* Proporción 16:9 Adaptable */}
             <div className="relative pt-[56.25%] w-full rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border-4 border-slate-200 dark:border-white/5 shadow-2xl bg-black group-hover:border-blue-500/30 transition-all">
                 <iframe 
                     className="absolute top-0 left-0 w-full h-full" 
-                    src={`https://www.youtube.com/embed/${videoId}`}
+                    src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`}
+                    title={title}
                     frameBorder="0" 
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                     allowFullScreen
