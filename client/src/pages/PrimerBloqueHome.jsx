@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"; // ✅ Agregado useEffect
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import BACKEND_URL from "../config"; // ✅ Importación de tu URL de backend
+import BACKEND_URL from "../config"; // ✅ Importada la configuración
 import { 
     X, Star, Hammer, Users, FileText, Scale, Trophy, Zap, 
-    Sword, Instagram, Youtube, Twitter, Target, Crown, ChevronRight, PlayCircle, ArrowRight, Heart, Layers
+    Sword, Instagram, Youtube, Twitter, Target, Crown, ChevronRight, PlayCircle, ArrowRight, Heart, Layers, Sparkles
 } from "lucide-react";
 
 const fadeInUp = {
@@ -24,25 +24,27 @@ const MAIN_EDITIONS = [
 export default function PrimerBloqueHome() {
     const [showModal, setShowModal] = useState(false);
     const [tierList, setTierList] = useState([]); // ✅ Estado para Tier List real
+    const [latestCards, setLatestCards] = useState([]); // ✅ Estado para carrusel de novedades
     const navigate = useNavigate();
 
-    // ✅ FETCH DE DATOS REALES BASADOS EN MAZOS CREADOS
+    // ✅ FETCH DE DATOS DINÁMICOS
     useEffect(() => {
-        const fetchTierList = async () => {
+        const fetchData = async () => {
             try {
-                const res = await fetch(`${BACKEND_URL}/api/decks/stats/tier-list?format=primer_bloque`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setTierList(data);
-                }
+                // Traer Tier List real
+                const resTier = await fetch(`${BACKEND_URL}/api/decks/stats/tier-list?format=primer_bloque`);
+                if (resTier.ok) setTierList(await resTier.json());
+
+                // Traer cartas recién agregadas por el Admin
+                const resLatest = await fetch(`${BACKEND_URL}/api/cards/latest?format=primer_bloque`);
+                if (resLatest.ok) setLatestCards(await resLatest.json());
             } catch (error) {
-                console.error("Error cargando Tier List real:", error);
+                console.error("Error cargando datos del Home:", error);
             }
         };
-        fetchTierList();
+        fetchData();
     }, []);
 
-    // Colores dinámicos para el ranking racial
     const rankColors = ["bg-blue-600", "bg-indigo-600", "bg-blue-400", "bg-slate-400"];
 
     return (
@@ -103,13 +105,50 @@ export default function PrimerBloqueHome() {
                 </div>
             </section>
 
-            {/* ✅ SECCIÓN TIER LIST DINÁMICA MEJORADA */}
+            {/* ✅ NUEVA SECCIÓN: CARRUSEL DE RECIÉN AGREGADAS */}
+            {latestCards.length > 0 && (
+                <section className="py-20 relative z-10 overflow-hidden bg-slate-50/30 dark:bg-white/5 border-y border-slate-200 dark:border-white/5">
+                    <div className="max-w-7xl mx-auto px-6 mb-10">
+                        <div className="flex items-center gap-4">
+                            <Sparkles className="text-blue-500" size={24} />
+                            <h2 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter">Últimas <span className="text-blue-600">Adquisiciones</span></h2>
+                            <div className="h-[1px] flex-1 bg-slate-200 dark:bg-white/10"></div>
+                        </div>
+                    </div>
+
+                    <div className="relative flex overflow-hidden">
+                        <motion.div 
+                            className="flex gap-6 px-6"
+                            animate={{ x: [0, -1032] }} 
+                            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                        >
+                            {/* Mostramos las cartas duplicadas para el efecto infinito */}
+                            {[...latestCards, ...latestCards].map((card, i) => (
+                                <div key={i} className="min-w-[160px] md:min-w-[200px] group">
+                                    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border border-slate-200 dark:border-white/10 group-hover:border-blue-600 transition-all duration-500">
+                                        <img src={card.imgUrl || card.img} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt={card.name} />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent opacity-0 group-hover:opacity-100 transition-opacity p-4 flex flex-col justify-end">
+                                            <p className="text-white font-black text-xs uppercase italic">{card.name}</p>
+                                            <p className="text-blue-400 text-[10px] font-bold uppercase">{card.edition}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </motion.div>
+                        {/* Difuminado elegante en los bordes */}
+                        <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#F8FAFC] dark:from-[#060912] to-transparent z-10 pointer-events-none"></div>
+                        <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[#F8FAFC] dark:from-[#060912] to-transparent z-10 pointer-events-none"></div>
+                    </div>
+                </section>
+            )}
+
+            {/* SECCIÓN TIER LIST DINÁMICA */}
             <section className="max-w-7xl mx-auto px-6 py-20 md:py-32 relative z-10">
                 <motion.div {...fadeInUp} className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-center">
                     <div className="lg:col-span-1 text-left">
                         <Target className="text-blue-600 mb-6" size={48} />
                         <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none mb-6">Tier List <span className="text-blue-600">Comunidad</span></h2>
-                        <p className="text-slate-500 dark:text-slate-400 text-lg leading-relaxed italic font-medium">Dominancia real de razas basada en los mazos creados por nuestra comunidad de Primer Bloque.</p>
+                        <p className="text-slate-500 dark:text-slate-400 text-lg leading-relaxed italic font-medium">Dominancia real basada en el análisis de los mazos creados por la comunidad de ForjaDeck.</p>
                     </div>
                     <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {tierList.length > 0 ? (
@@ -122,7 +161,9 @@ export default function PrimerBloqueHome() {
                                 />
                             ))
                         ) : (
-                            <p className="text-slate-400 italic">Sincronizando datos de la Arena...</p>
+                            <div className="p-8 border border-dashed border-slate-300 dark:border-white/10 rounded-3xl text-center text-slate-400 italic">
+                                Sincronizando metajuego...
+                            </div>
                         )}
                     </div>
                 </motion.div>
@@ -145,13 +186,9 @@ export default function PrimerBloqueHome() {
                 </motion.div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    {/* ✅ VIDEO: MyL Oficial */}
                     <YTCard title="Mitos y Leyendas Oficial" videoId="eyykKWWVmSY" />
-                    {/* ✅ VIDEO: Coliseo Mitero */}
                     <YTCard title="Coliseo Mitero (Directo)" videoId="Jkg69btmWc4" />
-                    {/* ✅ VIDEO: Elevadoh */}
                     <YTCard title="Elevadoh PB" videoId="5otKVVWA1Cg" /> 
-                    {/* ✅ VIDEO: Dragón Dorado */}
                     <YTCard title="Dragón Dorado PB" videoId="slO0z1MOQ3k" />
                 </div>
             </section>

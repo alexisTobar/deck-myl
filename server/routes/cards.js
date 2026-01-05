@@ -67,6 +67,25 @@ router.get('/search', async (req, res) => {
     }
 });
 
+// ✅ NUEVA RUTA: OBTENER LAS ÚLTIMAS CARTAS AGREGADAS (Para el carrusel del Home)
+router.get('/latest', async (req, res) => {
+    try {
+        const { format } = req.query;
+        const filter = format ? { format } : {};
+        
+        // Buscamos las últimas 10 cartas creadas por el admin
+        const latestCards = await Card.find(filter)
+            .sort({ _id: -1 }) 
+            .limit(10)
+            .lean();
+            
+        res.json(latestCards);
+    } catch (error) {
+        console.error("Error en latest cards:", error);
+        res.status(500).json({ error: "Error al obtener cartas recientes" });
+    }
+});
+
 // ✅ RUTAS ADMINISTRATIVAS MANTENIDAS (POST, PUT, DELETE)
 router.post('/', async (req, res) => {
     try {
