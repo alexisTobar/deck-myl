@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; // ✅ useEffect agregado
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import BACKEND_URL from "../config"; // ✅ Importada la configuración
 import { 
     X, Star, Hammer, Users, Scale, Trophy, Zap, 
-    Sword, Instagram, Youtube, Twitter, Target, Crown, ChevronRight, PlayCircle, Newspaper, ArrowRight, Heart
+    Sword, Instagram, Youtube, Twitter, Target, Crown, ChevronRight, PlayCircle, Newspaper, ArrowRight, Heart, Sparkles
 } from "lucide-react";
 
 const fadeInUp = {
@@ -15,6 +16,28 @@ const fadeInUp = {
 
 export default function ImperioHome() {
     const navigate = useNavigate();
+    const [tierList, setTierList] = useState([]); // ✅ Estado para Tier List real
+    const [latestCards, setLatestCards] = useState([]); // ✅ Estado para carrusel
+
+    // ✅ FETCH DE DATOS DINÁMICOS PARA ERA IMPERIO
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                // Traer Tier List real de Imperio
+                const resTier = await fetch(`${BACKEND_URL}/api/decks/stats/tier-list?format=imperio`);
+                if (resTier.ok) setTierList(await resTier.json());
+
+                // Traer cartas recién agregadas por el Admin para Imperio
+                const resLatest = await fetch(`${BACKEND_URL}/api/cards/latest?format=imperio`);
+                if (resLatest.ok) setLatestCards(await resLatest.json());
+            } catch (error) {
+                console.error("Error cargando datos de Imperio:", error);
+            }
+        };
+        fetchData();
+    }, []);
+
+    const rankColors = ["bg-red-600", "bg-orange-600", "bg-yellow-600", "bg-slate-400"];
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#070504] text-slate-900 dark:text-white font-sans overflow-x-hidden selection:bg-blue-100 transition-colors duration-500 relative">
@@ -42,7 +65,6 @@ export default function ImperioHome() {
                         </div>
                     </motion.div>
                     
-                    {/* 🛠️ MEJORA DE TÍTULO EXPERTO: Composición Minimalista Industrial */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -75,24 +97,69 @@ export default function ImperioHome() {
                 </div>
             </section>
 
-            {/* SECCIÓN RADAR */}
+            {/* ✅ NUEVA SECCIÓN: RECIÉN AGREGADAS IMPERIO (CARRUSEL) */}
+            {latestCards.length > 0 && (
+                <section className="py-20 bg-slate-50/50 dark:bg-white/5 relative z-10 overflow-hidden border-y border-slate-200 dark:border-white/5">
+                    <div className="max-w-7xl mx-auto px-6 mb-10">
+                        <div className="flex items-center gap-4">
+                            <Sparkles className="text-orange-500" />
+                            <h2 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">Últimas <span className="text-orange-600">Cartas</span></h2>
+                            <div className="h-[1px] flex-1 bg-slate-200 dark:bg-white/10"></div>
+                        </div>
+                    </div>
+                    
+                    <div className="relative">
+                        <motion.div 
+                            className="flex gap-6 px-6"
+                            animate={{ x: [0, -1000] }}
+                            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                        >
+                            {[...latestCards, ...latestCards].map((card, idx) => (
+                                <div key={idx} className="min-w-[180px] md:min-w-[220px] group">
+                                    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border-2 border-white dark:border-white/10 group-hover:border-orange-500 transition-all">
+                                        <img src={card.imgUrl || card.img} className="w-full h-full object-cover" alt={card.name} />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+                                            <p className="text-white font-black text-xs uppercase italic">{card.name}</p>
+                                            <p className="text-orange-400 text-[10px] font-bold uppercase">{card.edicion || card.edition}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </motion.div>
+                        <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#F8FAFC] dark:from-[#070504] to-transparent z-10"></div>
+                        <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#F8FAFC] dark:from-[#070504] to-transparent z-10"></div>
+                    </div>
+                </section>
+            )}
+
+            {/* ✅ SECCIÓN RADAR DINÁMICA (TIER LIST REAL) */}
             <section className="max-w-7xl mx-auto px-6 py-20 md:py-32 relative z-10">
                 <motion.div {...fadeInUp} className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-center">
                     <div className="lg:col-span-1 text-left">
                         <Target className="text-blue-600 mb-6" size={48} />
                         <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none mb-6">Radar de <span className="text-blue-600">Razas</span></h2>
-                        <p className="text-slate-500 dark:text-slate-400 text-lg leading-relaxed font-medium">Tendencia de uso en torneos recientes y popularidad en la arena oficial.</p>
+                        <p className="text-slate-500 dark:text-slate-400 text-lg leading-relaxed font-medium">Tendencia real en ForjaDeck basada en los mazos Imperio de la comunidad.</p>
                     </div>
                     <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <RaceRank name="Caballero" power="98%" color="bg-blue-600" />
-                        <RaceRank name="Dragón" power="92%" color="bg-indigo-600" />
-                        <RaceRank name="Sombra" power="85%" color="bg-blue-400" />
-                        <RaceRank name="Eterno" power="79%" color="bg-slate-400" />
+                        {tierList.length > 0 ? (
+                            tierList.map((race, index) => (
+                                <RaceRank 
+                                    key={race.name} 
+                                    name={race.name} 
+                                    power={race.power} 
+                                    color={rankColors[index] || "bg-slate-500"} 
+                                />
+                            ))
+                        ) : (
+                            <div className="col-span-2 p-10 border border-dashed border-slate-300 dark:border-white/10 rounded-3xl text-center text-slate-400 italic">
+                                Sincronizando datos de la Arena Imperio...
+                            </div>
+                        )}
                     </div>
                 </motion.div>
             </section>
 
-            {/* SECCIÓN ANALISTAS - OPTIMIZADA */}
+            {/* SECCIÓN ANALISTAS */}
             <section className="max-w-7xl mx-auto px-6 py-20 md:py-32 relative z-10 border-t border-slate-200 dark:border-white/5">
                 <motion.div {...fadeInUp} className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-6">
                     <div className="text-left">
@@ -167,7 +234,6 @@ function RaceRank({ name, power, color }) {
     );
 }
 
-// 🛠️ MEJORA DE YOUTUBE: Componente basado en VideoID para estabilidad total
 function YTCard({ title, videoId }) {
     return (
         <div className="space-y-4 group w-full">
@@ -180,7 +246,8 @@ function YTCard({ title, videoId }) {
             <div className="relative pt-[56.25%] w-full rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border-4 border-slate-200 dark:border-white/5 shadow-2xl bg-black group-hover:border-blue-500/30 transition-all">
                 <iframe 
                     className="absolute top-0 left-0 w-full h-full" 
-                    src={`https://www.youtube.com/embed/${videoId}`}
+                    src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`}
+                    title={title}
                     frameBorder="0" 
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                     allowFullScreen
