@@ -86,7 +86,6 @@ export default function HomePortal() {
         return Object.entries(card.races).map(([name, value]) => ({
             name: name, 
             value: Number(value), 
-            percentage: ((value / total) * 100).toFixed(1),
             color: RACE_COLORS[name] || `#${Math.floor(Math.random()*16777215).toString(16)}`
         }));
     };
@@ -96,7 +95,7 @@ export default function HomePortal() {
         const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
         const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
         return (
-            <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="10px" fontWeight="bold">
+            <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="11px" fontWeight="900">
                 {`${(percent * 100).toFixed(0)}%`}
             </text>
         );
@@ -107,33 +106,28 @@ export default function HomePortal() {
             
             {/* HERO SECTION */}
             <header className="w-full max-w-7xl px-4 md:px-6 pt-16 md:pt-24 pb-12 text-center animate-in fade-in slide-in-from-top-10 duration-1000">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/5 dark:bg-blue-400/10 border border-blue-600/10 dark:border-blue-400/20 rounded-full mb-8 shadow-sm hover:scale-105 transition-transform cursor-default">
-                    <Star size={12} className="text-blue-600 dark:text-blue-400 fill-blue-600 dark:fill-blue-400" />
-                    <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-blue-600 dark:text-blue-400">Nueva Versión ForjaDeck v3.0</span>
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/5 dark:bg-blue-400/10 border border-blue-600/10 dark:border-blue-400/20 rounded-full mb-8 shadow-sm">
+                    <Star size={12} className="text-blue-600 dark:text-blue-400 fill-blue-600" />
+                    <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-blue-600 dark:text-blue-400">Versión Meta v3.5</span>
                 </div>
-                
                 <div className="flex justify-center mb-8 px-4">
                     <img src={LOGO_NEGRO} alt="Logo" className="w-[85vw] max-w-[500px] md:max-w-[650px] h-auto object-contain dark:hidden" />
                     <img src={LOGO_BLANCO} alt="Logo" className="w-[85vw] max-w-[500px] md:max-w-[650px] h-auto object-contain hidden dark:block" />
                 </div>
-                
-                <p className="text-slate-500 dark:text-slate-400 text-base md:text-xl max-w-2xl mx-auto font-medium leading-relaxed opacity-80 px-4 text-center">
-                    La plataforma técnica para la forja de estrategias. 
-                    Optimización de mazos basada en el análisis de datos masivos.
-                </p>
+                <p className="text-slate-500 dark:text-slate-400 text-base md:text-xl max-w-2xl mx-auto font-medium leading-relaxed opacity-80 px-4 text-center">Análisis de datos para la forja de estrategias ganadoras.</p>
             </header>
 
-            {/* --- SELECTOR DE FORMATOS --- */}
+            {/* BOTONES FORMATO */}
             <motion.main initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }} className="w-full max-w-7xl px-6 grid grid-cols-1 md:grid-cols-2 gap-8 mb-32 z-10">
-                <FormatCard title="Primer Bloque" desc="Domina el formato de los dioses antiguos y leyendas clásicas." img="https://los40.cl/resizer/v2/RGW3O7B6EBMJTOG3663Q63HYUM.jpg?auth=c2cc267add0246b4d52e7e6ba39dac28c0c11ebe4c806e386358c4a65968d094&quality=70&width=1200&height=544&smart=true" icon={<ScrollText size={28} className="text-blue-500" />} onClick={() => navigate("/primer-bloque")} delay="delay-150" />
-                <FormatCard title="Imperio" desc="Metajuego actual y el pináculo del circuito competitivo." img="https://cdn.shopify.com/s/files/1/0103/3601/0303/files/bannerpreventakvm_177c3b4b-7d62-4fd8-8f0a-fa243f85e590.jpg?v=1761336400" icon={<Sword size={28} className="text-blue-600" />} onClick={() => navigate("/imperio")} delay="delay-300" />
+                <FormatCard title="Primer Bloque" desc="Relatos clásicos y dioses antiguos." img="https://los40.cl/resizer/v2/RGW3O7B6EBMJTOG3663Q63HYUM.jpg?auth=c2cc267add0246b4d52e7e6ba39dac28c0c11ebe4c806e386358c4a65968d094&quality=70&width=1200&height=544&smart=true" icon={<ScrollText size={28} className="text-blue-500" />} onClick={() => navigate("/primer-bloque")} delay="delay-150" />
+                <FormatCard title="Imperio" desc="Metajuego actual y competitivo oficial." img="https://cdn.shopify.com/s/files/1/0103/3601/0303/files/bannerpreventakvm_177c3b4b-7d62-4fd8-8f0a-fa243f85e590.jpg?v=1761336400" icon={<Sword size={28} className="text-blue-600" />} onClick={() => navigate("/imperio")} delay="delay-300" />
             </motion.main>
 
-            {/* SECCIÓN TOP 10 PB */}
-            <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="w-full max-w-7xl px-6 mb-24">
+            {/* TOP 10 PB */}
+            <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="w-full max-w-7xl px-6 mb-24 text-center md:text-left">
                 <div className="flex items-center gap-3 mb-10 border-b border-slate-200 dark:border-white/10 pb-6">
                     <TrendingUp className="text-blue-600" />
-                    <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic flex items-center justify-center md:justify-start gap-3">Top 10 Primer Bloque</h3>
+                    <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Top 10 Primer Bloque</h3>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 md:gap-6">
                     {loading ? [...Array(10)].map((_, n) => <div key={`pbl-${n}`} className="h-48 md:h-64 bg-slate-800/20 rounded-3xl animate-pulse" />) : 
@@ -142,11 +136,11 @@ export default function HomePortal() {
                 </div>
             </motion.section>
 
-            {/* SECCIÓN TOP 10 IMPERIO */}
-            <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="w-full max-w-7xl px-6 mb-32">
+            {/* TOP 10 IMPERIO */}
+            <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="w-full max-w-7xl px-6 mb-32 text-center md:text-left">
                 <div className="flex items-center gap-3 mb-10 border-b border-slate-200 dark:border-white/10 pb-6">
                     <TrendingUp className="text-blue-500" />
-                    <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic flex items-center justify-center md:justify-start gap-3">Top 10 Imperio</h3>
+                    <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Top 10 Imperio</h3>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 md:gap-6">
                     {loading ? [...Array(10)].map((_, n) => <div key={`iml-${n}`} className="h-48 md:h-64 bg-slate-800/20 rounded-3xl animate-pulse" />) : 
@@ -155,11 +149,11 @@ export default function HomePortal() {
                 </div>
             </motion.section>
 
-            {/* ✅ MODAL DE ANÁLISIS PROFESIONAL RESTAURADO */}
+            {/* ✅ MODAL DE ANÁLISIS PROFESIONAL CORREGIDO (Nombres de mazos + Gráfico) */}
             <AnimatePresence>
                 {showMetaModal && selectedMetaCard && (
                     <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowMetaModal(false)} className="absolute inset-0 bg-[#060912]/95 backdrop-blur-xl" />
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowMetaModal(false)} className="absolute inset-0 bg-black/90 backdrop-blur-xl" />
                         <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} className="relative w-full max-w-4xl bg-white dark:bg-[#0f172a] border border-white/10 rounded-[3.5rem] overflow-hidden shadow-2xl flex flex-col md:flex-row">
                             <button onClick={() => setShowMetaModal(false)} className="absolute top-6 right-6 z-20 p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-blue-500 transition-colors">
                                 <X size={20} />
@@ -198,7 +192,7 @@ export default function HomePortal() {
                                                     {getChartData(selectedMetaCard).map((e, i) => <Cell key={i} fill={e.color} />)}
                                                 </Pie>
                                                 <RechartsTooltip 
-                                                    contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '12px', color: '#fff', fontWeight: 'bold' }} 
+                                                    contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', fontSize: '12px', color: '#fff', fontWeight: 'bold' }} 
                                                     itemStyle={{ color: '#fff' }}
                                                 />
                                                 <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', paddingTop: '10px' }} />
@@ -207,23 +201,20 @@ export default function HomePortal() {
                                     ) : <div className="h-full flex items-center justify-center text-slate-500 italic text-xs uppercase">Sin datos de raza</div>}
                                 </div>
 
+                                {/* ✅ SECCIÓN DE NOMBRES DE MAZOS CORREGIDA */}
                                 <div className="space-y-3 text-left">
                                     <div className="flex items-center gap-2 text-slate-400 mb-2 border-t border-white/5 pt-4">
-                                        <LayoutList size={14} /> <span className="text-[10px] font-black uppercase tracking-widest">Fuentes Estratégicas:</span>
+                                        <LayoutList size={14} /> <span className="text-[10px] font-black uppercase tracking-widest">Aparece en estos Mazos:</span>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
-                                        {selectedMetaCard.featuredDecks?.map((deck, i) => (
-                                            <button 
+                                        {selectedMetaCard.featuredDecks?.map((deckName, i) => (
+                                            <div 
                                                 key={i} 
-                                                onClick={() => deck.isPublic && navigate(`/community/deck/${deck._id}`)}
-                                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase italic transition-all border flex items-center gap-2
-                                                    ${deck.isPublic 
-                                                        ? 'bg-blue-600/10 border-blue-600/30 text-blue-600 hover:bg-blue-600 hover:text-white cursor-pointer' 
-                                                        : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 cursor-default'}`}
+                                                className="px-4 py-2 rounded-xl text-[10px] font-black uppercase italic bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"
                                             >
-                                                {deck.name} {deck.isPublic && <ArrowRight size={10} />}
-                                            </button>
-                                        )) || <p className="text-[9px] text-slate-600 italic">No hay mazos vinculados</p>}
+                                                {deckName}
+                                            </div>
+                                        )) || <p className="text-[9px] text-slate-600 italic">No hay datos de mazos vinculados</p>}
                                     </div>
                                 </div>
                             </div>
@@ -284,7 +275,7 @@ export default function HomePortal() {
                 </div>
             </motion.section>
 
-            {/* MODAL INVOCADOR */}
+            {/* MODAL JUGADOR */}
             <AnimatePresence>
                 {showPlayerModal && (
                     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
@@ -292,7 +283,7 @@ export default function HomePortal() {
                         <motion.div initial={{ scale: 0.8, opacity: 0, y: 100 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 100 }} className="relative w-full max-w-lg bg-[#0f172a] border border-white/10 rounded-[3.5rem] shadow-2xl p-10 text-white text-center">
                             <UserPlus size={40} className="text-pink-600 mx-auto mb-6" />
                             <h3 className="text-4xl font-black uppercase italic mb-8">Únete al <span className="text-pink-600">Relato</span></h3>
-                            <form onSubmit={handleSavePlayer} className="space-y-4">
+                            <form onSubmit={handleSavePlayer} className="space-y-4 text-center">
                                 <input type="text" required className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold outline-none focus:border-pink-600 transition-all text-white" placeholder="Nombre" value={newPlayerData.name} onChange={e => setNewPlayerData({...newPlayerData, name: e.target.value})} />
                                 <input type="url" required className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold outline-none focus:border-pink-600 transition-all text-white" placeholder="Instagram URL" value={newPlayerData.instagram} onChange={e => setNewPlayerData({...newPlayerData, instagram: e.target.value})} />
                                 <input type="text" className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold outline-none focus:border-pink-600 transition-all text-white" placeholder="Logo URL" value={newPlayerData.logo} onChange={e => setNewPlayerData({...newPlayerData, logo: e.target.value})} />
