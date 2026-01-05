@@ -25,7 +25,7 @@ export default function PrimerBloqueHome() {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#060912] text-slate-900 dark:text-white font-sans overflow-x-hidden selection:bg-blue-100 transition-colors duration-500 relative">
+        <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#060912] text-slate-900 dark:text-white font-sans overflow-x-hidden transition-colors duration-500 relative">
             
             {/* ✨ TUS PARTÍCULAS ORIGINALES */}
             <div className="absolute inset-0 pointer-events-none z-0">
@@ -99,27 +99,31 @@ export default function PrimerBloqueHome() {
                 </motion.div>
             </section>
 
-            {/* SECCIÓN YOUTUBE - OPTIMIZADA */}
+            {/* SECCIÓN YOUTUBE - ACTUALIZADA CON TUS NUEVOS VIDEOS */}
             <section className="max-w-7xl mx-auto px-6 py-20 md:py-32 relative z-10 border-t border-slate-200 dark:border-white/5">
                 <motion.div {...fadeInUp} className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-6">
                     <div className="text-left">
                         <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">Sabios del <span className="text-blue-600">Relato</span></h2>
-                        <p className="text-slate-500 mt-2 font-bold uppercase tracking-widest text-xs italic">Aprende de los cronistas legendarios</p>
+                        <p className="text-slate-500 mt-2 font-bold uppercase tracking-widest text-xs italic">Aprende de los cronistas legendarios de Primer Bloque</p>
                     </div>
                     <div className="flex items-center gap-4 text-red-600 font-black uppercase text-sm">
                         <span className="flex h-3 w-3 relative">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
                         </span>
-                        <Youtube size={24} /> Análisis en Video
+                        <Youtube size={24} /> Análisis en Vivo
                     </div>
                 </motion.div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <YTCard title="Sombras y Oscuridad" videoId="z-hekxgmP2I" />
-                    <YTCard title="Mitos y Leyendas Oficial" videoId="u-am6kIUP_A" />
-                    <YTCard title="Elevadoh" videoId="K56XN5lB2-M" /> 
-                    <YTCard title="Coliseo Mitero" videoId="W1XU_vS0i1k" />
+                    {/* ✅ VIDEO: MyL Oficial */}
+                    <YTCard title="Mitos y Leyendas Oficial" videoId="eyykKWWVmSY" />
+                    {/* ✅ VIDEO: Coliseo Mitero */}
+                    <YTCard title="Coliseo Mitero (Directo)" videoId="Jkg69btmWc4" />
+                    {/* ✅ VIDEO: Elevadoh */}
+                    <YTCard title="Elevadoh PB" videoId="5otKVVWA1Cg" /> 
+                    {/* ✅ VIDEO: Dragón Dorado */}
+                    <YTCard title="Dragón Dorado PB" videoId="slO0z1MOQ3k" />
                 </div>
             </section>
 
@@ -195,7 +199,7 @@ function RaceRank({ name, power, color }) {
     );
 }
 
-// COMPONENTE DE YOUTUBE RESPONSIVO
+// 🛠️ COMPONENTE YOUTUBE OPTIMIZADO
 function YTCard({ title, videoId }) {
     return (
         <div className="space-y-4 group w-full">
@@ -205,7 +209,6 @@ function YTCard({ title, videoId }) {
                     SABIO
                 </span>
             </div>
-            {/* Proporción 16:9 Adaptable */}
             <div className="relative pt-[56.25%] w-full rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border-4 border-slate-200 dark:border-white/5 shadow-2xl bg-black group-hover:border-blue-500/30 transition-all">
                 <iframe 
                     className="absolute top-0 left-0 w-full h-full" 
