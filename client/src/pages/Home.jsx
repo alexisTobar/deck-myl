@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 // ✅ IMPORTACIÓN PARA GRÁFICOS PROFESIONALES
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from "recharts";
 import BACKEND_URL from "../config";
 import { 
     Sword, 
@@ -39,7 +39,7 @@ export default function HomePortal() {
     const [selectedMetaCard, setSelectedMetaCard] = useState(null);
     const [showMetaModal, setShowMetaModal] = useState(false);
 
-    // ✅ ESTADOS PARA EL NUEVO MODAL GALÁCTICO
+    // ✅ ESTADOS PARA EL NUEVO MODAL GALÁCTICO (RECUPERADO)
     const [showPlayerModal, setShowPlayerModal] = useState(false);
     const [newPlayerData, setNewPlayerData] = useState({ name: "", instagram: "", logo: "" });
 
@@ -49,6 +49,14 @@ export default function HomePortal() {
     const LOGO_NEGRO = "https://raw.githubusercontent.com/alexisTobar/deck-myl-assets/main/logoletrasnegas.png";
     const LOGO_BLANCO = "https://raw.githubusercontent.com/alexisTobar/deck-myl-assets/main/logoletrasblancas.png";
 
+    // ✅ COLORES PROFESIONALES PARA LAS RAZAS EN EL GRÁFICO
+    const RACE_COLORS = {
+        "Caballero": "#3b82f6", "Dragón": "#ef4444", "Sombra": "#a855f7", 
+        "Eterno": "#10b981", "Guerrero": "#f59e0b", "Faerie": "#ec4899",
+        "Sacerdote": "#06b6d4", "Bestia": "#84cc16", "Héroe": "#f97316",
+        "Híbrido": "#64748b", "Otras": "#94a3b8"
+    };
+
     useEffect(() => {
         const fetchTrendingData = async () => {
             setLoading(true);
@@ -57,16 +65,14 @@ export default function HomePortal() {
                 const resPb = await fetch(`${BACKEND_URL}/api/decks/stats/meta?format=primer_bloque`);
                 if (resPb.ok) {
                     const data = await resPb.json();
-                    const onlyPb = data.filter(c => c.format === 'primer_bloque');
-                    setPbTrending(onlyPb.slice(0, 10));
+                    setPbTrending(data.filter(c => c.format === 'primer_bloque').slice(0, 10));
                 }
 
                 // ✅ PETICIÓN Y FILTRADO ESTRICTO PARA IMPERIO
                 const resImp = await fetch(`${BACKEND_URL}/api/decks/stats/meta?format=imperio`);
                 if (resImp.ok) {
                     const data = await resImp.json();
-                    const onlyImp = data.filter(c => c.format === 'imperio');
-                    setImpTrending(onlyImp.slice(0, 10));
+                    setImpTrending(data.filter(c => c.format === 'imperio').slice(0, 10));
                 }
             } catch (error) {
                 console.error("Error cargando tendencias:", error);
@@ -114,17 +120,14 @@ export default function HomePortal() {
         }
     };
 
-    // ✅ PREPARACIÓN DE DATOS PARA EL GRÁFICO (Comparación local por pool de formato)
+    // ✅ NUEVA LÓGICA: Gráfico basado en la distribución de RAZAS de la carta
     const getChartData = (card) => {
-        const pool = card.format === 'primer_bloque' ? pbTrending : impTrending;
-        const totalOtherUsage = pool
-            .filter(c => c.name !== card.name)
-            .reduce((acc, curr) => acc + curr.usageCount, 0);
-        
-        return [
-            { name: card.name, value: card.usageCount, color: '#3b82f6' },
-            { name: 'Otras del Top 10', value: totalOtherUsage, color: '#1e293b' }
-        ];
+        if (!card.races) return [];
+        return Object.entries(card.races).map(([name, value]) => ({
+            name,
+            value,
+            color: RACE_COLORS[name] || "#" + Math.floor(Math.random()*16777215).toString(16)
+        }));
     };
 
     return (
@@ -245,70 +248,58 @@ export default function HomePortal() {
                 </div>
             </motion.section>
 
-            {/* ✅ MODAL DE ANÁLISIS PROFESIONAL DE CARTA */}
+            {/* ✅ MODAL DE ANÁLISIS PROFESIONAL DE CARTA (DESGLOSE POR RAZAS) */}
             <AnimatePresence>
                 {showMetaModal && selectedMetaCard && (
                     <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowMetaModal(false)} className="absolute inset-0 bg-[#060912]/95 backdrop-blur-xl" />
                         <motion.div 
                             initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            className="relative w-full max-w-2xl bg-white dark:bg-[#0f172a] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl"
+                            className="relative w-full max-w-3xl bg-white dark:bg-[#0f172a] border border-white/10 rounded-[3.5rem] overflow-hidden shadow-2xl flex flex-col md:flex-row"
                         >
-                            <button onClick={() => setShowMetaModal(false)} className="absolute top-6 right-6 z-10 p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-blue-500 transition-colors">
+                            <button onClick={() => setShowMetaModal(false)} className="absolute top-6 right-6 z-20 p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-blue-500 transition-colors">
                                 <X size={20} />
                             </button>
 
-                            <div className="flex flex-col md:flex-row h-full">
-                                <div className="w-full md:w-1/2 p-8 bg-slate-50 dark:bg-black/20 flex items-center justify-center">
-                                    <img src={selectedMetaCard.imgUrl || selectedMetaCard.img} className="w-full max-w-[240px] rounded-2xl shadow-2xl border-4 border-white dark:border-white/5" alt={selectedMetaCard.name} />
+                            <div className="w-full md:w-1/2 p-8 bg-slate-50 dark:bg-black/20 flex items-center justify-center">
+                                <img src={selectedMetaCard.imgUrl || selectedMetaCard.img} className="w-full max-w-[220px] rounded-2xl shadow-2xl border-4 border-white dark:border-white/5" alt={selectedMetaCard.name} />
+                            </div>
+
+                            <div className="w-full md:w-1/2 p-8 md:p-10 flex flex-col justify-center">
+                                <div className="mb-6">
+                                    <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Racial Distribution Analysis</span>
+                                    <h3 className="text-3xl font-black uppercase italic text-slate-900 dark:text-white leading-none mb-2">{selectedMetaCard.name}</h3>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{selectedMetaCard.format.replace('_',' ')}</p>
                                 </div>
 
-                                <div className="w-full md:w-1/2 p-8 md:p-10 flex flex-col justify-center">
-                                    <div className="mb-6">
-                                        <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Deep Scan Analysis</span>
-                                        <h3 className="text-3xl font-black uppercase italic text-slate-900 dark:text-white leading-none">{selectedMetaCard.name}</h3>
-                                        <p className="text-[9px] font-bold text-blue-500 uppercase mt-2 italic tracking-widest">{selectedMetaCard.format.replace('_',' ')}</p>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4 mb-8">
-                                        <div className="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-2xl border border-blue-100 dark:border-blue-500/20 text-center">
-                                            <p className="text-[10px] font-bold text-blue-400 uppercase mb-1">Ocurrencias</p>
-                                            <p className="text-2xl font-black text-blue-600 dark:text-blue-400">{selectedMetaCard.usageCount}</p>
-                                        </div>
-                                        <div className="p-4 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl border border-indigo-100 dark:border-indigo-500/20 text-center">
-                                            <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Impacto Top 10</p>
-                                            <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
-                                                {((selectedMetaCard.usageCount / (selectedMetaCard.format === 'primer_bloque' ? pbTrending : impTrending).reduce((a,b)=>a+b.usageCount,0))*100).toFixed(1)}%
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="h-48 w-full relative">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <PieChart>
-                                                <Pie
-                                                    data={getChartData(selectedMetaCard)}
-                                                    innerRadius={50}
-                                                    outerRadius={70}
-                                                    paddingAngle={5}
-                                                    dataKey="value"
-                                                >
-                                                    {getChartData(selectedMetaCard).map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                                                    ))}
-                                                </Pie>
-                                                <RechartsTooltip 
-                                                    contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '10px', color: '#fff' }}
-                                                />
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                            <p className="text-[8px] font-black uppercase text-slate-400 text-center leading-tight">Meta<br/>Share</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <p className="text-[9px] text-slate-500 italic text-center mt-4">Analítica generada por el Motor Forja v3.0</p>
+                                <div className="p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10 mb-6 text-center">
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase">Presencia en Mazos</p>
+                                    <p className="text-2xl font-black text-blue-500">{selectedMetaCard.usageCount}</p>
                                 </div>
+
+                                <div className="h-60 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={getChartData(selectedMetaCard)}
+                                                innerRadius={45}
+                                                outerRadius={65}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                                stroke="none"
+                                            >
+                                                {getChartData(selectedMetaCard).map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                                ))}
+                                            </Pie>
+                                            <RechartsTooltip 
+                                                contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '10px', color: '#fff' }}
+                                            />
+                                            <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', paddingTop: '10px' }} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                                <p className="text-[9px] text-slate-500 italic text-center mt-4">Analítica generada por el Motor Forja v3.0</p>
                             </div>
                         </motion.div>
                     </div>
@@ -358,7 +349,7 @@ export default function HomePortal() {
                 </div>
             </motion.section>
 
-            {/* --- RED DE INVOCADORES --- */}
+            {/* --- ✅ RED DE INVOCADORES (RECUPERADA) --- */}
             <motion.section 
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -399,12 +390,12 @@ export default function HomePortal() {
                             <span className="text-[9px] font-black uppercase tracking-tighter text-slate-700 dark:text-slate-300 group-hover:text-pink-500 transition-colors truncate w-full text-center">@{player.name}</span>
                         </motion.a>
                     )) : (
-                        <p className="text-slate-500 italic text-sm">Sé el primero en unirte a la red...</p>
+                        <p className="text-slate-500 italic text-sm text-center w-full">Sé el primero en unirte a la red...</p>
                     )}
                 </div>
             </motion.section>
 
-            {/* --- EL NUEVO MODAL "FORJA DE INVOCADORES" --- */}
+            {/* --- ✅ EL MODAL "FORJA DE INVOCADORES" (RECUPERADO) --- */}
             <AnimatePresence>
                 {showPlayerModal && (
                     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
@@ -419,11 +410,9 @@ export default function HomePortal() {
                             </div>
                             <form onSubmit={handleSavePlayer} className="p-8 md:p-10 pt-6 space-y-6 text-white">
                                 <div className="flex justify-center mb-4">
-                                    <div className="flex flex-col items-center gap-2">
-                                        <div className="w-20 h-20 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 animate-spin-slow">
-                                            <div className="w-full h-full rounded-full border-[4px] border-[#0f172a] overflow-hidden bg-slate-800 flex items-center justify-center">
-                                                {newPlayerData.logo ? <img src={newPlayerData.logo} className="w-full h-full object-cover" /> : <Camera className="text-slate-600" size={28} />}
-                                            </div>
+                                    <div className="w-20 h-20 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 animate-spin-slow">
+                                        <div className="w-full h-full rounded-full border-[4px] border-[#0f172a] overflow-hidden bg-slate-800 flex items-center justify-center">
+                                            {newPlayerData.logo ? <img src={newPlayerData.logo} className="w-full h-full object-cover" /> : <Camera className="text-slate-600" size={28} />}
                                         </div>
                                     </div>
                                 </div>
@@ -459,8 +448,8 @@ export default function HomePortal() {
 
             {/* --- FOOTER --- */}
             <footer className="w-full py-20 bg-white dark:bg-[#0A0C10] border-t dark:border-white/5 transition-colors duration-500">
-                <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12">
-                    <div className="text-center md:text-left">
+                <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12 text-center md:text-left">
+                    <div>
                         <img src={LOGO_NEGRO} className="h-10 md:h-12 w-auto mb-4 object-contain dark:hidden" alt="ForjaDeck Footer" />
                         <img src={LOGO_BLANCO} className="h-10 md:h-12 w-auto mb-4 object-contain hidden dark:block" alt="ForjaDeck Footer Dark" />
                         <p className="text-[11px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-[0.4em]">Intelligence Database for Invocadores</p>
@@ -481,7 +470,8 @@ export default function HomePortal() {
     );
 }
 
-// ✅ TARJETA META MEJORADA
+// ✅ COMPONENTES AUXILIARES
+
 function MetaCard({ card, index, onClick }) {
     return (
         <motion.div 
@@ -518,7 +508,6 @@ function FormatCard({ title, desc, img, icon, onClick, delay }) {
         >
             <div className="h-48 md:h-72 relative overflow-hidden">
                 <img src={img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-90 dark:opacity-60" alt={title} />
-                <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-900 via-white/10 dark:via-transparent group-hover:from-blue-50/80 dark:group-hover:from-blue-900/20 transition-colors duration-500"></div>
                 <div className="absolute bottom-6 left-8 p-4 bg-white/95 dark:bg-slate-800/95 backdrop-blur shadow-2xl rounded-2xl border border-slate-100 dark:border-white/10 group-hover:-translate-y-2 transition-transform duration-500">
                     {icon}
                 </div>

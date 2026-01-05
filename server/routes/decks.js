@@ -51,7 +51,7 @@ router.get('/my-decks', verifyToken, async (req, res) => {
 // 3. GUARDAR UN MAZO NUEVO (POST)
 router.post('/', verifyToken, async (req, res) => {
     try {
-        const { name, cards, format, isPublic } = req.body;
+        const { name, cards, format, isPublic, race } = req.body; // ✅ Se añade race del body
 
         if (!name || !cards || cards.length === 0) {
             return res.status(400).json({ error: "El mazo debe tener nombre y cartas" });
@@ -71,6 +71,7 @@ router.post('/', verifyToken, async (req, res) => {
             name: name,
             cards: formattedCards,
             format: format || 'imperio',
+            race: race || 'Híbrido', // ✅ Guardamos la raza predominante
             isPublic: isPublic || false,
             likes: []
         });
@@ -124,7 +125,7 @@ router.put('/like/:id', verifyToken, async (req, res) => {
 // 6. ACTUALIZAR CONTENIDO DEL MAZO (PUT)
 router.put('/:id', verifyToken, async (req, res) => {
     try {
-        const { name, cards, format, isPublic } = req.body;
+        const { name, cards, format, isPublic, race } = req.body;
 
         const deck = await Deck.findOne({ _id: req.params.id, user: req.user.id });
         if (!deck) return res.status(404).json({ error: "No encontrado" });
@@ -141,6 +142,7 @@ router.put('/:id', verifyToken, async (req, res) => {
         deck.name = name;
         deck.cards = formattedCards;
         if (format) deck.format = format;
+        if (race) deck.race = race; // ✅ Actualizamos raza
         if (isPublic !== undefined) deck.isPublic = isPublic;
 
         await deck.save();
@@ -214,44 +216,54 @@ router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
     }
 });
 
-// 10. ✅ META REPORT CORREGIDO: INDEPENDIENTE POR FORMATO
+// 10. ✅ META REPORT MEJORADO: INDEPENDIENTE POR FORMATO Y DESGLOSE POR RAZA
 router.get('/stats/meta', async (req, res) => {
     try {
-        const { format } = req.query; // Capturamos el formato enviado por el Home
+        const { format } = req.query; 
 
-        // 1. Filtramos los mazos por formato si viene en la URL
+        // 1. Filtramos los mazos por formato
         const queryFilter = format ? { format: format } : {};
         const allDecks = await Deck.find(queryFilter);
         
         const cardUsage = {};
 
         allDecks.forEach(deck => {
+            // Intentamos obtener la raza del mazo (campo 'race' o desde el nombre)
+            let currentRace = deck.race || "Híbrido";
+
             deck.cards.forEach(card => {
                 const key = card.slug || card.name;
-                if (cardUsage[key]) {
-                    // Contamos frecuencia de aparición en mazos (no cantidad de copias, 
-                    // para saber qué tan "popular" es la carta en diferentes estrategias)
-                    cardUsage[key].usageCount += 1;
-                } else {
+                
+                if (!cardUsage[key]) {
                     cardUsage[key] = {
                         name: card.name,
                         imgUrl: card.imgUrl || card.img,
                         format: deck.format,
-                        usageCount: 1
+                        usageCount: 0,
+                        races: {} // ✅ Objeto para mapear: { "Caballero": 5, "Sombra": 2 }
                     };
                 }
+
+                // Sumamos frecuencia de aparición en mazos (no cantidad de copias)
+                cardUsage[key].usageCount += 1;
+
+                // ✅ Mapeamos el uso por raza
+                if (!cardUsage[key].races[currentRace]) {
+                    cardUsage[key].races[currentRace] = 0;
+                }
+                cardUsage[key].races[currentRace] += 1;
             });
         });
 
-        // 2. Convertimos el objeto en array y ordenamos por las más usadas
+        // 2. Ordenamos por las 10 más usadas
         const sortedMeta = Object.values(cardUsage)
             .sort((a, b) => b.usageCount - a.usageCount)
-            .slice(0, 10); // Top 10 independiente
+            .slice(0, 10);
 
         res.json(sortedMeta);
     } catch (error) {
-        console.error("Error en Meta Report:", error);
-        res.status(500).json({ error: "Error al calcular estadísticas" });
+        console.error("Error en Meta Report Profesional:", error);
+        res.status(500).json({ error: "Error al calcular estadísticas detalladas" });
     }
 });
 
