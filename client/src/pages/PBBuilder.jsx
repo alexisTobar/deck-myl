@@ -50,7 +50,7 @@ export default function PBBuilder() {
     const [mazo, setMazo] = useState([]);
     const [nombreMazo, setNombreMazo] = useState("");
     
-    // ✅ NUEVO ESTADO PARA LA RAZA DEL MAZO
+    // ✅ ESTADO PARA LA RAZA DEL MAZO
     const [razaMazo, setRazaMazo] = useState("");
 
     const [editingDeckId, setEditingDeckId] = useState(null);
@@ -109,7 +109,7 @@ export default function PBBuilder() {
                 setNombreMazo(isCloning ? `Copia de ${d.name}` : d.name);
                 setEditingDeckId(isCloning ? null : d._id);
                 setIsPublic(isCloning ? false : (d.isPublic || false));
-                setRazaMazo(d.race || "");
+                setRazaMazo(d.race || ""); // Cargar raza existente
                 setMazo(d.cards.map(c => ({ ...c, cantidad: c.quantity || 1, imgUrl: getImg(c) })));
                 const firstGold = d.cards.find(c => c.type === "Oro");
                 if (firstGold) setOroInicialSlug(firstGold.slug);
@@ -159,6 +159,7 @@ export default function PBBuilder() {
         setMazo(mazo.map(c => c.slug === slug ? { ...c, cantidad: c.cantidad - 1 } : c).filter(c => c.cantidad > 0));
     };
 
+    // ✅ CORRECCIÓN FINAL DE GUARDADO PARA ENVIAR 'race'
     const handleSaveDeck = async () => {
         if (!nombreMazo.trim()) return alert("Nombre requerido");
         if (!razaMazo) return alert("Debes seleccionar la Raza de tu mazo para el análisis.");
@@ -177,11 +178,17 @@ export default function PBBuilder() {
                     cards: mazo.map(c => ({ ...c, quantity: c.cantidad })), 
                     format: formato, 
                     isPublic: isPublic,
-                    race: razaMazo // ✅ Enviamos la raza a la BD
+                    race: razaMazo // ✅ Campo crítico enviado correctamente
                 })
             });
-            if (res.ok) navigate("/my-decks");
-        } catch (e) { alert("Error"); } finally { setGuardando(false); }
+            if (res.ok) {
+                setModalGuardarOpen(false);
+                navigate("/my-decks");
+            } else {
+                const errorData = await res.json();
+                alert(errorData.error || "Error al guardar");
+            }
+        } catch (e) { alert("Error al guardar mazo"); } finally { setGuardando(false); }
     };
 
     const handleTakeScreenshot = async () => {
@@ -377,50 +384,27 @@ export default function PBBuilder() {
                 </div>
             </div>
 
-            {/* ✅ MODAL MANO DE PRUEBA ACTUALIZADO */}
+            {/* MODAL MANO DE PRUEBA */}
             <AnimatePresence>
                 {manoPrueba.length > 0 && (
                     <div className="fixed inset-0 bg-slate-950/95 z-[300] flex flex-col items-center justify-center p-4 backdrop-blur-xl overflow-hidden">
                         <motion.h3 initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-xl md:text-2xl font-black text-blue-500 dark:text-yellow-500 uppercase italic mb-8 tracking-widest text-center flex items-center gap-3"><Sparkles className="animate-pulse text-yellow-400" size={24} /> Mano Inicial PB</motion.h3>
-                        
                         <div className="flex flex-col md:flex-row gap-8 items-center max-w-full">
                             {oroInicialSlug && mazo.find(c => c.slug === oroInicialSlug) && (
                                 <div className="flex flex-col items-center gap-2 border-r border-white/10 pr-8">
                                     <span className="text-[10px] font-black text-yellow-500 uppercase tracking-widest bg-yellow-500/10 px-3 py-1 rounded-full border border-yellow-500/20">Oro Inicial</span>
-                                    <motion.div 
-                                        initial={{ opacity: 0, scale: 0.5 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        className="w-28 md:w-32"
-                                    >
-                                        <img 
-                                            src={getImg(mazo.find(c => c.slug === oroInicialSlug))} 
-                                            className="w-full rounded-lg border-2 border-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.4)]" 
-                                            alt="oro inicial" 
-                                        />
-                                    </motion.div>
+                                    <motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} className="w-28 md:w-32"><img src={getImg(mazo.find(c => c.slug === oroInicialSlug))} className="w-full rounded-lg border-2 border-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.4)]" alt="oro inicial" /></motion.div>
                                 </div>
                             )}
-
                             <div className="flex flex-col items-center gap-2">
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cartas Repartidas</span>
                                 <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-3">
                                     {manoPrueba.map((c, i) => (
-                                        <motion.div 
-                                            key={`${c.slug}-${i}`}
-                                            custom={i}
-                                            variants={cardDealingVariants}
-                                            initial="hidden"
-                                            animate="visible"
-                                            exit="exit"
-                                            className="w-20 md:w-28"
-                                        >
-                                            <img src={getImg(c)} className="w-full rounded-lg border border-white/10 shadow-xl" alt="mano" />
-                                        </motion.div>
+                                        <motion.div key={`${c.slug}-${i}`} custom={i} variants={cardDealingVariants} initial="hidden" animate="visible" exit="exit" className="w-20 md:w-28"><img src={getImg(c)} className="w-full rounded-lg border border-white/10 shadow-xl" alt="mano" /></motion.div>
                                     ))}
                                 </div>
                             </div>
                         </div>
-
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }} className="mt-12 flex gap-4">
                             <button onClick={simularMano} className="bg-blue-600 dark:bg-yellow-600 text-white dark:text-black px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all">Mulligan</button>
                             <button onClick={() => setManoPrueba([])} className="bg-slate-800 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest border border-white/10 active:scale-95 transition-all">Cerrar</button>
@@ -433,91 +417,44 @@ export default function PBBuilder() {
             {showMobileList && (
                 <div className="md:hidden fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end" onClick={() => setShowMobileList(false)}>
                     <div className="bg-white dark:bg-slate-900 rounded-t-[3rem] h-[80vh] p-6 overflow-hidden border-t border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-black uppercase text-blue-600 dark:text-yellow-500 italic tracking-tighter">Mi Grimorio ({totalCartas}/50)</h3>
-                            <div className="flex gap-2">
-                                <button onClick={handleTakeScreenshot} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-blue-600 dark:text-yellow-500 border border-slate-200 dark:border-slate-700"><Camera size={20}/></button>
-                                <button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 border border-slate-200 dark:border-slate-700 transition-colors hover:text-red-500"><X size={24} /></button>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-5 gap-1 mb-4">
-                            {ORDER_TYPES.map(type => (
-                                <div key={type} className="flex flex-col items-center bg-slate-50 dark:bg-slate-800 rounded-lg p-2 border border-slate-100 dark:border-white/5">
-                                    <span className="text-[6px] font-black text-slate-400 uppercase">{type}</span>
-                                    <span className="text-xs font-black text-slate-700 dark:text-yellow-500">{statsForExport.counts[type] || 0}</span>
-                                </div>
-                            ))}
-                        </div>
+                        <div className="flex justify-between items-center mb-4"><h3 className="text-xl font-black uppercase text-blue-600 dark:text-yellow-500 italic tracking-tighter">Mi Grimorio ({totalCartas}/50)</h3><button onClick={() => setShowMobileList(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 border border-slate-200 dark:border-slate-700 transition-colors hover:text-red-500"><X size={24} /></button></div>
+                        <div className="grid grid-cols-5 gap-1 mb-4">{ORDER_TYPES.map(type => (<div key={type} className="flex flex-col items-center bg-slate-50 dark:bg-slate-800 rounded-lg p-2 border border-slate-100 dark:border-white/5"><span className="text-[6px] font-black text-slate-400 uppercase">{type}</span><span className="text-xs font-black text-slate-700 dark:text-yellow-500">{statsForExport.counts[type] || 0}</span></div>))}</div>
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
                             {ORDER_TYPES.map(t => mazoAgrupado[t] && (
-                                <div key={t} className="mb-6">
-                                    <h4 className="text-slate-400 dark:text-yellow-600 text-[10px] font-black uppercase mb-3 tracking-widest border-b dark:border-orange-800 pb-1">{t}</h4>
-                                    <div className="space-y-3">
-                                        {mazoAgrupado[t].map(c => (
-                                            <div key={c.slug} className={`flex justify-between items-center py-2 px-3 rounded-xl border ${oroInicialSlug === c.slug ? 'border-yellow-500 bg-yellow-500/5' : 'border-transparent'}`}>
-                                                <div className="flex items-center gap-3">
-                                                    <img src={getImg(c)} className="w-12 h-16 rounded-xl shadow-md object-cover" alt={c.name} />
-                                                    <div className="flex flex-col">
-                                                        <span className="text-sm font-black text-slate-700 dark:text-slate-200 uppercase truncate max-w-[150px]">{c.name}</span>
-                                                        {c.type === "Oro" && (
-                                                            <button onClick={() => setOroInicialSlug(c.slug === oroInicialSlug ? null : c.slug)} className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full w-fit ${oroInicialSlug === c.slug ? 'bg-yellow-500 text-black' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'}`}>
-                                                                {oroInicialSlug === c.slug ? 'Oro Inicial' : 'Usar como Inicial'}
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-4 bg-slate-100 dark:bg-slate-950 p-2 px-5 rounded-2xl">
-                                                    <button onClick={() => handleRemove(c.slug)} className="text-red-500 active:scale-90 transition-transform"><Minus size={20} strokeWidth={3}/></button>
-                                                    <span className="font-black text-slate-800 dark:text-white text-base w-4 text-center">{c.cantidad}</span>
-                                                    <button onClick={() => handleAdd(c)} className="text-green-500 active:scale-90 transition-transform"><Plus size={20} strokeWidth={3}/></button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
+                                <div key={t} className="mb-6"><h4 className="text-slate-400 dark:text-yellow-600 text-[10px] font-black uppercase mb-3 tracking-widest border-b dark:border-orange-800 pb-1">{t}</h4><div className="space-y-3">{mazoAgrupado[t].map(c => (
+                                    <div key={c.slug} className={`flex justify-between items-center py-2 px-3 rounded-xl border ${oroInicialSlug === c.slug ? 'border-yellow-500 bg-yellow-500/5' : 'border-transparent'}`}><div className="flex items-center gap-3"><img src={getImg(c)} className="w-12 h-16 rounded-xl shadow-md object-cover" alt={c.name} /><div className="flex flex-col"><span className="text-sm font-black text-slate-700 dark:text-slate-200 uppercase truncate max-w-[150px]">{c.name}</span>{c.type === "Oro" && (<button onClick={() => setOroInicialSlug(c.slug === oroInicialSlug ? null : c.slug)} className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full w-fit ${oroInicialSlug === c.slug ? 'bg-yellow-500 text-black' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'}`}>{oroInicialSlug === c.slug ? 'Oro Inicial' : 'Usar como Inicial'}</button>)}</div></div><div className="flex items-center gap-4 bg-slate-100 dark:bg-slate-950 p-2 px-5 rounded-2xl"><button onClick={() => handleRemove(c.slug)} className="text-red-500 active:scale-90 transition-transform"><Minus size={20} strokeWidth={3}/></button><span className="font-black text-slate-800 dark:text-white text-base w-4 text-center">{c.cantidad}</span><button onClick={() => handleAdd(c)} className="text-green-500 active:scale-90 transition-transform"><Plus size={20} strokeWidth={3}/></button></div></div>))}</div></div>))}
                         </div>
                     </div>
                 </div>
             )}
 
             {cardToZoom && (
-                <div className="fixed inset-0 z-[400] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-4 transition-all duration-300" onClick={() => setCardToZoom(null)}>
+                <div className="fixed inset-0 z-[400] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-4" onClick={() => setCardToZoom(null)}>
                     <button onClick={() => setCardToZoom(null)} className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-2xl z-[410] transition-all"><X size={24} strokeWidth={3} /></button>
                     <div className="relative max-w-sm w-full flex flex-col items-center animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
                         <img src={getImg(cardToZoom)} className="w-full h-auto rounded-[2rem] shadow-[0_0_50px_rgba(37,99,235,0.3)] dark:shadow-[0_0_50px_rgba(234,179,8,0.3)] border-4 border-white/20" alt="zoom" />
                         <div className="mt-8 flex items-center justify-center gap-10 bg-white/90 dark:bg-slate-900/90 p-5 px-12 rounded-[2.5rem] border border-slate-200 dark:border-slate-700 shadow-2xl backdrop-blur-lg">
                             <button onClick={() => handleRemove(cardToZoom.slug)} className="w-14 h-14 rounded-2xl bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white flex items-center justify-center transition-all active:scale-90"><Minus size={28} strokeWidth={3} /></button>
-                            <span className="text-5xl font-black text-slate-900 dark:text-white leading-none">
-                                {mazo.filter(x => x.name.toLowerCase().trim() === cardToZoom.name.toLowerCase().trim()).reduce((acc, curr) => acc + curr.cantidad, 0)}
-                            </span>
+                            <span className="text-5xl font-black text-slate-900 dark:text-white leading-none">{mazo.find(x => x.slug === cardToZoom.slug)?.cantidad || 0}</span>
                             <button onClick={() => handleAdd(cardToZoom)} className="w-14 h-14 rounded-2xl bg-green-500/10 hover:bg-green-600 text-green-500 hover:text-white flex items-center justify-center transition-all active:scale-90"><Plus size={28} strokeWidth={3} /></button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* ✅ MODAL GUARDAR MEJORADO CON SELECCIÓN DE RAZA */}
+            {/* MODAL GUARDAR MEJORADO CON RAZA */}
             {modalGuardarOpen && (
                 <div className="fixed inset-0 bg-slate-950/90 z-[500] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in" onClick={() => setModalGuardarOpen(false)}>
                     <div className="bg-white dark:bg-slate-800 p-8 rounded-[3rem] w-full max-w-sm border border-slate-200 dark:border-slate-700 shadow-2xl" onClick={e => e.stopPropagation()}>
                         <h3 className="text-2xl font-black mb-8 uppercase text-blue-600 dark:text-yellow-500 tracking-tighter italic text-center leading-none">Archivar<br/>Estrategia PB</h3>
-                        
                         <div className="space-y-4">
-                            <div>
-                                <span className="text-[10px] font-black text-slate-400 uppercase ml-2">Nombre del Mazo</span>
-                                <input value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-blue-500 dark:focus:border-yellow-500 transition-all text-slate-900 dark:text-white font-black uppercase text-sm tracking-widest" placeholder="NOMBRE..." />
-                            </div>
-
-                            {/* ✅ NUEVO SELECTOR DE RAZA PREDOMINANTE */}
+                            <div><span className="text-[10px] font-black text-slate-400 uppercase ml-2">Nombre del Mazo</span><input value={nombreMazo} onChange={(e) => setNombreMazo(e.target.value)} className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-blue-500 dark:focus:border-yellow-500 transition-all text-slate-900 dark:text-white font-black uppercase text-sm tracking-widest" placeholder="NOMBRE..." /></div>
+                            
+                            {/* SELECTOR DE RAZA */}
                             <div>
                                 <span className="text-[10px] font-black text-slate-400 uppercase ml-2">Raza Predominante (Para Análisis)</span>
                                 <div className="relative">
-                                    <select 
-                                        value={razaMazo} 
-                                        onChange={(e) => setRazaMazo(e.target.value)} 
-                                        className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-blue-500 dark:focus:border-yellow-500 transition-all text-slate-900 dark:text-white font-black uppercase text-sm appearance-none cursor-pointer"
-                                    >
+                                    <select value={razaMazo} onChange={(e) => setRazaMazo(e.target.value)} className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-blue-500 dark:focus:border-yellow-500 transition-all text-slate-900 dark:text-white font-black uppercase text-sm appearance-none cursor-pointer">
                                         <option value="">Selecciona Raza...</option>
                                         {RAZAS_PB.map(r => <option key={r} value={r}>{r}</option>)}
                                         <option value="Híbrido">Híbrido / Mix</option>
@@ -531,20 +468,23 @@ export default function PBBuilder() {
                                 <span className="text-xs font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest italic">Publicar en Arena <Globe size={14} className="inline ml-1 text-blue-600 dark:text-orange-500" /></span>
                             </label>
                         </div>
-
                         <div className="flex flex-col gap-2 mt-10">
-                            <button 
-                                onClick={handleSaveDeck} 
-                                disabled={guardando || !nombreMazo.trim() || !razaMazo} 
-                                className={`w-full py-4 rounded-2xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-3 italic ${(!nombreMazo.trim() || !razaMazo) ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-blue-600 dark:bg-yellow-600 text-white dark:text-black'}`}
-                            >
-                                <Save size={18} /> CONFIRMAR
-                            </button>
+                            <button onClick={handleSaveDeck} disabled={guardando || !nombreMazo.trim() || !razaMazo} className={`w-full py-4 rounded-2xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-3 italic ${(!nombreMazo.trim() || !razaMazo) ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-blue-600 dark:bg-yellow-600 text-white dark:text-black'}`}><Save size={18} /> CONFIRMAR</button>
                             <button onClick={() => setModalGuardarOpen(false)} className="w-full text-slate-400 font-black py-2 hover:text-slate-600 dark:hover:text-white transition-colors uppercase italic text-[10px] tracking-[0.2em]">CANCELAR</button>
                         </div>
                     </div>
                 </div>
             )}
+        </div>
+    );
+}
+
+function Feature({ icon, title, text }) {
+    return (
+        <div className="text-center flex flex-col items-center group cursor-default">
+            <div className="mb-6 p-6 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-white/10 shadow-sm group-hover:shadow-xl group-hover:scale-110 transition-all duration-500 text-blue-600 dark:text-blue-400">{icon}</div>
+            <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4 italic">{title}</h4>
+            <p className="text-slate-500 dark:text-slate-400 text-xs font-medium leading-relaxed max-w-[220px] opacity-70 dark:opacity-60">{text}</p>
         </div>
     );
 }
