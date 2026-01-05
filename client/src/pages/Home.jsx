@@ -80,10 +80,25 @@ export default function HomePortal() {
     };
 
     const getChartData = (card) => {
-        if (!card || !card.races) return [];
+        if (!card || !card.races || Object.keys(card.races).length === 0) return [];
+        const total = Object.values(card.races).reduce((a, b) => a + b, 0);
         return Object.entries(card.races).map(([name, value]) => ({
-            name, value: Number(value), color: RACE_COLORS[name] || `#${Math.floor(Math.random()*16777215).toString(16)}`
+            name: `${name} (${((value / total) * 100).toFixed(1)}%)`, 
+            value: Number(value), 
+            color: RACE_COLORS[name] || `#${Math.floor(Math.random()*16777215).toString(16)}`
         }));
+    };
+
+    // Renderizado de porcentajes en el gráfico
+    const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+        const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+        const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+        return (
+            <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize="10px" fontWeight="bold">
+                {`${(percent * 100).toFixed(0)}%`}
+            </text>
+        );
     };
 
     return (
@@ -160,31 +175,51 @@ export default function HomePortal() {
                                     <p className="text-[9px] font-bold text-slate-400 uppercase">Frecuencia en Mazos</p>
                                     <p className="text-2xl font-black text-blue-500">{selectedMetaCard.usageCount}</p>
                                 </div>
-                                {/* GRÁFICO */}
-                                <div className="h-60 w-full mb-6">
+                                {/* GRÁFICO MEJORADO */}
+                                <div className="h-72 w-full mb-8">
                                     {getChartData(selectedMetaCard).length > 0 ? (
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
-                                                <Pie data={getChartData(selectedMetaCard)} innerRadius={45} outerRadius={65} paddingAngle={5} dataKey="value" stroke="none">
+                                                <Pie 
+                                                    data={getChartData(selectedMetaCard)} 
+                                                    innerRadius={50} 
+                                                    outerRadius={75} 
+                                                    paddingAngle={5} 
+                                                    dataKey="value" 
+                                                    stroke="none"
+                                                    label={renderCustomizedLabel}
+                                                    labelLine={false}
+                                                >
                                                     {getChartData(selectedMetaCard).map((e, i) => <Cell key={i} fill={e.color} />)}
                                                 </Pie>
-                                                <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '10px', color: '#fff' }} />
-                                                <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', paddingTop: '10px' }} />
+                                                <RechartsTooltip 
+                                                    contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '12px', color: '#fff', fontWeight: 'bold' }} 
+                                                    itemStyle={{ color: '#fff' }}
+                                                />
+                                                <Legend verticalAlign="bottom" height={40} iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', paddingTop: '10px' }} />
                                             </PieChart>
                                         </ResponsiveContainer>
                                     ) : <div className="h-full flex items-center justify-center text-slate-500 italic text-xs uppercase">Sin datos de raza</div>}
                                 </div>
-                                {/* TOP MAZOS */}
+                                {/* TOP MAZOS INTERACTIVOS */}
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-2 text-slate-400 mb-2 border-t border-white/5 pt-4">
-                                        <LayoutList size={14} /> <span className="text-[10px] font-black uppercase tracking-widest">Aparece en estos Mazos:</span>
+                                        <LayoutList size={14} /> <span className="text-[10px] font-black uppercase tracking-widest">Fuentes Estratégicas (Click para ver):</span>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
-                                        {selectedMetaCard.featuredDecks?.map((deckName, i) => (
-                                            <span key={i} className="px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-full text-[9px] font-bold text-slate-500 dark:text-slate-300 border border-white/5">
-                                                {deckName}
-                                            </span>
-                                        )) || <p className="text-[9px] text-slate-600">Mazos privados o sin nombre</p>}
+                                        {selectedMetaCard.featuredDecks?.map((deck, i) => (
+                                            <button 
+                                                key={i} 
+                                                disabled={!deck.isPublic}
+                                                onClick={() => deck.isPublic && navigate(`/community/deck/${deck._id}`)}
+                                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase italic transition-all border flex items-center gap-2
+                                                    ${deck.isPublic 
+                                                        ? 'bg-green-500/10 border-green-500/30 text-green-500 hover:bg-green-500 hover:text-white cursor-pointer' 
+                                                        : 'bg-slate-500/10 border-slate-500/20 text-slate-500 cursor-not-allowed opacity-60'}`}
+                                            >
+                                                {deck.name} {!deck.isPublic && <Lock size={10} />}
+                                            </button>
+                                        )) || <p className="text-[9px] text-slate-600">Analizando fuentes...</p>}
                                     </div>
                                 </div>
                             </div>
@@ -200,36 +235,57 @@ export default function HomePortal() {
                         <div className="flex-1 text-center md:text-left order-2 md:order-1">
                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-500/10 rounded-full mb-6"><ShoppingBag size={14} className="text-orange-500" /><span className="text-[10px] font-black uppercase text-orange-500">Official Store</span></div>
                             <h2 className="text-4xl md:text-7xl font-black uppercase italic tracking-tighter mb-4 leading-none">Juegos <span className="text-blue-600">Vikingos</span></h2>
-                            <p className="text-slate-500 dark:text-slate-400 text-lg mb-8 max-w-lg font-medium italic">Encuentra las cartas más codiciadas y los últimos lanzamientos.</p>
+                            <p className="text-slate-500 dark:text-slate-400 text-lg mb-8 max-w-lg font-medium italic text-center md:text-left mx-auto md:mx-0">
+                                Encuentra las cartas más codiciadas y los últimos lanzamientos de Mitos y Leyendas. Calidad legendaria para invocadores reales.
+                            </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                                <a href="https://www.juegosvikingos.cl" target="_blank" rel="noreferrer" className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase italic text-xs flex gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/30">Visitar Tienda <ExternalLink size={18} /></a>
+                                <a href="https://www.juegosvikingos.cl" target="_blank" rel="noreferrer" className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase italic tracking-widest flex items-center justify-center gap-3 hover:bg-blue-700 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-blue-600/30">
+                                    Visitar Tienda <ExternalLink size={18} />
+                                </a>
+                                <a href="https://www.instagram.com/juegosvikingos" target="_blank" rel="noreferrer" className="px-8 py-4 bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white rounded-2xl font-black uppercase italic tracking-widest flex items-center justify-center gap-3 hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
+                                    <Instagram size={18} /> Ver Instagram
+                                </a>
                             </div>
                         </div>
-                        <div className="flex-1 order-1 md:order-2 flex justify-center"><motion.img animate={{ y: [0, -20, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} src={VIKINGO_LOGO} className="w-full max-w-[280px] h-auto drop-shadow-[0_20px_50px_rgba(37,99,235,0.4)]" /></div>
+                        <div className="flex-1 order-1 md:order-2 flex justify-center">
+                            <motion.img 
+                                animate={{ y: [0, -20, 0] }} 
+                                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} 
+                                src={VIKINGO_LOGO} 
+                                className="w-full max-w-[280px] md:max-w-full h-auto object-contain drop-shadow-[0_20px_50px_rgba(37,99,235,0.4)]" 
+                                alt="Vikingo"
+                            />
+                        </div>
                     </div>
                 </div>
             </motion.section>
 
-            {/* RED INVOCADORES (RECUPERADA) */}
+            {/* RED INVOCADORES */}
             <motion.section initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="w-full max-w-7xl px-6 mb-32">
                 <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-4">
                     <div className="text-center md:text-left">
                         <h3 className="text-3xl font-black text-slate-900 dark:text-white uppercase italic flex items-center gap-3 justify-center md:justify-start"><Instagram className="text-pink-600" /> Red de Invocadores</h3>
                         <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Sigue a los mejores jugadores y comunidades</p>
                     </div>
-                    <button onClick={() => setShowPlayerModal(true)} className="px-6 py-3 bg-white dark:bg-white/5 border border-pink-600/30 rounded-2xl font-black text-[10px] uppercase text-pink-600 hover:bg-pink-600 hover:text-white transition-all shadow-lg flex items-center gap-2"><PlusCircle size={18} /> Aparecer aquí</button>
+                    <button onClick={() => setShowPlayerModal(true)} className="group relative px-6 py-3 bg-white dark:bg-white/5 border border-pink-600/30 rounded-2xl font-black text-[10px] uppercase text-pink-600 overflow-hidden transition-all hover:bg-pink-600 hover:text-white shadow-lg flex items-center gap-2">
+                        <PlusCircle size={18} /> Aparecer aquí
+                    </button>
                 </div>
                 <div className="flex gap-8 overflow-x-auto no-scrollbar py-6 px-2">
                     {players.map((p, i) => (
                         <motion.a whileHover={{ scale: 1.1, rotate: 5 }} key={i} href={p.instagram} target="_blank" rel="noreferrer" className="flex flex-col items-center gap-3 min-w-[100px]">
-                            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 shadow-xl"><div className="w-full h-full rounded-full border-[4px] border-white dark:border-[#0f172a] overflow-hidden"><img src={p.logo || "https://via.placeholder.com/150"} className="w-full h-full object-cover" alt="player" /></div></div>
+                            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 shadow-xl">
+                                <div className="w-full h-full rounded-full border-[4px] border-white dark:border-[#0f172a] overflow-hidden">
+                                    <img src={p.logo || "https://via.placeholder.com/150"} className="w-full h-full object-cover" alt="player" />
+                                </div>
+                            </div>
                             <span className="text-[9px] font-black uppercase text-slate-700 dark:text-slate-300 truncate w-full text-center">@{p.name}</span>
                         </motion.a>
                     ))}
                 </div>
             </motion.section>
 
-            {/* MODAL INVOCADOR (RECUPERADO) */}
+            {/* MODAL INVOCADOR */}
             <AnimatePresence>
                 {showPlayerModal && (
                     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
@@ -238,9 +294,9 @@ export default function HomePortal() {
                             <UserPlus size={40} className="text-pink-600 mx-auto mb-6" />
                             <h3 className="text-4xl font-black uppercase italic mb-8">Únete al <span className="text-pink-600">Relato</span></h3>
                             <form onSubmit={handleSavePlayer} className="space-y-4">
-                                <input type="text" required className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold outline-none focus:border-pink-600 transition-all" placeholder="Nombre" value={newPlayerData.name} onChange={e => setNewPlayerData({...newPlayerData, name: e.target.value})} />
-                                <input type="url" required className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold outline-none focus:border-pink-600 transition-all" placeholder="Instagram URL" value={newPlayerData.instagram} onChange={e => setNewPlayerData({...newPlayerData, instagram: e.target.value})} />
-                                <input type="text" className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold outline-none focus:border-pink-600 transition-all" placeholder="Logo URL" value={newPlayerData.logo} onChange={e => setNewPlayerData({...newPlayerData, logo: e.target.value})} />
+                                <input type="text" required className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold outline-none focus:border-pink-600 transition-all text-white" placeholder="Nombre" value={newPlayerData.name} onChange={e => setNewPlayerData({...newPlayerData, name: e.target.value})} />
+                                <input type="url" required className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold outline-none focus:border-pink-600 transition-all text-white" placeholder="Instagram URL" value={newPlayerData.instagram} onChange={e => setNewPlayerData({...newPlayerData, instagram: e.target.value})} />
+                                <input type="text" className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold outline-none focus:border-pink-600 transition-all text-white" placeholder="Logo URL" value={newPlayerData.logo} onChange={e => setNewPlayerData({...newPlayerData, logo: e.target.value})} />
                                 <button type="submit" className="w-full py-5 bg-pink-600 text-white rounded-3xl text-xs font-black uppercase italic tracking-[0.2em] shadow-lg hover:scale-[1.03] transition-all">Inyectar Leyenda</button>
                             </form>
                         </motion.div>
@@ -249,18 +305,18 @@ export default function HomePortal() {
             </AnimatePresence>
 
             {/* CARACTERÍSTICAS */}
-            <motion.section initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="w-full bg-white/60 dark:bg-[#0A0C10]/60 backdrop-blur-xl border-y dark:border-white/10 py-24 mb-20">
+            <motion.section initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="w-full bg-white/60 dark:bg-[#0A0C10]/60 backdrop-blur-xl border-y dark:border-white/10 py-24 mb-20 transition-all">
                 <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-16">
-                    <Feature icon={<ShieldCheck size={32} />} title="Validación DAR" text="Arquitectura de mazos bajo las reglas vigentes." />
-                    <Feature icon={<Zap size={32} />} title="Motor Forja" text="Procesamiento en tiempo real de estadísticas." />
-                    <Feature icon={<Users size={32} />} title="Networking" text="Conexión global entre constructores." />
+                    <Feature icon={<ShieldCheck size={32} className="text-blue-500" />} title="Validación DAR" text="Arquitectura de mazos protegida bajo las reglas vigentes." />
+                    <Feature icon={<Zap size={32} className="text-blue-400" />} title="Motor Forja" text="Procesamiento en tiempo real de estadísticas y win-rates." />
+                    <Feature icon={<Users size={32} className="text-blue-600" />} title="Networking" text="Conexión global entre constructores y coleccionistas." />
                 </div>
             </motion.section>
 
-            <footer className="w-full py-20 bg-white dark:bg-[#0A0C10] border-t dark:border-white/5 text-center">
+            <footer className="w-full py-20 bg-white dark:bg-[#0A0C10] border-t dark:border-white/5 text-center transition-colors">
                 <img src={LOGO_BLANCO} className="h-10 w-auto mb-4 mx-auto hidden dark:block" alt="fd" />
                 <p className="text-[11px] text-slate-400 font-bold uppercase tracking-[0.4em]">ForjaDeck Database System • 2026</p>
-                <div className="mt-6 flex items-center justify-center gap-2 text-sm font-black text-slate-300">Hecho con <Heart size={16} className="text-red-500 fill-red-500" /> por Alexis Tobar</div>
+                <div className="mt-6 flex items-center justify-center gap-2 text-sm font-black text-slate-700 dark:text-slate-300">Hecho con <Heart size={16} className="text-red-500 fill-red-500" /> por Alexis Tobar</div>
             </footer>
         </div>
     );
@@ -282,7 +338,7 @@ function MetaCard({ card, index, onClick }) {
 function FormatCard({ title, desc, img, icon, onClick, delay }) {
     return (
         <div onClick={onClick} className={`group cursor-pointer bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 overflow-hidden hover:shadow-[0_20px_50px_rgba(37,99,235,0.15)] dark:hover:shadow-blue-500/10 hover:border-blue-400 transition-all flex flex-col animate-in fade-in slide-in-from-bottom-10 ${delay}`}>
-            <div className="h-48 md:h-72 relative overflow-hidden"><img src={img} className="w-full h-full object-cover group-hover:scale-110 opacity-90 dark:opacity-60" alt="title" /><div className="absolute bottom-6 left-8 p-4 bg-white/95 dark:bg-slate-800/95 backdrop-blur shadow-2xl rounded-2xl border border-slate-100 dark:border-white/10 group-hover:-translate-y-2 transition-transform duration-500">{icon}</div></div>
+            <div className="h-48 md:h-72 relative overflow-hidden"><img src={img} className="w-full h-full object-cover group-hover:scale-110 opacity-90 dark:opacity-60 transition-transform duration-1000" alt="title" /><div className="absolute bottom-6 left-8 p-4 bg-white/95 dark:bg-slate-800/95 backdrop-blur shadow-2xl rounded-2xl border border-slate-100 dark:border-white/10 group-hover:-translate-y-2 transition-transform duration-500">{icon}</div></div>
             <div className="p-8 md:p-10 pt-6"><h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 uppercase italic tracking-tighter group-hover:text-blue-600 transition-colors leading-tight">{title}</h2><p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-6 leading-relaxed">{desc}</p><div className="flex items-center gap-3 text-[10px] md:text-xs font-black uppercase tracking-widest text-blue-600">Crea tu Mazo <ArrowRight size={18} className="group-hover:translate-x-3 transition-transform" /></div></div>
         </div>
     );
@@ -290,8 +346,8 @@ function FormatCard({ title, desc, img, icon, onClick, delay }) {
 
 function Feature({ icon, title, text }) {
     return (
-        <div className="text-center flex flex-col items-center group cursor-default">
-            <div className="mb-6 p-6 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-white/10 shadow-sm group-hover:shadow-xl group-hover:scale-110 transition-all duration-500 text-blue-600 dark:text-blue-400">{icon}</div>
+        <div className="text-center flex flex-col items-center group cursor-default px-4">
+            <div className="mb-6 p-6 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-white/10 shadow-sm group-hover:shadow-xl group-hover:scale-110 transition-all duration-500">{icon}</div>
             <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4 italic">{title}</h4>
             <p className="text-slate-500 dark:text-slate-400 text-xs font-medium leading-relaxed max-w-[220px] opacity-70 dark:opacity-60">{text}</p>
         </div>
