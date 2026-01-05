@@ -102,14 +102,11 @@ export default function HomePortal() {
         );
     };
 
-    // ✅ FUNCIÓN CORREGIDA: ENVÍA AL COMMUNITY CORRECTO SEGÚN EL FORMATO
     const goToCommunityDeck = (deck) => {
         if (deck.isPublic) {
-            // Determinamos la ruta basada en el formato de la carta seleccionada actualmente
             const path = selectedMetaCard.format === 'primer_bloque' 
                 ? "/primer-bloque/community" 
                 : "/imperio/community";
-            
             navigate(path, { state: { autoOpenDeckId: deck._id } });
         } else {
             toast.info("Este mazo es privado.");
@@ -122,7 +119,7 @@ export default function HomePortal() {
             {/* HERO SECTION */}
             <header className="w-full max-w-7xl px-4 md:px-6 pt-16 md:pt-24 pb-12 text-center animate-in fade-in slide-in-from-top-10 duration-1000">
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/5 dark:bg-blue-400/10 border border-blue-600/10 dark:border-blue-400/20 rounded-full mb-8 shadow-sm">
-                    <Star size={12} className="text-blue-600 dark:text-blue-400 fill-blue-600" />
+                    <Star size={12} className="text-blue-600 dark:text-blue-400 fill-blue-600 dark:fill-blue-400" />
                     <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-blue-600 dark:text-blue-400">Versión Meta v3.5</span>
                 </div>
                 <div className="flex justify-center mb-8 px-4">
@@ -164,40 +161,44 @@ export default function HomePortal() {
                 </div>
             </motion.section>
 
-            {/* ✅ MODAL DE ANÁLISIS PROFESIONAL */}
+            {/* ✅ MODAL ADAPTADO PARA MÓVIL Y WEB (No borra nada) */}
             <AnimatePresence>
                 {showMetaModal && selectedMetaCard && (
-                    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-2 md:p-4">
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowMetaModal(false)} className="absolute inset-0 bg-black/90 backdrop-blur-xl" />
-                        <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} className="relative w-full max-w-4xl bg-white dark:bg-[#0f172a] border border-white/10 rounded-[3.5rem] overflow-hidden shadow-2xl flex flex-col md:flex-row">
-                            <button onClick={() => setShowMetaModal(false)} className="absolute top-6 right-6 z-20 p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-blue-500 transition-colors">
+                        <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} className="relative w-full max-w-4xl bg-white dark:bg-[#0f172a] border border-white/10 rounded-[2rem] md:rounded-[3.5rem] overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[95vh] md:max-h-[90vh]">
+                            
+                            <button onClick={() => setShowMetaModal(false)} className="absolute top-4 right-4 md:top-6 md:right-6 z-20 p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-blue-500 transition-colors shadow-lg">
                                 <X size={20} />
                             </button>
                             
-                            <div className="w-full md:w-1/2 p-8 bg-slate-50 dark:bg-black/20 flex items-center justify-center">
-                                <img src={selectedMetaCard.imgUrl || selectedMetaCard.img} className="w-full max-w-[240px] rounded-2xl shadow-2xl border-4 border-white dark:border-white/5" alt="card" />
+                            {/* Lado Imagen de Carta */}
+                            <div className="w-full md:w-1/2 p-6 md:p-8 bg-slate-50 dark:bg-black/20 flex items-center justify-center border-b md:border-b-0 md:border-r border-white/5">
+                                <img src={selectedMetaCard.imgUrl || selectedMetaCard.img} className="w-full max-w-[180px] md:max-w-[240px] rounded-xl md:rounded-2xl shadow-2xl border-2 md:border-4 border-white dark:border-white/5" alt="card" />
                             </div>
 
-                            <div className="w-full md:w-1/2 p-8 md:p-10 flex flex-col justify-center overflow-y-auto max-h-[90vh]">
-                                <div className="mb-6 text-left">
-                                    <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Racial Distribution Analysis</span>
-                                    <h3 className="text-3xl font-black uppercase italic text-slate-900 dark:text-white leading-none mb-2">{selectedMetaCard.name}</h3>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{selectedMetaCard.format?.replace('_',' ')}</p>
+                            {/* Lado Estadísticas y Mazos */}
+                            <div className="w-full md:w-1/2 p-6 md:p-10 flex flex-col overflow-y-auto custom-scrollbar">
+                                <div className="mb-4 md:mb-6 text-left">
+                                    <span className="text-[9px] md:text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Racial Distribution Analysis</span>
+                                    <h3 className="text-2xl md:text-3xl font-black uppercase italic text-slate-900 dark:text-white leading-none mb-1 md:mb-2">{selectedMetaCard.name}</h3>
+                                    <p className="text-[9px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest">{selectedMetaCard.format?.replace('_',' ')}</p>
                                 </div>
 
-                                <div className="p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10 mb-6 text-center">
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Presencia Global</p>
-                                    <p className="text-2xl font-black text-blue-500">{selectedMetaCard.usageCount} Mazos</p>
+                                <div className="p-3 md:p-4 bg-blue-500/5 rounded-xl md:rounded-2xl border border-blue-500/10 mb-4 md:mb-6 text-center">
+                                    <p className="text-[8px] md:text-[9px] font-bold text-slate-400 uppercase mb-1">Presencia Global</p>
+                                    <p className="text-xl md:text-2xl font-black text-blue-500">{selectedMetaCard.usageCount} Mazos</p>
                                 </div>
 
-                                <div className="h-64 w-full mb-8">
+                                {/* Gráfico Responsivo */}
+                                <div className="h-48 md:h-64 w-full mb-6 md:mb-8">
                                     {getChartData(selectedMetaCard).length > 0 ? (
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
                                                 <Pie 
                                                     data={getChartData(selectedMetaCard)} 
-                                                    innerRadius={50} 
-                                                    outerRadius={75} 
+                                                    innerRadius={45} 
+                                                    outerRadius={65} 
                                                     paddingAngle={5} 
                                                     dataKey="value" 
                                                     stroke="none"
@@ -207,28 +208,29 @@ export default function HomePortal() {
                                                     {getChartData(selectedMetaCard).map((e, i) => <Cell key={i} fill={e.color} />)}
                                                 </Pie>
                                                 <RechartsTooltip 
-                                                    contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '12px', color: '#fff', fontWeight: 'bold' }} 
+                                                    contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '11px', color: '#fff', fontWeight: 'bold' }} 
                                                     itemStyle={{ color: '#fff' }}
                                                 />
                                                 <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', paddingTop: '10px' }} />
                                             </PieChart>
                                         </ResponsiveContainer>
-                                    ) : <div className="h-full flex items-center justify-center text-slate-500 italic text-xs uppercase">Sin datos de raza</div>}
+                                    ) : <div className="h-full flex items-center justify-center text-slate-500 italic text-[10px] uppercase">Sin datos de raza</div>}
                                 </div>
 
+                                {/* Fuentes Estratégicas */}
                                 <div className="space-y-3 text-left">
                                     <div className="flex items-center gap-2 text-slate-400 mb-2 border-t border-white/5 pt-4">
-                                        <LayoutList size={14} /> <span className="text-[10px] font-black uppercase tracking-widest">Fuentes Estratégicas:</span>
+                                        <LayoutGrid size={14} /> <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest">Fuentes Estratégicas:</span>
                                     </div>
-                                    <div className="flex flex-wrap gap-2">
+                                    <div className="flex flex-wrap gap-2 pb-4">
                                         {selectedMetaCard.featuredDecks?.map((deck, i) => (
                                             <button 
                                                 key={i} 
                                                 onClick={() => goToCommunityDeck(deck)}
-                                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase italic transition-all border flex items-center gap-2
+                                                className={`px-3 py-2 md:px-4 md:py-2 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase italic transition-all border flex items-center gap-2
                                                     ${deck.isPublic 
-                                                        ? 'bg-green-500/10 border-green-500/30 text-green-500 hover:bg-green-500 hover:text-white cursor-pointer active:scale-95' 
-                                                        : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 cursor-default'}`}
+                                                        ? 'bg-green-500/10 border-green-500/30 text-green-500 hover:bg-green-500 hover:text-white cursor-pointer shadow-sm active:scale-95' 
+                                                        : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 cursor-not-allowed opacity-60'}`}
                                             >
                                                 {deck.name} {deck.isPublic && <ArrowRight size={10} />} {!deck.isPublic && <Lock size={10} />}
                                             </button>
