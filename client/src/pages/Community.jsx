@@ -164,7 +164,7 @@ export default function Community() {
                     <h2 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter flex items-center gap-3">
                         <Flame size={24} className="text-orange-500" /> Explorar <span className="text-blue-600">Recientes</span>
                     </h2>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{recentDecks.length} Grimorios</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{recentDecks.length} Mazos</span>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-10">
