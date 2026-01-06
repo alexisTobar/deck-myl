@@ -2,7 +2,6 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { saveAs } from 'file-saver';
 import BACKEND_URL from "../config";
-// ✅ Iconos Lucide
 import { Search, Trash2, Edit3, Globe, Lock, X, Camera, FileText, LayoutGrid, Bell, Heart, ArrowRight, MessageSquare, Send, Swords, Plus, ScrollText, Sword, Sparkles, Wand2 } from "lucide-react";
 
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
@@ -29,28 +28,28 @@ const animationStyles = `
   .animate-shine { position: relative; overflow: hidden; }
   .animate-shine::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent); transform: skewX(-25deg); animation: shine 3s infinite; }
   
-  /* ✅ ZOOM ÉPICO DE CARTA INTERNA */
+  /* ✅ ZOOM AJUSTADO PARA NOTEBOOKS - NO SE CORTA */
   .card-reveal-zoom {
-    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     cursor: zoom-in;
-    filter: saturate(0.8);
+    transform-origin: center center;
   }
   .card-reveal-zoom:hover {
-    transform: scale(1.6) translateY(-30px) rotateZ(2deg);
+    transform: scale(1.15) translateY(-5px);
     z-index: 50;
-    filter: saturate(1.2) brightness(1.1);
-    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.8), 0 0 20px rgba(37, 99, 235, 0.4);
+    filter: brightness(1.05);
+    box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.3);
   }
   
-  .glass-morph {
-    background: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+  .glass-light {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
   }
 
   .custom-scrollbar::-webkit-scrollbar { width: 4px; }
   .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-  .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 `;
 
 export default function MyDecks() {
@@ -174,96 +173,70 @@ export default function MyDecks() {
         return result.reverse(); 
     }, [decks, searchTerm, filterFormat]);
 
-    if (loading) return <div className="min-h-screen bg-slate-900 flex items-center justify-center"><div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>;
+    if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>;
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#06080F] text-slate-900 dark:text-white pb-32 transition-colors duration-500 overflow-x-hidden font-sans text-center relative">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white pb-32 transition-colors duration-500 overflow-x-hidden font-sans text-center relative">
             <style>{animationStyles}</style>
 
-            {/* --- TOP BANNER ACCIÓN (Sustituye botones flotantes molestos) --- */}
-            <div className="w-full bg-blue-600 dark:bg-blue-700 py-3 px-4 text-white overflow-hidden relative group">
-                <div className="max-w-7xl mx-auto flex justify-center md:justify-between items-center relative z-10">
-                    <p className="hidden md:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest italic opacity-80">
-                        <Wand2 size={14} /> Forja tu destino en la arena
-                    </p>
-                    <div className="flex gap-4">
-                        <Link to="/primer-bloque/builder" className="flex items-center gap-2 bg-black/20 hover:bg-black/40 px-6 py-2 rounded-full text-[11px] font-black uppercase italic transition-all border border-white/20 animate-shine">
-                            <ScrollText size={14} /> Nueva Crónica PB
+            {/* --- TOP BANNER --- */}
+            <div className="w-full bg-blue-600 py-2 px-4 text-white shadow-md">
+                <div className="max-w-7xl mx-auto flex justify-between items-center">
+                    <p className="hidden md:block text-[10px] font-black uppercase tracking-widest italic opacity-90">Forja tu arsenal estratégico</p>
+                    <div className="flex gap-2 mx-auto md:mx-0">
+                        <Link to="/primer-bloque/builder" className="flex items-center gap-1.5 bg-black/20 hover:bg-black/40 px-4 py-1.5 rounded-full text-[10px] font-black uppercase italic transition-all border border-white/20">
+                            <ScrollText size={12} /> Nuevo PB
                         </Link>
-                        <Link to="/imperio/builder" className="flex items-center gap-2 bg-white text-blue-700 hover:bg-slate-100 px-6 py-2 rounded-full text-[11px] font-black uppercase italic transition-all shadow-xl shadow-blue-900/40">
-                            <Sword size={14} /> Nuevo Imperio
+                        <Link to="/imperio/builder" className="flex items-center gap-1.5 bg-white text-blue-600 hover:bg-slate-100 px-4 py-1.5 rounded-full text-[10px] font-black uppercase italic transition-all shadow-md">
+                            <Sword size={12} /> Nuevo Imperio
                         </Link>
                     </div>
                 </div>
             </div>
             
-            {/* --- HEADER --- */}
-            <div className="bg-white/70 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 sticky top-0 z-50 px-4 py-6">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-                    <div className="flex items-center gap-6">
+            {/* --- HEADER MINIMALISTA --- */}
+            <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 sticky top-0 z-50 px-4 py-4">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div className="flex items-center gap-4">
                         <div className="text-left">
-                            <h1 className="text-3xl font-black tracking-tighter uppercase italic leading-none">Mi <span className="text-blue-600">Arsenal</span></h1>
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-1">Colección Estratégica</p>
+                            <h1 className="text-2xl font-black tracking-tighter uppercase italic leading-none">Mis <span className="text-blue-600">Mazos</span></h1>
                         </div>
                         <div className="relative">
-                            <button onClick={() => setShowNotifications(!showNotifications)} className="p-3 bg-slate-100 dark:bg-white/5 rounded-2xl transition-all relative group hover:border-blue-500/50 border border-transparent">
-                                <Bell size={24} className={notifications.length > 0 ? "text-blue-600 animate-pulse" : "text-slate-400 group-hover:text-blue-400"} />
-                                {notifications.length > 0 && <span className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>}
+                            <button onClick={() => setShowNotifications(!showNotifications)} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-xl relative transition-all hover:bg-slate-200">
+                                <Bell size={20} className={notifications.length > 0 ? "text-blue-600 animate-pulse" : "text-slate-400"} />
+                                {notifications.length > 0 && <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-slate-800"></span>}
                             </button>
-                            {showNotifications && (
-                                <div className="fixed md:absolute top-24 md:top-14 left-1/2 -translate-x-1/2 md:left-0 md:translate-x-0 w-[94%] md:w-80 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/10 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.5)] p-6 z-[100] animate-pop">
-                                    <h4 className="text-xs font-black uppercase tracking-widest text-blue-600 mb-4 text-left flex items-center gap-2"><MessageSquare size={14}/> Comunicaciones</h4>
-                                    <div className="space-y-3 max-h-[350px] overflow-y-auto custom-scrollbar">
-                                        {notifications.length === 0 ? <p className="text-[10px] text-center text-slate-400 uppercase py-8">Desierto en el frente</p> : notifications.map((n, i) => (
-                                            <div key={i} className="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-transparent hover:border-blue-500/20 cursor-pointer transition-all text-left" onClick={() => { setSelectedDeck(n.fullDeck); setShowNotifications(false); }}>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Estrategia: {n.deckName}</p>
-                                                <p className="text-[12px] font-medium text-slate-700 dark:text-slate-200 line-clamp-2 italic">"@{n.username}: {n.text}"</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
 
-                    <div className="relative w-full md:w-96 group">
-                        <Search size={18} className="absolute left-4 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                        <input type="text" placeholder="Localizar mazo por nombre..." className="bg-slate-100 dark:bg-black/40 text-sm font-bold pl-12 pr-6 py-4 w-full rounded-3xl outline-none border border-transparent focus:border-blue-500/50 transition-all dark:text-white" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                    <div className="relative w-full md:w-80">
+                        <Search size={16} className="absolute left-3.5 top-3 text-slate-400" />
+                        <input type="text" placeholder="Buscar mazo..." className="bg-slate-100 dark:bg-slate-700 text-xs font-bold pl-10 pr-4 py-2.5 w-full rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                     </div>
                 </div>
             </div>
 
             {/* --- GRID DE MAZOS --- */}
-            <div className="max-w-7xl mx-auto p-6 md:p-10">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="max-w-7xl mx-auto p-4 md:p-8">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                     {processedDecks.map((deck) => (
-                        <div key={deck._id} onClick={() => setSelectedDeck(deck)} className="group relative bg-white dark:bg-[#0F172A] rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-white/10 hover:shadow-[0_40px_80px_rgba(0,0,0,0.4)] transition-all duration-500 cursor-pointer flex flex-col text-left">
-                            <div className="h-48 md:h-56 relative overflow-hidden bg-slate-100 dark:bg-slate-800">
-                                <img src={getCardImage(deck.cards[0])} className="w-full h-full object-cover opacity-90 dark:opacity-40 group-hover:scale-110 group-hover:rotate-1 transition-transform duration-1000" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-[#06080F] via-transparent to-transparent opacity-80"></div>
+                        <div key={deck._id} onClick={() => setSelectedDeck(deck)} className="group relative bg-white dark:bg-slate-800 rounded-3xl overflow-hidden border border-slate-200 dark:border-white/5 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col text-left">
+                            <div className="h-40 md:h-48 relative overflow-hidden bg-slate-200 dark:bg-slate-900">
+                                <img src={getCardImage(deck.cards[0])} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-800 via-transparent opacity-90"></div>
                                 
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-4 backdrop-blur-md">
-                                    <button onClick={(e) => handleEdit(deck, e)} className="p-3.5 bg-white text-blue-600 rounded-2xl hover:scale-110 active:scale-90 transition-transform shadow-2xl"><Edit3 size={20}/></button>
-                                    <button onClick={(e) => togglePrivacy(deck, e)} className="p-3.5 bg-slate-800 text-white rounded-2xl hover:scale-110 active:scale-90 transition-transform shadow-2xl">{deck.isPublic ? <Globe size={20}/> : <Lock size={20}/>}</button>
-                                    <button onClick={(e) => { e.stopPropagation(); setDeckToDelete(deck); }} className="p-3.5 bg-red-600 text-white rounded-2xl hover:scale-110 active:scale-90 transition-transform shadow-2xl"><Trash2 size={20}/></button>
-                                </div>
-                                <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
-                                    <span className={`text-[9px] font-black px-3 py-1 rounded-lg uppercase w-fit shadow-lg ${getFormatStyles(deck.format).badgeClass}`}>{getFormatStyles(deck.format).label}</span>
-                                    <span className="text-[9px] font-black px-3 py-1 rounded-lg uppercase bg-white/10 text-white border border-white/20 backdrop-blur-md w-fit flex items-center gap-2">
-                                        <Swords size={12} /> {deck.race || "Híbrido"}
+                                <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
+                                    <span className={`text-[7px] font-black px-2 py-0.5 rounded-md uppercase ${getFormatStyles(deck.format).badgeClass}`}>{getFormatStyles(deck.format).label}</span>
+                                    <span className="text-[7px] font-black px-2 py-0.5 rounded-md uppercase bg-slate-100/50 dark:bg-slate-900/50 backdrop-blur-md border border-white/20 flex items-center gap-1">
+                                        <Swords size={8} /> {deck.race || "Híbrido"}
                                     </span>
                                 </div>
                             </div>
-                            <div className="p-6 md:p-8">
-                                <h2 className="text-xl md:text-2xl font-black uppercase italic truncate group-hover:text-blue-500 transition-colors leading-none tracking-tighter">{deck.name}</h2>
-                                <div className="flex justify-between items-center mt-6">
-                                    <div className="flex flex-col">
-                                        <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Capacidad</span>
-                                        <span className="text-sm font-black text-blue-600">{getTotalCards(deck.cards)}/50</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-600/10 rounded-xl text-blue-600 border border-blue-600/10">
-                                        <MessageSquare size={14}/> <span className="text-xs font-black">{deck.comments?.length || 0}</span>
-                                    </div>
+                            <div className="p-4">
+                                <h2 className="text-sm font-black uppercase italic truncate group-hover:text-blue-600 transition-colors leading-none tracking-tighter">{deck.name}</h2>
+                                <div className="flex justify-between items-center mt-4">
+                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{getTotalCards(deck.cards)} Cartas</span>
+                                    <MessageSquare size={12} className="text-slate-300"/>
                                 </div>
                             </div>
                         </div>
@@ -271,122 +244,113 @@ export default function MyDecks() {
                 </div>
             </div>
 
-            {/* --- MODAL DETALLE ÉPICO --- */}
+            {/* --- MODAL DETALLE REFINADO --- */}
             {selectedDeck && (
-                <div className="fixed inset-0 z-[110] bg-slate-950/98 flex items-end md:items-center justify-center animate-in fade-in duration-300" onClick={() => { setSelectedDeck(null); setShowMobileComments(false); }}>
-                    <div className="bg-white dark:bg-[#0B1120] w-full max-w-[1500px] h-[98vh] md:h-[94vh] md:rounded-[3.5rem] rounded-t-[3.5rem] flex flex-col overflow-hidden shadow-[0_0_100px_rgba(0,0,0,1)] border border-white/5" onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 z-[110] bg-slate-900/80 backdrop-blur-md flex items-end md:items-center justify-center p-2" onClick={() => { setSelectedDeck(null); setShowMobileComments(false); }}>
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-6xl h-[92vh] md:h-[85vh] rounded-[2.5rem] flex flex-col overflow-hidden shadow-2xl border border-white/20" onClick={e => e.stopPropagation()}>
                         
-                        <div className="p-8 md:p-14 border-b border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-8 flex-shrink-0">
-                            <div className="min-w-0 text-left">
-                                <h2 className="text-3xl md:text-7xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter truncate leading-none mb-4">{selectedDeck.name}</h2>
-                                <div className="flex gap-4">
-                                    <span className={`text-xs font-black px-5 py-2 rounded-full uppercase ${getFormatStyles(selectedDeck.format).badgeClass}`}>{getFormatStyles(selectedDeck.format).label}</span>
-                                    <span className="text-xs font-black px-5 py-2 rounded-full uppercase bg-yellow-500 text-black flex items-center gap-2 shadow-lg shadow-yellow-500/20">
-                                        <Swords size={16} /> {selectedDeck.race || "Híbrido"}
-                                    </span>
-                                </div>
+                        {/* Header Modal */}
+                        <div className="p-5 md:p-8 border-b border-slate-100 dark:border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 flex-shrink-0 text-left">
+                            <div>
+                                <h2 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter leading-none">{selectedDeck.name}</h2>
+                                <p className="text-[10px] font-black text-blue-600 mt-2 uppercase tracking-widest">Creado por @{selectedDeck.user?.username}</p>
                             </div>
-
-                            <div className="flex items-center gap-3 w-full md:w-auto">
-                                <button onClick={() => setShowMobileComments(!showMobileComments)} className="md:hidden flex-1 bg-blue-600/10 text-blue-500 p-5 rounded-[2rem] font-black text-xs uppercase border border-blue-500/20">
-                                    Informes ({selectedDeck.comments?.length || 0})
-                                </button>
-                                <button onClick={(e) => handleEdit(selectedDeck, e)} className="flex-1 md:flex-none flex items-center justify-center gap-3 bg-blue-600 text-white px-10 py-5 rounded-[2rem] font-black text-sm uppercase shadow-2xl hover:bg-blue-500 active:scale-95 transition-all"><Edit3 size={20} /> Forjar</button>
-                                <button onClick={() => setSelectedDeck(null)} className="p-5 bg-slate-800 rounded-[2rem] text-white hover:bg-red-500 transition-all"><X size={28} /></button>
+                            <div className="flex items-center gap-2 w-full md:w-auto">
+                                <button onClick={(e) => handleEdit(selectedDeck, e)} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase shadow-md active:scale-95 transition-all"><Edit3 size={14} /> Editar</button>
+                                <button onClick={() => setSelectedDeck(null)} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-2xl text-slate-400 hover:text-red-500 transition-all"><X size={20} /></button>
                             </div>
                         </div>
 
+                        {/* Contenido Modal */}
                         <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-                            {/* ✅ ÁREA DE CARTAS CON ZOOM REVELACIÓN */}
-                            <div className="flex-1 overflow-y-auto p-8 md:p-20 bg-black/40 custom-scrollbar" style={{ perspective: '1200px' }}>
-                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-6 md:gap-12">
+                            <div className="flex-1 overflow-y-auto p-4 md:p-10 bg-slate-50/50 dark:bg-slate-950/20 custom-scrollbar">
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 md:gap-6">
                                     {selectedDeck.cards.map((c, i) => (
-                                        <div key={i} className="relative group text-center" onClick={() => setCardToZoom(c)}>
-                                            <div className="card-reveal-zoom rounded-2xl overflow-hidden border-2 border-white/5 shadow-2xl">
-                                                <img src={getCardImage(c)} alt={c.name} className="w-full h-auto block" loading="lazy" />
-                                                <div className="absolute -top-2 -right-2 bg-blue-600 text-white w-8 h-8 md:w-12 md:h-12 rounded-2xl flex items-center justify-center font-black text-sm md:text-lg border-4 border-slate-900 shadow-2xl z-20">x{c.quantity || 1}</div>
+                                        <div key={i} className="relative group text-center cursor-pointer" onClick={() => setCardToZoom(c)}>
+                                            <div className="card-reveal-zoom rounded-xl md:rounded-2xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-sm">
+                                                <img src={getCardImage(c)} alt={c.name} className="w-full h-auto block" />
+                                                
+                                                {/* ✅ MINIMAL BADGE DE CANTIDAD */}
+                                                <div className="absolute top-1.5 right-1.5 bg-blue-600 text-white w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center font-black text-[9px] border border-white shadow-md z-10">
+                                                    {c.quantity || 1}
+                                                </div>
                                             </div>
-                                            <p className="mt-4 text-[9px] md:text-xs text-slate-500 font-black uppercase truncate italic group-hover:text-blue-400 transition-colors tracking-widest">{c.name}</p>
+                                            <p className="mt-2 text-[7px] md:text-[9px] text-slate-400 font-bold uppercase truncate italic">{c.name}</p>
                                         </div>
                                     ))}
                                 </div>
                             </div>
 
-                            {/* Panel Comunicaciones */}
+                            {/* Lateral Comentarios Refinado */}
                             <div className={`
-                                flex-[0.7] md:max-w-[450px] bg-[#0A0C10] flex flex-col min-h-0 border-l border-white/5
-                                fixed md:relative bottom-0 left-0 w-full md:w-auto h-[75vh] md:h-auto z-[120] md:z-0 transition-transform duration-500 ease-out transform
+                                flex-[0.5] md:max-w-[340px] bg-white dark:bg-slate-800 flex flex-col min-h-0 border-l border-slate-100 dark:border-white/5
+                                fixed md:relative bottom-0 left-0 w-full md:w-auto h-[60vh] md:h-auto z-[120] md:z-0 transition-transform duration-300
                                 ${showMobileComments ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}
                             `}>
-                                <div className="p-8 border-b border-white/5 font-black text-xs uppercase flex items-center justify-between text-blue-400 bg-white/5">
-                                    <div className="flex items-center gap-3 tracking-[0.2em]"><MessageSquare size={22} /> Sala de Estrategia</div>
-                                    <button onClick={() => setShowMobileComments(false)} className="md:hidden text-slate-400"><X size={28} /></button>
+                                <div className="p-4 border-b border-slate-100 dark:border-white/5 font-black text-[9px] uppercase flex items-center justify-between text-slate-400">
+                                    <span>Conversación</span>
+                                    <button onClick={() => setShowMobileComments(false)} className="md:hidden"><X size={16}/></button>
                                 </div>
-                                <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar text-left">
+                                <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar text-left text-xs">
                                     {selectedDeck.comments?.map((com, idx) => (
-                                        <div key={com._id || idx} className="bg-white/5 p-6 rounded-[2.5rem] border border-white/5 hover:bg-white/10 transition-all group">
-                                            <p className="text-[11px] font-black text-blue-500 mb-2 uppercase italic tracking-tighter flex items-center gap-2">
-                                                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full group-hover:animate-ping"></span>
-                                                @{com.username}
-                                            </p>
-                                            <p className="text-sm text-slate-300 font-medium leading-relaxed italic">"{com.text}"</p>
+                                        <div key={idx} className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-white/5">
+                                            <p className="text-[9px] font-black text-blue-600 mb-1">@{com.username}</p>
+                                            <p className="text-slate-600 dark:text-slate-300">{com.text}</p>
                                         </div>
                                     ))}
                                 </div>
-                                <div className="p-8 bg-slate-950 border-t border-white/5">
-                                    <div className="flex gap-4">
-                                        <input type="text" placeholder="Emitir juicio..." value={newComment} onChange={(e) => setNewComment(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleAddComment()} className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-8 py-5 text-sm outline-none focus:border-blue-500 text-white transition-all shadow-inner" />
-                                        <button onClick={handleAddComment} className="bg-blue-600 p-5 rounded-2xl text-white active:scale-90 shadow-2xl shadow-blue-900/40"><Send size={24} /></button>
+                                <div className="p-4 border-t border-slate-100 dark:border-white/5">
+                                    <div className="flex gap-2">
+                                        <input type="text" placeholder="Comentar..." value={newComment} onChange={(e) => setNewComment(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleAddComment()} className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-xs outline-none focus:border-blue-500 transition-all shadow-inner" />
+                                        <button onClick={handleAddComment} className="bg-blue-600 p-2.5 rounded-xl text-white shadow-md active:scale-95"><Send size={16} /></button>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="p-8 md:p-14 bg-[#06080F] border-t border-white/5 grid grid-cols-2 md:grid-cols-4 gap-4 flex-shrink-0">
-                            <button onClick={(e) => togglePrivacy(selectedDeck, e)} className="md:flex hidden items-center justify-center gap-3 bg-white/5 p-5 rounded-[2rem] font-black text-xs uppercase border border-white/5 hover:bg-white/10 transition-all">
-                                {selectedDeck.isPublic ? <Globe size={20} className="text-blue-400" /> : <Lock size={20} className="text-red-500" />} {selectedDeck.isPublic ? 'Modo Público' : 'Modo Privado'}
+                        {/* Botones Acciones Inferiores (Minimalistas) */}
+                        <div className="p-4 md:p-6 border-t border-slate-100 dark:border-white/5 grid grid-cols-2 md:grid-cols-4 gap-2 flex-shrink-0 bg-slate-50/50 dark:bg-slate-800">
+                            <button onClick={(e) => togglePrivacy(selectedDeck, e)} className="flex items-center justify-center gap-2 bg-white dark:bg-slate-700 text-slate-700 dark:text-white p-3 rounded-2xl font-black text-[9px] uppercase border border-slate-200 dark:border-white/5 transition-all hover:bg-slate-100">
+                                {selectedDeck.isPublic ? <Globe size={14} className="text-blue-500" /> : <Lock size={14} className="text-slate-400" />} {selectedDeck.isPublic ? 'Público' : 'Privado'}
                             </button>
-                            <button onClick={(e) => handleDownloadInfographic(selectedDeck, e)} className="flex items-center justify-center gap-3 bg-white text-black p-5 rounded-[2rem] font-black text-xs uppercase active:scale-95 transition-all shadow-2xl"><Camera size={22} /> Captura Ultra HD</button>
-                            <button onClick={(e) => handleDownloadTextList(selectedDeck, e)} className="flex items-center justify-center gap-3 bg-white/5 p-5 rounded-[2rem] font-black text-xs uppercase border border-white/5 transition-all"><FileText size={22} /> Listado .txt</button>
-                            <button onClick={(e) => { e.stopPropagation(); setDeckToDelete(selectedDeck); }} className="flex items-center justify-center gap-3 bg-red-500/10 text-red-500 p-5 rounded-[2rem] font-black text-xs uppercase border border-red-500/20 active:scale-95 hover:bg-red-500 hover:text-white transition-all"><Trash2 size={22} /> Purgar</button>
+                            <button onClick={(e) => handleDownloadInfographic(selectedDeck, e)} className="flex items-center justify-center gap-2 bg-slate-900 text-white p-3 rounded-2xl font-black text-[9px] uppercase shadow-md active:scale-95 transition-all"><Camera size={14} /> Exportar Foto</button>
+                            <button onClick={(e) => handleDownloadTextList(selectedDeck, e)} className="flex items-center justify-center gap-2 bg-white dark:bg-slate-700 text-slate-700 dark:text-white p-3 rounded-2xl font-black text-[9px] uppercase border border-slate-200 dark:border-white/5 transition-all hover:bg-slate-100"><FileText size={14} /> Lista Texto</button>
+                            <button onClick={(e) => { e.stopPropagation(); setDeckToDelete(selectedDeck); }} className="flex items-center justify-center gap-2 bg-red-50 text-red-600 p-3 rounded-2xl font-black text-[9px] uppercase border border-red-100 transition-all hover:bg-red-600 hover:text-white"><Trash2 size={14} /> Eliminar</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* ✅ MODAL ZOOM INDIVIDUAL MEJORADO (FULL ARTE) */}
+            {/* ✅ MODAL ZOOM INDIVIDUAL (LOGICA QUE TE GUSTÓ, VISUAL MINIMALISTA) */}
             {cardToZoom && (
-                <div className="fixed inset-0 z-[300] bg-black/98 backdrop-blur-3xl flex flex-col items-center justify-center p-4 animate-in fade-in duration-500" onClick={() => setCardToZoom(null)}>
-                    <button className="absolute top-10 right-10 w-16 h-16 bg-white/5 text-white rounded-full flex items-center justify-center text-3xl font-bold border border-white/10 active:scale-90" onClick={() => setCardToZoom(null)}>✕</button>
-                    <div className="max-w-md w-full animate-pop flex flex-col items-center" onClick={e => e.stopPropagation()}>
-                        <img src={getCardImage(cardToZoom)} className="w-full h-auto rounded-[3.5rem] shadow-[0_0_120px_rgba(37,99,235,0.5)] border-4 border-white/10 mb-10 transition-transform duration-700 hover:scale-105" alt="zoom" />
-                        <div className="bg-white/5 p-10 rounded-[3rem] border border-white/10 backdrop-blur-xl w-full text-left">
-                             <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] mb-2 block">Identificación de Unidad</span>
-                             <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter mb-2">{cardToZoom.name}</h4>
-                             <div className="h-1 w-20 bg-blue-600 rounded-full mb-4"></div>
-                             <p className="text-slate-400 font-bold uppercase text-xs tracking-widest">{cardToZoom.type} • {cardToZoom.race || 'Sin Raza'}</p>
+                <div className="fixed inset-0 z-[300] bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl flex flex-col items-center justify-center p-4" onClick={() => setCardToZoom(null)}>
+                    <button className="absolute top-6 right-6 w-10 h-10 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-500" onClick={() => setCardToZoom(null)}><X size={20} /></button>
+                    <div className="max-w-xs md:max-w-md w-full flex flex-col items-center animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+                        <img src={getCardImage(cardToZoom)} className="w-full h-auto rounded-[2rem] shadow-2xl border-4 border-white dark:border-slate-800" alt="zoom" />
+                        <div className="mt-6 text-center">
+                             <h4 className="text-xl md:text-3xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter">{cardToZoom.name}</h4>
+                             <p className="text-blue-600 font-bold uppercase text-[9px] tracking-[0.3em] mt-2">{cardToZoom.type} • {cardToZoom.race || 'Unidad'}</p>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Modal Borrar Épico */}
+            {/* Modal Borrar */}
             {deckToDelete && (
-                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/95 p-4 backdrop-blur-xl">
-                    <div className="bg-[#0F172A] p-14 rounded-[4rem] max-w-sm w-full text-center border border-white/10 shadow-[0_0_100px_rgba(239,68,68,0.2)]">
-                        <div className="w-24 h-24 bg-red-500/20 text-red-500 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 animate-pulse border border-red-500/30"><Trash2 size={48} /></div>
-                        <h3 className="text-3xl font-black mb-2 uppercase tracking-tighter">¿Eliminar?</h3>
-                        <p className="text-slate-500 text-xs font-bold mb-10 uppercase tracking-widest">Esta estrategia se perderá en el abismo.</p>
-                        <div className="flex flex-col gap-4">
-                            <button onClick={confirmDelete} className="w-full bg-red-600 py-5 rounded-[2rem] text-white font-black uppercase text-xs tracking-widest shadow-2xl shadow-red-900/40 active:scale-95 transition-all">Destruir Arsenal</button>
-                            <button onClick={() => setDeckToDelete(null)} className="w-full py-2 text-slate-500 font-black uppercase text-[10px] hover:text-white transition-all">Mantener estrategia</button>
+                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4">
+                    <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] max-w-sm w-full text-center border border-slate-100 shadow-2xl">
+                        <h3 className="text-xl font-black mb-2 uppercase">¿Confirmar?</h3>
+                        <p className="text-slate-400 text-xs font-bold mb-6">Esta acción no se puede deshacer.</p>
+                        <div className="flex gap-3">
+                            <button onClick={() => setDeckToDelete(null)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-2xl font-black uppercase text-[10px]">No</button>
+                            <button onClick={confirmDelete} className="flex-1 bg-red-600 py-3 rounded-2xl text-white font-black uppercase text-[10px]">Eliminar</button>
                         </div>
                     </div>
                 </div>
             )}
 
             {toast.show && (
-                <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] px-10 py-5 rounded-full font-black text-xs uppercase shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-pop border backdrop-blur-2xl ${toast.type === 'error' ? 'bg-red-600/90 text-white border-red-500' : 'bg-blue-600/90 text-white border-blue-500'}`}>
+                <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-full font-black text-[9px] uppercase shadow-xl animate-in slide-in-from-bottom-10 ${toast.type === 'error' ? 'bg-red-600 text-white' : 'bg-blue-600 text-white'}`}>
                     {toast.msg}
                 </div>
             )}
