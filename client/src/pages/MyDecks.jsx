@@ -1,6 +1,7 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react"; // ✅ useRef recuperado
 import { useNavigate, Link } from "react-router-dom";
 import { saveAs } from 'file-saver';
+import { toPng } from 'html-to-image'; // ✅ toPng recuperado
 import BACKEND_URL from "../config";
 import { Search, Trash2, Edit3, Globe, Lock, X, Camera, FileText, LayoutGrid, Bell, Heart, ArrowRight, MessageSquare, Send, Swords, Plus, ScrollText, Sword, Sparkles, Wand2 } from "lucide-react";
 
@@ -28,7 +29,6 @@ const animationStyles = `
   .animate-shine { position: relative; overflow: hidden; }
   .animate-shine::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent); transform: skewX(-25deg); animation: shine 3s infinite; }
   
-  /* ✅ ZOOM AJUSTADO PARA NOTEBOOKS - NO SE CORTA */
   .card-reveal-zoom {
     transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     cursor: zoom-in;
@@ -66,6 +66,9 @@ export default function MyDecks() {
     const [showMobileComments, setShowMobileComments] = useState(false); 
     const [cardToZoom, setCardToZoom] = useState(null);
     const navigate = useNavigate();
+
+    // ✅ REFERENCIA PARA CAPTURA DE IMAGEN RECUPERADA
+    const deckImageRef = useRef(null);
 
     const token = localStorage.getItem("token");
     const user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null;
@@ -152,11 +155,28 @@ export default function MyDecks() {
         saveAs(blob, `Lista_${deck.name}.txt`);
     };
 
+    // ✅ LÓGICA DE DESCARGA DE IMAGEN RECUPERADA Y CORREGIDA
     const handleDownloadInfographic = async (deck, e) => {
         if (e) e.stopPropagation();
+        if (!deckImageRef.current) return;
+        
         setIsDownloading(true);
-        showToast("Imagen generada");
-        setIsDownloading(false);
+        showToast("Generando archivo...", "info");
+        
+        try {
+            const dataUrl = await toPng(deckImageRef.current, { 
+                quality: 0.95, 
+                backgroundColor: '#0f172a',
+                cacheBust: true 
+            });
+            saveAs(dataUrl, `Mazo_${deck.name}.png`);
+            showToast("Imagen descargada ✅");
+        } catch (err) { 
+            console.error(err);
+            showToast("Error al generar imagen", "error"); 
+        } finally { 
+            setIsDownloading(false); 
+        }
     };
 
     const showToast = (msg, type = "success") => {
@@ -194,7 +214,6 @@ export default function MyDecks() {
                 </div>
             </div>
             
-            {/* --- HEADER MINIMALISTA --- */}
             <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 sticky top-0 z-50 px-4 py-4">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="flex items-center gap-4">
@@ -216,7 +235,6 @@ export default function MyDecks() {
                 </div>
             </div>
 
-            {/* --- GRID DE MAZOS --- */}
             <div className="max-w-7xl mx-auto p-4 md:p-8">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                     {processedDecks.map((deck) => (
@@ -244,12 +262,10 @@ export default function MyDecks() {
                 </div>
             </div>
 
-            {/* --- MODAL DETALLE REFINADO --- */}
             {selectedDeck && (
                 <div className="fixed inset-0 z-[110] bg-slate-900/80 backdrop-blur-md flex items-end md:items-center justify-center p-2" onClick={() => { setSelectedDeck(null); setShowMobileComments(false); }}>
                     <div className="bg-white dark:bg-slate-900 w-full max-w-6xl h-[92vh] md:h-[85vh] rounded-[2.5rem] flex flex-col overflow-hidden shadow-2xl border border-white/20" onClick={e => e.stopPropagation()}>
                         
-                        {/* Header Modal */}
                         <div className="p-5 md:p-8 border-b border-slate-100 dark:border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 flex-shrink-0 text-left">
                             <div>
                                 <h2 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter leading-none">{selectedDeck.name}</h2>
@@ -261,16 +277,14 @@ export default function MyDecks() {
                             </div>
                         </div>
 
-                        {/* Contenido Modal */}
                         <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-                            <div className="flex-1 overflow-y-auto p-4 md:p-10 bg-slate-50/50 dark:bg-slate-950/20 custom-scrollbar">
+                            {/* ✅ CONTENEDOR DE CARTAS CON REFERENCIA PARA DESCARGA RECUPERADO */}
+                            <div className="flex-1 overflow-y-auto p-4 md:p-10 bg-slate-50/50 dark:bg-slate-950/20 custom-scrollbar" ref={deckImageRef}>
                                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 md:gap-6">
                                     {selectedDeck.cards.map((c, i) => (
                                         <div key={i} className="relative group text-center cursor-pointer" onClick={() => setCardToZoom(c)}>
                                             <div className="card-reveal-zoom rounded-xl md:rounded-2xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-sm">
                                                 <img src={getCardImage(c)} alt={c.name} className="w-full h-auto block" />
-                                                
-                                                {/* ✅ MINIMAL BADGE DE CANTIDAD */}
                                                 <div className="absolute top-1.5 right-1.5 bg-blue-600 text-white w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center font-black text-[9px] border border-white shadow-md z-10">
                                                     {c.quantity || 1}
                                                 </div>
@@ -281,7 +295,6 @@ export default function MyDecks() {
                                 </div>
                             </div>
 
-                            {/* Lateral Comentarios Refinado */}
                             <div className={`
                                 flex-[0.5] md:max-w-[340px] bg-white dark:bg-slate-800 flex flex-col min-h-0 border-l border-slate-100 dark:border-white/5
                                 fixed md:relative bottom-0 left-0 w-full md:w-auto h-[60vh] md:h-auto z-[120] md:z-0 transition-transform duration-300
@@ -308,12 +321,12 @@ export default function MyDecks() {
                             </div>
                         </div>
 
-                        {/* Botones Acciones Inferiores (Minimalistas) */}
+                        {/* ✅ BOTONES DE ACCIÓN (INCLUYE DESCARGAR FOTO) */}
                         <div className="p-4 md:p-6 border-t border-slate-100 dark:border-white/5 grid grid-cols-2 md:grid-cols-4 gap-2 flex-shrink-0 bg-slate-50/50 dark:bg-slate-800">
                             <button onClick={(e) => togglePrivacy(selectedDeck, e)} className="flex items-center justify-center gap-2 bg-white dark:bg-slate-700 text-slate-700 dark:text-white p-3 rounded-2xl font-black text-[9px] uppercase border border-slate-200 dark:border-white/5 transition-all hover:bg-slate-100">
                                 {selectedDeck.isPublic ? <Globe size={14} className="text-blue-500" /> : <Lock size={14} className="text-slate-400" />} {selectedDeck.isPublic ? 'Público' : 'Privado'}
                             </button>
-                            <button onClick={(e) => handleDownloadInfographic(selectedDeck, e)} className="flex items-center justify-center gap-2 bg-slate-900 text-white p-3 rounded-2xl font-black text-[9px] uppercase shadow-md active:scale-95 transition-all"><Camera size={14} /> Exportar Foto</button>
+                            <button onClick={(e) => handleDownloadInfographic(selectedDeck, e)} disabled={isDownloading} className="flex items-center justify-center gap-2 bg-slate-900 text-white p-3 rounded-2xl font-black text-[9px] uppercase shadow-md active:scale-95 transition-all disabled:opacity-50"><Camera size={14} /> {isDownloading ? 'Generando...' : 'Exportar Foto'}</button>
                             <button onClick={(e) => handleDownloadTextList(selectedDeck, e)} className="flex items-center justify-center gap-2 bg-white dark:bg-slate-700 text-slate-700 dark:text-white p-3 rounded-2xl font-black text-[9px] uppercase border border-slate-200 dark:border-white/5 transition-all hover:bg-slate-100"><FileText size={14} /> Lista Texto</button>
                             <button onClick={(e) => { e.stopPropagation(); setDeckToDelete(selectedDeck); }} className="flex items-center justify-center gap-2 bg-red-50 text-red-600 p-3 rounded-2xl font-black text-[9px] uppercase border border-red-100 transition-all hover:bg-red-600 hover:text-white"><Trash2 size={14} /> Eliminar</button>
                         </div>
@@ -321,7 +334,6 @@ export default function MyDecks() {
                 </div>
             )}
 
-            {/* ✅ MODAL ZOOM INDIVIDUAL (LOGICA QUE TE GUSTÓ, VISUAL MINIMALISTA) */}
             {cardToZoom && (
                 <div className="fixed inset-0 z-[300] bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl flex flex-col items-center justify-center p-4" onClick={() => setCardToZoom(null)}>
                     <button className="absolute top-6 right-6 w-10 h-10 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-500" onClick={() => setCardToZoom(null)}><X size={20} /></button>
@@ -335,7 +347,6 @@ export default function MyDecks() {
                 </div>
             )}
 
-            {/* Modal Borrar */}
             {deckToDelete && (
                 <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4">
                     <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] max-w-sm w-full text-center border border-slate-100 shadow-2xl">
@@ -354,6 +365,16 @@ export default function MyDecks() {
                     {toast.msg}
                 </div>
             )}
+        </div>
+    );
+}
+
+function Feature({ icon, title, text }) {
+    return (
+        <div className="text-center flex flex-col items-center group cursor-default">
+            <div className="mb-6 p-6 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-white/10 shadow-sm group-hover:shadow-xl group-hover:scale-110 transition-all duration-500 text-blue-600 dark:text-blue-400">{icon}</div>
+            <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4 italic">{title}</h4>
+            <p className="text-slate-500 dark:text-slate-400 text-xs font-medium leading-relaxed max-w-[220px] opacity-70 dark:opacity-60">{text}</p>
         </div>
     );
 }
