@@ -91,7 +91,7 @@ export default function Community() {
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="flex items-center gap-3">
                         <LayoutGrid size={20} className="text-blue-600" />
-                        <h1 className="text-xl font-black uppercase italic tracking-tighter">Comunidad</h1>
+                        <h1 className="text-xl font-black uppercase italic tracking-tighter">Comunidad2</h1>
                     </div>
 
                     <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/10">
