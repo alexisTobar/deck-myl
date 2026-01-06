@@ -1,9 +1,9 @@
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // ✅ Agregado Link
 import { saveAs } from 'file-saver';
 import BACKEND_URL from "../config";
 // ✅ Iconos Lucide
-import { Search, Trash2, Edit3, Globe, Lock, X, Camera, FileText, LayoutGrid, Bell, Heart, ArrowRight, MessageSquare, Send, Swords } from "lucide-react";
+import { Search, Trash2, Edit3, Globe, Lock, X, Camera, FileText, LayoutGrid, Bell, Heart, ArrowRight, MessageSquare, Send, Swords, Plus, ScrollText, Sword } from "lucide-react";
 
 const ORDER_TYPES = ["Oro", "Aliado", "Talismán", "Arma", "Tótem"];
 
@@ -24,6 +24,25 @@ const getFormatStyles = (format) => {
     };
 };
 
+const animationStyles = `
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes pop { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .animate-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .animate-pop { animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+  
+  /* ✅ MEJORA: EFECTO CARTA 3D ZOOM */
+  .deck-card-container { perspective: 1000px; }
+  .card-3d-effect {
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+    transform-style: preserve-3d;
+  }
+  .card-3d-effect:hover {
+    transform: scale(1.05) rotateY(5deg) rotateX(5deg);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    z-index: 10;
+  }
+`;
+
 export default function MyDecks() {
     const [decks, setDecks] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -36,6 +55,7 @@ export default function MyDecks() {
     const [showNotifications, setShowNotifications] = useState(false);
     const [newComment, setNewComment] = useState("");
     const [showMobileComments, setShowMobileComments] = useState(false); 
+    const [cardToZoom, setCardToZoom] = useState(null); // ✅ Nuevo estado para Zoom de carta individual
     const navigate = useNavigate();
 
     const token = localStorage.getItem("token");
@@ -149,7 +169,20 @@ export default function MyDecks() {
     if (loading) return <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1120] flex items-center justify-center transition-colors"><div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>;
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1120] text-slate-900 dark:text-white pb-32 transition-colors duration-500 overflow-x-hidden font-sans text-center">
+        <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1120] text-slate-900 dark:text-white pb-32 transition-colors duration-500 overflow-x-hidden font-sans text-center relative">
+            <style>{animationStyles}</style>
+
+            {/* ✅ MEJORA: BOTONES FLOTANTES DE CREACIÓN (WEB Y MÓVIL) */}
+            <div className="fixed top-24 right-6 z-[60] flex flex-col gap-3 pointer-events-none">
+                <Link to="/primer-bloque/builder" className="pointer-events-auto group flex items-center gap-3 bg-blue-600 hover:bg-blue-500 text-white p-3 md:px-5 rounded-2xl shadow-2xl transition-all hover:scale-110 active:scale-95">
+                    <ScrollText size={20} className="font-bold" />
+                    <span className="hidden md:block text-[10px] font-black uppercase italic">Nuevo PB</span>
+                </Link>
+                <Link to="/imperio/builder" className="pointer-events-auto group flex items-center gap-3 bg-indigo-600 hover:bg-indigo-500 text-white p-3 md:px-5 rounded-2xl shadow-2xl transition-all hover:scale-110 active:scale-95">
+                    <Sword size={20} />
+                    <span className="hidden md:block text-[10px] font-black uppercase italic">Nuevo Imperio</span>
+                </Link>
+            </div>
             
             {/* --- HEADER --- */}
             <div className="bg-white/70 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 sticky top-0 z-50 px-4 py-4">
@@ -186,10 +219,10 @@ export default function MyDecks() {
             </div>
 
             {/* --- GRID DE MAZOS --- */}
-            <div className="max-w-7xl mx-auto p-6 md:p-10">
+            <div className="max-w-7xl mx-auto p-6 md:p-10 deck-card-container">
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
                     {processedDecks.map((deck) => (
-                        <div key={deck._id} onClick={() => setSelectedDeck(deck)} className="group relative bg-white dark:bg-slate-900 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-white/10 hover:shadow-2xl transition-all duration-500 cursor-pointer flex flex-col shadow-sm text-left">
+                        <div key={deck._id} onClick={() => setSelectedDeck(deck)} className="group relative bg-white dark:bg-slate-900 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-white/10 hover:shadow-2xl transition-all duration-500 cursor-pointer flex flex-col shadow-sm text-left card-3d-effect">
                             <div className="h-36 md:h-48 relative overflow-hidden bg-slate-100 dark:bg-slate-800">
                                 <img src={getCardImage(deck.cards[0])} className="w-full h-full object-cover opacity-80 dark:opacity-40 group-hover:scale-110 transition-transform duration-1000" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-900 via-transparent"></div>
@@ -201,7 +234,6 @@ export default function MyDecks() {
                                 </div>
                                 <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
                                     <span className={`text-[7px] md:text-[8px] font-black px-2 py-0.5 rounded-full uppercase w-fit ${getFormatStyles(deck.format).badgeClass}`}>{getFormatStyles(deck.format).label}</span>
-                                    {/* ✅ RAZA EN GRID */}
                                     <span className="text-[7px] md:text-[8px] font-black px-2 py-0.5 rounded-full uppercase bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20 backdrop-blur-md w-fit flex items-center gap-1">
                                         <Swords size={8} /> {deck.race || "Híbrido"}
                                     </span>
@@ -224,13 +256,11 @@ export default function MyDecks() {
                 <div className="fixed inset-0 z-[110] bg-slate-950/95 md:backdrop-blur-md flex items-end md:items-center justify-center transition-all" onClick={() => { setSelectedDeck(null); setShowMobileComments(false); }}>
                     <div className="bg-white dark:bg-slate-900 w-full max-w-7xl h-[95vh] md:h-[90vh] rounded-t-[2.5rem] md:rounded-[3rem] border-x border-t md:border border-slate-200 dark:border-white/10 flex flex-col overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
                         
-                        {/* Cabecera Responsiva */}
                         <div className="p-5 md:p-10 border-b border-slate-100 dark:border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 flex-shrink-0 relative text-left">
                             <div className="min-w-0">
                                 <h2 className="text-xl md:text-5xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter truncate leading-none">{selectedDeck.name}</h2>
                                 <div className="flex gap-2 mt-3">
                                     <span className={`text-[8px] md:text-[10px] font-black px-3 py-1 rounded-lg uppercase ${getFormatStyles(selectedDeck.format).badgeClass}`}>{getFormatStyles(selectedDeck.format).label}</span>
-                                    {/* ✅ RAZA EN MODAL */}
                                     <span className="text-[8px] md:text-[10px] font-black px-3 py-1 rounded-lg uppercase bg-yellow-500 text-black flex items-center gap-2">
                                         <Swords size={12} /> {selectedDeck.race || "Híbrido"}
                                     </span>
@@ -247,13 +277,12 @@ export default function MyDecks() {
                             </div>
                         </div>
 
-                        {/* Área Principal */}
                         <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0 relative text-left">
-                            <div className="flex-1 overflow-y-auto p-4 md:p-12 bg-slate-50/50 dark:bg-black/20 custom-scrollbar">
+                            <div className="flex-1 overflow-y-auto p-4 md:p-12 bg-slate-50/50 dark:bg-black/20 custom-scrollbar deck-card-container">
                                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-3 md:gap-8">
                                     {selectedDeck.cards.map((c, i) => (
-                                        <div key={i} className="relative group animate-in fade-in zoom-in-95 text-center">
-                                            <div className="rounded-xl md:rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-white/10 shadow-sm transition-all group-hover:scale-105">
+                                        <div key={i} className="relative group animate-in fade-in zoom-in-95 text-center cursor-pointer" onClick={() => setCardToZoom(c)}>
+                                            <div className="card-3d-effect rounded-xl md:rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-white/10 shadow-sm">
                                                 <img src={getCardImage(c)} alt={c.name} className="w-full h-auto block" loading="lazy" />
                                                 <div className="absolute top-1 right-1 bg-blue-600 text-white w-5 h-5 md:w-8 md:h-8 rounded-lg flex items-center justify-center font-black text-[9px] md:text-xs border-2 border-white dark:border-slate-900">x{c.quantity || 1}</div>
                                             </div>
@@ -297,6 +326,18 @@ export default function MyDecks() {
                             <button onClick={(e) => handleDownloadTextList(selectedDeck, e)} className="flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 p-3 md:p-4 rounded-2xl font-black text-[9px] uppercase border dark:border-white/5 transition-all"><FileText size={18} /> Lista Texto</button>
                             <button onClick={(e) => { e.stopPropagation(); setDeckToDelete(selectedDeck); }} className="flex items-center justify-center gap-2 bg-red-500/10 text-red-500 p-3 md:p-4 rounded-2xl font-black text-[9px] uppercase border border-red-500/20 active:scale-95 transition-all"><Trash2 size={18} /> Borrar</button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ✅ MEJORA: MODAL ZOOM PROFESIONAL INDIVIDUAL */}
+            {cardToZoom && (
+                <div className="fixed inset-0 z-[300] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-4 animate-fade-in" onClick={() => setCardToZoom(null)}>
+                    <button className="absolute top-10 right-10 w-12 h-12 bg-white/10 text-white rounded-full flex items-center justify-center text-xl font-bold border border-white/20 active:scale-90" onClick={() => setCardToZoom(null)}>✕</button>
+                    <div className="max-w-sm w-full animate-pop" onClick={e => e.stopPropagation()}>
+                        <img src={getCardImage(cardToZoom)} className="w-full h-auto rounded-[2.5rem] shadow-[0_0_80px_rgba(37,99,235,0.4)] border-4 border-white/10" alt="zoom" />
+                        <h4 className="mt-6 text-2xl font-black text-white uppercase italic tracking-tighter">{cardToZoom.name}</h4>
+                        <p className="text-blue-400 font-bold uppercase text-[10px] tracking-[0.3em]">{cardToZoom.type}</p>
                     </div>
                 </div>
             )}
