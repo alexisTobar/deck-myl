@@ -96,16 +96,14 @@ export default function HomePortal() {
         const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
         const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
         return (
-            <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="11px" fontWeight="900">
+            <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="10px" fontWeight="900">
                 {`${(percent * 100).toFixed(0)}%`}
             </text>
         );
     };
 
-    // ✅ FUNCIÓN CORREGIDA PARA NAVEGACIÓN
     const goToCommunityDeck = (deck) => {
         if (deck.isPublic) {
-            // Usamos el formato directamente del objeto de la carta seleccionada
             const path = selectedMetaCard?.format === 'primer_bloque' 
                 ? "/primer-bloque/community" 
                 : "/imperio/community";
@@ -143,7 +141,7 @@ export default function HomePortal() {
                     <TrendingUp className="text-blue-600" />
                     <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Top 10 Primer Bloque</h3>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 md:gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6">
                     {loading ? [...Array(10)].map((_, n) => <div key={`pbl-${n}`} className="h-48 md:h-64 bg-slate-800/20 rounded-3xl animate-pulse" />) : 
                         pbTrending.map((card, idx) => (
                             <MetaCard key={`pb-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
@@ -158,7 +156,7 @@ export default function HomePortal() {
                     <TrendingUp className="text-blue-500" />
                     <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Top 10 Imperio</h3>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 md:gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6">
                     {loading ? [...Array(10)].map((_, n) => <div key={`iml-${n}`} className="h-48 md:h-64 bg-slate-800/20 rounded-3xl animate-pulse" />) : 
                         impTrending.map((card, idx) => (
                             <MetaCard key={`imp-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
@@ -167,75 +165,75 @@ export default function HomePortal() {
                 </div>
             </motion.section>
 
-            {/* ✅ MODAL ADAPTADO PARA MÓVIL Y WEB */}
+            {/* ✅ MODAL SOLUCIONADO: RESPONSIVE NOTEBOOK Y MÓVIL */}
             <AnimatePresence>
                 {showMetaModal && selectedMetaCard && (
-                    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-2 md:p-4">
+                    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 md:p-6">
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowMetaModal(false)} className="absolute inset-0 bg-black/90 backdrop-blur-xl" />
                         <motion.div 
                             initial={{ scale: 0.9, opacity: 0, y: 20 }} 
                             animate={{ scale: 1, opacity: 1, y: 0 }} 
                             exit={{ scale: 0.9, opacity: 0, y: 20 }} 
-                            className="relative w-full max-w-4xl bg-white dark:bg-[#0f172a] border border-white/10 rounded-[2rem] md:rounded-[3.5rem] overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[95vh] md:max-h-[90vh]"
+                            className="relative w-full max-w-5xl bg-white dark:bg-[#0f172a] border border-white/10 rounded-[2rem] md:rounded-[3.5rem] overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[92vh]"
                         >
-                            <button onClick={() => setShowMetaModal(false)} className="absolute top-4 right-4 md:top-6 md:right-6 z-[2010] p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-blue-500 transition-colors shadow-lg">
+                            <button onClick={() => setShowMetaModal(false)} className="absolute top-4 right-4 z-[2010] p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-blue-500 transition-all shadow-lg">
                                 <X size={20} />
                             </button>
                             
-                            {/* Imagen de Carta (Arriba en móvil, Izquierda en PC) */}
-                            <div className="w-full md:w-1/2 p-6 md:p-8 bg-slate-50 dark:bg-black/20 flex items-center justify-center border-b md:border-b-0 md:border-r border-white/5">
-                                <img src={selectedMetaCard.imgUrl || selectedMetaCard.img} className="w-full max-w-[160px] md:max-w-[240px] rounded-xl md:rounded-2xl shadow-2xl border-2 md:border-4 border-white dark:border-white/5" alt="card" />
+                            {/* Lado Imagen de Carta: Centrado y adaptado */}
+                            <div className="w-full md:w-2/5 p-6 md:p-8 bg-slate-50 dark:bg-black/20 flex items-center justify-center border-b md:border-b-0 md:border-r border-white/5 flex-shrink-0">
+                                <img src={selectedMetaCard.imgUrl || selectedMetaCard.img} className="w-full max-w-[140px] sm:max-w-[180px] md:max-w-[260px] rounded-xl md:rounded-2xl shadow-2xl border-2 md:border-4 border-white dark:border-white/5" alt="card" />
                             </div>
 
-                            {/* Estadísticas (Abajo en móvil, Derecha en PC) */}
-                            <div className="w-full md:w-1/2 p-6 md:p-10 flex flex-col overflow-y-auto custom-scrollbar">
-                                <div className="mb-4 md:mb-6 text-left">
-                                    <span className="text-[9px] md:text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Racial Distribution Analysis</span>
-                                    <h3 className="text-2xl md:text-3xl font-black uppercase italic text-slate-900 dark:text-white leading-none mb-1 md:mb-2">{selectedMetaCard.name}</h3>
-                                    <p className="text-[9px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest">{selectedMetaCard.format?.replace('_',' ')}</p>
+                            {/* Lado Estadísticas: Scrollable para notebooks de baja resolución */}
+                            <div className="w-full md:w-3/5 p-6 md:p-10 flex flex-col overflow-y-auto custom-scrollbar">
+                                <div className="mb-6">
+                                    <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Racial Distribution Analysis</span>
+                                    <h3 className="text-2xl md:text-4xl font-black uppercase italic text-slate-900 dark:text-white leading-tight mb-1">{selectedMetaCard.name}</h3>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{selectedMetaCard.format?.replace('_',' ')}</p>
                                 </div>
 
-                                <div className="p-3 md:p-4 bg-blue-500/5 rounded-xl md:rounded-2xl border border-blue-500/10 mb-4 md:mb-6 text-center">
-                                    <p className="text-[8px] md:text-[9px] font-bold text-slate-400 uppercase mb-1">Presencia Global</p>
-                                    <p className="text-xl md:text-2xl font-black text-blue-500">{selectedMetaCard.usageCount} Mazos</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                                    <div className="p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10 text-center">
+                                        <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Presencia Global</p>
+                                        <p className="text-2xl font-black text-blue-500">{selectedMetaCard.usageCount} Mazos</p>
+                                    </div>
+                                    {/* Gráfico circular con ResponsiveContainer */}
+                                    <div className="h-48 md:h-56 w-full">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie 
+                                                    data={getChartData(selectedMetaCard)} 
+                                                    innerRadius={35} 
+                                                    outerRadius={55} 
+                                                    paddingAngle={5} 
+                                                    dataKey="value" 
+                                                    stroke="none"
+                                                    label={renderCustomizedLabel}
+                                                    labelLine={false}
+                                                >
+                                                    {getChartData(selectedMetaCard).map((e, i) => <Cell key={i} fill={e.color} />)}
+                                                </Pie>
+                                                <RechartsTooltip 
+                                                    contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '11px', color: '#fff', fontWeight: 'bold' }} 
+                                                    itemStyle={{ color: '#fff' }}
+                                                />
+                                                <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', paddingTop: '10px' }} />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
                                 </div>
 
-                                {/* Gráfico Circular */}
-                                <div className="h-48 md:h-64 w-full mb-6 md:mb-8">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie 
-                                                data={getChartData(selectedMetaCard)} 
-                                                innerRadius={40} 
-                                                outerRadius={60} 
-                                                paddingAngle={5} 
-                                                dataKey="value" 
-                                                stroke="none"
-                                                label={renderCustomizedLabel}
-                                                labelLine={false}
-                                            >
-                                                {getChartData(selectedMetaCard).map((e, i) => <Cell key={i} fill={e.color} />)}
-                                            </Pie>
-                                            <RechartsTooltip 
-                                                contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '11px', color: '#fff', fontWeight: 'bold' }} 
-                                                itemStyle={{ color: '#fff' }}
-                                            />
-                                            <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', paddingTop: '10px' }} />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                </div>
-
-                                {/* Listado de Mazos Estratégicos */}
-                                <div className="space-y-3 text-left">
-                                    <div className="flex items-center gap-2 text-slate-400 mb-2 border-t border-white/5 pt-4">
-                                        <LayoutList size={14} /> <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest">Fuentes Estratégicas:</span>
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2 text-slate-400 border-t border-white/5 pt-6">
+                                        <LayoutList size={14} /> <span className="text-[10px] font-black uppercase tracking-widest">Fuentes Estratégicas:</span>
                                     </div>
                                     <div className="flex flex-wrap gap-2 pb-6">
                                         {selectedMetaCard.featuredDecks?.map((deck, i) => (
                                             <button 
                                                 key={i} 
                                                 onClick={() => goToCommunityDeck(deck)}
-                                                className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase italic transition-all border flex items-center gap-2
+                                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase italic transition-all border flex items-center gap-2
                                                     ${deck.isPublic 
                                                         ? 'bg-green-500/10 border-green-500/30 text-green-500 hover:bg-green-500 hover:text-white cursor-pointer active:scale-95' 
                                                         : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 cursor-not-allowed opacity-60'}`}
@@ -263,14 +261,14 @@ export default function HomePortal() {
                             <h2 className="text-4xl md:text-7xl font-black uppercase italic tracking-tighter mb-4 leading-none">Juegos <span className="text-blue-600">Vikingos</span></h2>
                             <p className="text-slate-500 dark:text-slate-400 text-lg mb-8 max-w-lg font-medium italic mx-auto md:mx-0">Encuentra las cartas más codiciadas y los últimos lanzamientos de Mitos y Leyendas.</p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                                <a href="https://www.juegosvikingos.cl" target="_blank" rel="noreferrer" className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase italic text-xs flex gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/30 active:scale-95">Visitar Tienda <ExternalLink size={18} /></a>
-                                <a href="https://www.instagram.com/juegosvikingos" target="_blank" rel="noreferrer" className="px-8 py-4 bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white rounded-2xl font-black uppercase italic text-xs flex gap-2 hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
+                                <a href="https://www.juegosvikingos.cl" target="_blank" rel="noreferrer" className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase italic text-xs flex gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/30 active:scale-95 text-center">Visitar Tienda <ExternalLink size={18} /></a>
+                                <a href="https://www.instagram.com/juegosvikingos" target="_blank" rel="noreferrer" className="px-8 py-4 bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white rounded-2xl font-black uppercase italic text-xs flex gap-2 hover:bg-slate-200 dark:hover:bg-white/10 transition-all text-center">
                                     <Instagram size={18} /> Instagram
                                 </a>
                             </div>
                         </div>
                         <div className="flex-1 order-1 md:order-2 flex justify-center">
-                            <motion.img animate={{ y: [0, -20, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} src={VIKINGO_LOGO} className="w-full max-w-[280px] h-auto drop-shadow-[0_20px_50px_rgba(37,99,235,0.4)]" alt="vikingo" />
+                            <motion.img animate={{ y: [0, -20, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} src={VIKINGO_LOGO} className="w-full max-w-[200px] md:max-w-[280px] h-auto drop-shadow-[0_20px_50px_rgba(37,99,235,0.4)]" alt="vikingo" />
                         </div>
                     </div>
                 </div>
