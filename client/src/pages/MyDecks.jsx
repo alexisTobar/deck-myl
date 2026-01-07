@@ -66,7 +66,7 @@ export default function MyDecks() {
     const [showMobileComments, setShowMobileComments] = useState(false); 
     const [cardToZoom, setCardToZoom] = useState(null);
     
-    // ✅ ESTADO PARA NOTIFICACIONES LEÍDAS
+    // ✅ MEJORA: ESTADO PARA PERSISTENCIA DE NOTIFICACIONES
     const [hasUnread, setHasUnread] = useState(false);
     
     const navigate = useNavigate();
@@ -84,9 +84,14 @@ export default function MyDecks() {
             const data = await res.json();
             if (res.ok) {
                 setDecks(data);
-                // Si hay comentarios nuevos en mazos públicos, activar punto rojo
-                const hasComments = data.some(d => d.isPublic && d.comments?.length > 0);
-                setHasUnread(hasComments);
+                
+                // ✅ LÓGICA DE PERSISTENCIA: Comparamos el total de comentarios actual con el guardado en LocalStorage
+                const totalComments = data.reduce((acc, d) => acc + (d.comments?.length || 0), 0);
+                const lastSeenCount = parseInt(localStorage.getItem("lastSeenCommentsCount") || "0");
+                
+                if (totalComments > lastSeenCount) {
+                    setHasUnread(true);
+                }
             }
             else showToast("Error al cargar mazos", "error");
         } catch (err) { showToast("Error de conexión", "error"); }
@@ -103,11 +108,14 @@ export default function MyDecks() {
         return allComments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 10);
     }, [decks]);
 
-    // ✅ FUNCIÓN PARA ABRIR NOTIFICACIONES Y LIMPIAR EL CONTADOR
+    // ✅ FUNCIÓN MEJORADA: LIMPIA EL PUNTO ROJO Y GUARDA EN EL NAVEGADOR QUE YA VISTE TODO
     const handleToggleNotifications = () => {
         setShowNotifications(!showNotifications);
         if (!showNotifications) {
-            setHasUnread(false); // Limpia el punto rojo al abrir
+            setHasUnread(false);
+            // Guardamos el total actual de comentarios como "vistos"
+            const totalComments = decks.reduce((acc, d) => acc + (d.comments?.length || 0), 0);
+            localStorage.setItem("lastSeenCommentsCount", totalComments.toString());
         }
     };
 
@@ -128,6 +136,10 @@ export default function MyDecks() {
                 setSelectedDeck(updatedDeck);
                 setDecks(prev => prev.map(d => d._id === updatedDeck._id ? updatedDeck : d));
                 setNewComment("");
+                
+                // Actualizar contador local al comentar nosotros mismos para no generar notificación propia
+                const newTotal = decks.reduce((acc, d) => acc + (d.comments?.length || 0), 0) + 1;
+                localStorage.setItem("lastSeenCommentsCount", newTotal.toString());
             }
         } catch (error) { console.error(error); }
     };
@@ -184,6 +196,7 @@ export default function MyDecks() {
             saveAs(dataUrl, `Mazo_${deck.name}.png`);
             showToast("Imagen descargada ✅");
         } catch (err) { 
+            console.error(err);
             showToast("Error al generar imagen", "error"); 
         } finally { 
             setIsDownloading(false); 
@@ -232,10 +245,10 @@ export default function MyDecks() {
                             <h1 className="text-2xl font-black tracking-tighter uppercase italic leading-none">Mis <span className="text-blue-600">Mazos</span></h1>
                         </div>
                         <div className="relative">
-                            {/* ✅ CAMPANITA CON CONTADOR DINÁMICO */}
+                            {/* ✅ CAMPANITA CON PERSISTENCIA DE LECTURA */}
                             <button onClick={handleToggleNotifications} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-xl relative transition-all hover:bg-slate-200">
                                 <Bell size={20} className={hasUnread ? "text-blue-600 animate-pulse" : "text-slate-400"} />
-                                {hasUnread && (
+                                {hasUnread && notifications.length > 0 && (
                                     <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[9px] font-black rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center px-1">
                                         {notifications.length}
                                     </span>
@@ -395,6 +408,16 @@ export default function MyDecks() {
                     {toast.msg}
                 </div>
             )}
+        </div>
+    );
+}
+
+function Feature({ icon, title, text }) {
+    return (
+        <div className="text-center flex flex-col items-center group cursor-default">
+            <div className="mb-6 p-6 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-white/10 shadow-sm group-hover:shadow-xl group-hover:scale-110 transition-all duration-500 text-blue-600 dark:text-blue-400">{icon}</div>
+            <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4 italic">{title}</h4>
+            <p className="text-slate-500 dark:text-slate-400 text-xs font-medium leading-relaxed max-w-[220px] opacity-70 dark:opacity-60">{text}</p>
         </div>
     );
 }
