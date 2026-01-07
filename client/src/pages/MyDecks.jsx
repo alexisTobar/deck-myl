@@ -1,7 +1,7 @@
-import { useEffect, useState, useMemo, useRef } from "react"; // ✅ useRef recuperado
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { saveAs } from 'file-saver';
-import { toPng } from 'html-to-image'; // ✅ toPng recuperado
+import { toPng } from 'html-to-image';
 import BACKEND_URL from "../config";
 import { Search, Trash2, Edit3, Globe, Lock, X, Camera, FileText, LayoutGrid, Bell, Heart, ArrowRight, MessageSquare, Send, Swords, Plus, ScrollText, Sword, Sparkles, Wand2 } from "lucide-react";
 
@@ -65,9 +65,11 @@ export default function MyDecks() {
     const [newComment, setNewComment] = useState("");
     const [showMobileComments, setShowMobileComments] = useState(false); 
     const [cardToZoom, setCardToZoom] = useState(null);
+    
+    // ✅ ESTADO PARA NOTIFICACIONES LEÍDAS
+    const [hasUnread, setHasUnread] = useState(false);
+    
     const navigate = useNavigate();
-
-    // ✅ REFERENCIA PARA CAPTURA DE IMAGEN RECUPERADA
     const deckImageRef = useRef(null);
 
     const token = localStorage.getItem("token");
@@ -80,7 +82,12 @@ export default function MyDecks() {
         try {
             const res = await fetch(`${BACKEND_URL}/api/decks/my-decks`, { headers: { "auth-token": token } });
             const data = await res.json();
-            if (res.ok) setDecks(data);
+            if (res.ok) {
+                setDecks(data);
+                // Si hay comentarios nuevos en mazos públicos, activar punto rojo
+                const hasComments = data.some(d => d.isPublic && d.comments?.length > 0);
+                setHasUnread(hasComments);
+            }
             else showToast("Error al cargar mazos", "error");
         } catch (err) { showToast("Error de conexión", "error"); }
         finally { setLoading(false); }
@@ -95,6 +102,14 @@ export default function MyDecks() {
         });
         return allComments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 10);
     }, [decks]);
+
+    // ✅ FUNCIÓN PARA ABRIR NOTIFICACIONES Y LIMPIAR EL CONTADOR
+    const handleToggleNotifications = () => {
+        setShowNotifications(!showNotifications);
+        if (!showNotifications) {
+            setHasUnread(false); // Limpia el punto rojo al abrir
+        }
+    };
 
     const getTotalCards = (cards) => {
         return cards.reduce((acc, card) => acc + (card.quantity || 1), 0);
@@ -155,14 +170,11 @@ export default function MyDecks() {
         saveAs(blob, `Lista_${deck.name}.txt`);
     };
 
-    // ✅ LÓGICA DE DESCARGA DE IMAGEN RECUPERADA Y CORREGIDA
     const handleDownloadInfographic = async (deck, e) => {
         if (e) e.stopPropagation();
         if (!deckImageRef.current) return;
-        
         setIsDownloading(true);
         showToast("Generando archivo...", "info");
-        
         try {
             const dataUrl = await toPng(deckImageRef.current, { 
                 quality: 0.95, 
@@ -172,7 +184,6 @@ export default function MyDecks() {
             saveAs(dataUrl, `Mazo_${deck.name}.png`);
             showToast("Imagen descargada ✅");
         } catch (err) { 
-            console.error(err);
             showToast("Error al generar imagen", "error"); 
         } finally { 
             setIsDownloading(false); 
@@ -199,16 +210,16 @@ export default function MyDecks() {
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white pb-32 transition-colors duration-500 overflow-x-hidden font-sans text-center relative">
             <style>{animationStyles}</style>
 
-            {/* --- TOP BANNER --- */}
+            {/* --- TOP BANNER ACCESO DIRECTO --- */}
             <div className="w-full bg-blue-600 py-2 px-4 text-white shadow-md">
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
-                    <p className="hidden md:block text-[10px] font-black uppercase tracking-widest italic opacity-90">Forja tu mazo estratégico</p>
+                    <p className="hidden md:block text-[10px] font-black uppercase tracking-widest italic opacity-90">Forja tu arsenal estratégico</p>
                     <div className="flex gap-2 mx-auto md:mx-0">
                         <Link to="/primer-bloque/builder" className="flex items-center gap-1.5 bg-black/20 hover:bg-black/40 px-4 py-1.5 rounded-full text-[10px] font-black uppercase italic transition-all border border-white/20">
-                            <ScrollText size={12} /> Crea nuevo mazo PB
+                            <ScrollText size={12} /> Nuevo PB
                         </Link>
                         <Link to="/imperio/builder" className="flex items-center gap-1.5 bg-white text-blue-600 hover:bg-slate-100 px-4 py-1.5 rounded-full text-[10px] font-black uppercase italic transition-all shadow-md">
-                            <Sword size={12} /> Crea nuevo mazo Imperio
+                            <Sword size={12} /> Nuevo Imperio
                         </Link>
                     </div>
                 </div>
@@ -221,10 +232,29 @@ export default function MyDecks() {
                             <h1 className="text-2xl font-black tracking-tighter uppercase italic leading-none">Mis <span className="text-blue-600">Mazos</span></h1>
                         </div>
                         <div className="relative">
-                            <button onClick={() => setShowNotifications(!showNotifications)} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-xl relative transition-all hover:bg-slate-200">
-                                <Bell size={20} className={notifications.length > 0 ? "text-blue-600 animate-pulse" : "text-slate-400"} />
-                                {notifications.length > 0 && <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-slate-800"></span>}
+                            {/* ✅ CAMPANITA CON CONTADOR DINÁMICO */}
+                            <button onClick={handleToggleNotifications} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-xl relative transition-all hover:bg-slate-200">
+                                <Bell size={20} className={hasUnread ? "text-blue-600 animate-pulse" : "text-slate-400"} />
+                                {hasUnread && (
+                                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[9px] font-black rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center px-1">
+                                        {notifications.length}
+                                    </span>
+                                )}
                             </button>
+                            
+                            {showNotifications && (
+                                <div className="fixed md:absolute top-20 md:top-12 left-1/2 -translate-x-1/2 md:left-0 md:translate-x-0 w-[92%] md:w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl p-4 z-[100] animate-in fade-in zoom-in-95">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-4 text-left">Novedades en Comunidad</h4>
+                                    <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                                        {notifications.length === 0 ? <p className="text-[10px] text-center text-slate-400 uppercase py-4">Sin novedades</p> : notifications.map((n, i) => (
+                                            <div key={i} className="bg-slate-50 dark:bg-white/5 p-3 rounded-xl border dark:border-white/5 cursor-pointer hover:border-blue-500 transition-all text-left" onClick={() => { setSelectedDeck(n.fullDeck); setShowNotifications(false); }}>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase truncate">Deck: {n.deckName}</p>
+                                                <p className="text-[11px] font-medium text-slate-700 dark:text-slate-200 line-clamp-2">@{n.username}: {n.text}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -235,6 +265,7 @@ export default function MyDecks() {
                 </div>
             </div>
 
+            {/* GRILLA DE MAZOS */}
             <div className="max-w-7xl mx-auto p-4 md:p-8">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                     {processedDecks.map((deck) => (
@@ -242,7 +273,6 @@ export default function MyDecks() {
                             <div className="h-40 md:h-48 relative overflow-hidden bg-slate-200 dark:bg-slate-900">
                                 <img src={getCardImage(deck.cards[0])} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-800 via-transparent opacity-90"></div>
-                                
                                 <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
                                     <span className={`text-[7px] font-black px-2 py-0.5 rounded-md uppercase ${getFormatStyles(deck.format).badgeClass}`}>{getFormatStyles(deck.format).label}</span>
                                     <span className="text-[7px] font-black px-2 py-0.5 rounded-md uppercase bg-slate-100/50 dark:bg-slate-900/50 backdrop-blur-md border border-white/20 flex items-center gap-1">
@@ -262,6 +292,7 @@ export default function MyDecks() {
                 </div>
             </div>
 
+            {/* MODAL DETALLE CON CAPTURA DE IMAGEN */}
             {selectedDeck && (
                 <div className="fixed inset-0 z-[110] bg-slate-900/80 backdrop-blur-md flex items-end md:items-center justify-center p-2" onClick={() => { setSelectedDeck(null); setShowMobileComments(false); }}>
                     <div className="bg-white dark:bg-slate-900 w-full max-w-6xl h-[92vh] md:h-[85vh] rounded-[2.5rem] flex flex-col overflow-hidden shadow-2xl border border-white/20" onClick={e => e.stopPropagation()}>
@@ -269,23 +300,23 @@ export default function MyDecks() {
                         <div className="p-5 md:p-8 border-b border-slate-100 dark:border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 flex-shrink-0 text-left">
                             <div>
                                 <h2 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter leading-none">{selectedDeck.name}</h2>
-                                <p className="text-[10px] font-black text-blue-600 mt-2 uppercase tracking-widest">Creado por @{selectedDeck.user?.username}</p>
+                                <p className="text-[10px] font-black text-blue-600 mt-2 uppercase tracking-widest">Invocador: @{selectedDeck.user?.username}</p>
                             </div>
                             <div className="flex items-center gap-2 w-full md:w-auto">
-                                <button onClick={(e) => handleEdit(selectedDeck, e)} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase shadow-md active:scale-95 transition-all"><Edit3 size={14} /> Editar</button>
+                                <button onClick={(e) => handleEdit(selectedDeck, e)} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase shadow-md hover:bg-blue-500 transition-all"><Edit3 size={14} /> Editar</button>
                                 <button onClick={() => setSelectedDeck(null)} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-2xl text-slate-400 hover:text-red-500 transition-all"><X size={20} /></button>
                             </div>
                         </div>
 
                         <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-                            {/* ✅ CONTENEDOR DE CARTAS CON REFERENCIA PARA DESCARGA RECUPERADO */}
+                            {/* ÁREA DE CAPTURA DE IMAGEN */}
                             <div className="flex-1 overflow-y-auto p-4 md:p-10 bg-slate-50/50 dark:bg-slate-950/20 custom-scrollbar" ref={deckImageRef}>
                                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 md:gap-6">
                                     {selectedDeck.cards.map((c, i) => (
                                         <div key={i} className="relative group text-center cursor-pointer" onClick={() => setCardToZoom(c)}>
                                             <div className="card-reveal-zoom rounded-xl md:rounded-2xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-sm">
                                                 <img src={getCardImage(c)} alt={c.name} className="w-full h-auto block" />
-                                                <div className="absolute top-1.5 right-1.5 bg-blue-600 text-white w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center font-black text-[9px] border border-white shadow-md z-10">
+                                                <div className="absolute top-1 right-1 bg-blue-600 text-white w-5 h-5 rounded-full flex items-center justify-center font-black text-[9px] border border-white shadow-md z-10">
                                                     {c.quantity || 1}
                                                 </div>
                                             </div>
@@ -295,11 +326,7 @@ export default function MyDecks() {
                                 </div>
                             </div>
 
-                            <div className={`
-                                flex-[0.5] md:max-w-[340px] bg-white dark:bg-slate-800 flex flex-col min-h-0 border-l border-slate-100 dark:border-white/5
-                                fixed md:relative bottom-0 left-0 w-full md:w-auto h-[60vh] md:h-auto z-[120] md:z-0 transition-transform duration-300
-                                ${showMobileComments ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}
-                            `}>
+                            <div className={`flex-[0.5] md:max-w-[340px] bg-white dark:bg-slate-800 flex flex-col min-h-0 border-l border-slate-100 dark:border-white/5 fixed md:relative bottom-0 left-0 w-full md:w-auto h-[60vh] md:h-auto z-[120] md:z-0 transition-transform duration-300 ${showMobileComments ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}`}>
                                 <div className="p-4 border-b border-slate-100 dark:border-white/5 font-black text-[9px] uppercase flex items-center justify-between text-slate-400">
                                     <span>Conversación</span>
                                     <button onClick={() => setShowMobileComments(false)} className="md:hidden"><X size={16}/></button>
@@ -321,12 +348,13 @@ export default function MyDecks() {
                             </div>
                         </div>
 
-                        {/* ✅ BOTONES DE ACCIÓN (INCLUYE DESCARGAR FOTO) */}
                         <div className="p-4 md:p-6 border-t border-slate-100 dark:border-white/5 grid grid-cols-2 md:grid-cols-4 gap-2 flex-shrink-0 bg-slate-50/50 dark:bg-slate-800">
                             <button onClick={(e) => togglePrivacy(selectedDeck, e)} className="flex items-center justify-center gap-2 bg-white dark:bg-slate-700 text-slate-700 dark:text-white p-3 rounded-2xl font-black text-[9px] uppercase border border-slate-200 dark:border-white/5 transition-all hover:bg-slate-100">
                                 {selectedDeck.isPublic ? <Globe size={14} className="text-blue-500" /> : <Lock size={14} className="text-slate-400" />} {selectedDeck.isPublic ? 'Público' : 'Privado'}
                             </button>
-                            <button onClick={(e) => handleDownloadInfographic(selectedDeck, e)} disabled={isDownloading} className="flex items-center justify-center gap-2 bg-slate-900 text-white p-3 rounded-2xl font-black text-[9px] uppercase shadow-md active:scale-95 transition-all disabled:opacity-50"><Camera size={14} /> {isDownloading ? 'Generando...' : 'Exportar Foto'}</button>
+                            <button onClick={(e) => handleDownloadInfographic(selectedDeck, e)} disabled={isDownloading} className="flex items-center justify-center gap-2 bg-slate-900 text-white p-3 rounded-2xl font-black text-[9px] uppercase shadow-md active:scale-95 transition-all disabled:opacity-50">
+                                <Camera size={14} /> {isDownloading ? 'Generando...' : 'Exportar Foto'}
+                            </button>
                             <button onClick={(e) => handleDownloadTextList(selectedDeck, e)} className="flex items-center justify-center gap-2 bg-white dark:bg-slate-700 text-slate-700 dark:text-white p-3 rounded-2xl font-black text-[9px] uppercase border border-slate-200 dark:border-white/5 transition-all hover:bg-slate-100"><FileText size={14} /> Lista Texto</button>
                             <button onClick={(e) => { e.stopPropagation(); setDeckToDelete(selectedDeck); }} className="flex items-center justify-center gap-2 bg-red-50 text-red-600 p-3 rounded-2xl font-black text-[9px] uppercase border border-red-100 transition-all hover:bg-red-600 hover:text-white"><Trash2 size={14} /> Eliminar</button>
                         </div>
@@ -334,6 +362,7 @@ export default function MyDecks() {
                 </div>
             )}
 
+            {/* ZOOM CARTA INDIVIDUAL */}
             {cardToZoom && (
                 <div className="fixed inset-0 z-[300] bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl flex flex-col items-center justify-center p-4" onClick={() => setCardToZoom(null)}>
                     <button className="absolute top-6 right-6 w-10 h-10 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-500" onClick={() => setCardToZoom(null)}><X size={20} /></button>
@@ -347,6 +376,7 @@ export default function MyDecks() {
                 </div>
             )}
 
+            {/* ELIMINAR */}
             {deckToDelete && (
                 <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4">
                     <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] max-w-sm w-full text-center border border-slate-100 shadow-2xl">
@@ -365,16 +395,6 @@ export default function MyDecks() {
                     {toast.msg}
                 </div>
             )}
-        </div>
-    );
-}
-
-function Feature({ icon, title, text }) {
-    return (
-        <div className="text-center flex flex-col items-center group cursor-default">
-            <div className="mb-6 p-6 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-white/10 shadow-sm group-hover:shadow-xl group-hover:scale-110 transition-all duration-500 text-blue-600 dark:text-blue-400">{icon}</div>
-            <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4 italic">{title}</h4>
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-medium leading-relaxed max-w-[220px] opacity-70 dark:opacity-60">{text}</p>
         </div>
     );
 }
