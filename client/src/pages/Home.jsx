@@ -6,7 +6,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, L
 import BACKEND_URL from "../config";
 import { 
     Sword, ScrollText, Zap, TrendingUp, ShieldCheck, Users, ArrowRight, Heart, Star, 
-    ShoppingBag, Instagram, ExternalLink, PlusCircle, X, Camera, Sparkles, UserPlus, BarChart3, LayoutGrid, Lock, AlertTriangle, ShieldAlert
+    ShoppingBag, Instagram, ExternalLink, PlusCircle, X, Camera, Sparkles, UserPlus, BarChart3, LayoutGrid, Lock, AlertTriangle, ShieldAlert, ImageOff
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -21,7 +21,7 @@ export default function HomePortal() {
     const [showPlayerModal, setShowPlayerModal] = useState(false);
     const [newPlayerData, setNewPlayerData] = useState({ name: "", instagram: "", logo: "" });
 
-    // ✅ DATOS PARA CARRUSEL DE BANEADAS (URLs directas corregidas)
+    // ✅ DATOS PARA CARRUSEL DE BANEADAS (Placeholder corregido a placehold.co)
     const bannedCards = [
         { name: "Sif", type: "Prohibida", img: "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/1.webp", color: "bg-red-500" },
         { name: "Lugh", type: "1 Copia", img: "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/2.webp", color: "bg-orange-500" },
@@ -166,13 +166,14 @@ export default function HomePortal() {
                                         src={card.img} 
                                         className="w-full h-full object-cover transition-transform group-hover/card:scale-105" 
                                         alt={card.name} 
-                                        onError={(e) => { e.target.src = "https://via.placeholder.com/250x350?text=Cargando+Carta..."; }}
+                                        onError={(e) => { e.target.src = "https://placehold.co/250x350/1e293b/white?text=Imagen+No+Encontrada"; }}
                                     />
                                     <div className={`absolute top-2 right-2 px-3 py-1 ${card.color} text-white text-[9px] font-black uppercase rounded-full shadow-lg z-10`}>
                                         {card.type}
                                     </div>
-                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/card:opacity-100 transition-opacity flex items-center justify-center p-4 text-center">
+                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/card:opacity-100 transition-opacity flex flex-col items-center justify-center p-4 text-center">
                                         <p className="text-white text-xs font-bold whitespace-normal">{card.name}</p>
+                                        <div className="mt-2 text-white/50"><ImageOff size={20} /></div>
                                     </div>
                                 </div>
                             </div>
@@ -227,7 +228,12 @@ export default function HomePortal() {
                             </button>
                             
                             <div className="w-full md:w-2/5 p-6 md:p-8 bg-slate-50 dark:bg-black/20 flex items-center justify-center border-b md:border-b-0 md:border-r border-white/5 flex-shrink-0">
-                                <img src={selectedMetaCard.imgUrl || selectedMetaCard.img} className="w-full max-w-[140px] sm:max-w-[180px] md:max-w-[260px] rounded-xl md:rounded-2xl shadow-2xl border-2 md:border-4 border-white dark:border-white/5" alt="card" onError={(e) => { e.target.src = "https://via.placeholder.com/250x350?text=Imagen+No+Disponible"; }} />
+                                <img 
+                                    src={selectedMetaCard.imgUrl || selectedMetaCard.img} 
+                                    className="w-full max-w-[140px] sm:max-w-[180px] md:max-w-[260px] rounded-xl md:rounded-2xl shadow-2xl border-2 md:border-4 border-white dark:border-white/5" 
+                                    alt="card" 
+                                    onError={(e) => { e.target.src = "https://placehold.co/250x350/1e293b/white?text=Sin+Imagen"; }}
+                                />
                             </div>
 
                             <div className="w-full md:w-3/5 p-6 md:p-10 flex flex-col overflow-y-auto custom-scrollbar">
@@ -335,7 +341,7 @@ export default function HomePortal() {
                         <motion.a whileHover={{ scale: 1.1, rotate: 5 }} key={i} href={p.instagram} target="_blank" rel="noreferrer" className="flex flex-col items-center gap-3 min-w-[100px]">
                             <div className="w-20 h-20 md:w-24 md:h-24 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 shadow-xl">
                                 <div className="w-full h-full rounded-full border-[4px] border-white dark:border-[#0f172a] overflow-hidden">
-                                    <img src={p.logo || "https://via.placeholder.com/150"} className="w-full h-full object-cover" alt="player" onError={(e) => { e.target.src = "https://via.placeholder.com/150?text=Jugador"; }} />
+                                    <img src={p.logo || "https://placehold.co/150/0f172a/white?text=Invocador"} className="w-full h-full object-cover" alt="player" onError={(e) => { e.target.src = "https://placehold.co/150/0f172a/white?text=Invocador"; }} />
                                 </div>
                             </div>
                             <span className="text-[9px] font-black uppercase text-slate-700 dark:text-slate-300 truncate w-full text-center">@{p.name}</span>
@@ -386,7 +392,12 @@ function MetaCard({ card, index, onClick }) {
     return (
         <motion.div whileHover={{ y: -8, scale: 1.02 }} onClick={onClick} className="cursor-pointer group bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 p-3 rounded-[1.5rem] hover:shadow-2xl transition-all duration-500 shadow-xl shadow-black/5 text-center">
             <div className="aspect-[3/4] bg-slate-100 dark:bg-slate-800 rounded-xl mb-3 overflow-hidden relative shadow-inner">
-                <img src={card.imgUrl || card.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="card" onError={(e) => e.target.src = "https://via.placeholder.com/200x280?text=MyL"} />
+                <img 
+                    src={card.imgUrl || card.img} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                    alt="card" 
+                    onError={(e) => { e.target.src = "https://placehold.co/200x280/1e293b/white?text=Cargando..."; }} 
+                />
                 <div className="absolute bottom-2 left-2 px-2 py-1 bg-blue-600 text-white rounded-lg text-[10px] font-black shadow-lg">#{index + 1}</div>
             </div>
             <div className="px-1"><h4 className="text-[10px] md:text-xs font-black text-slate-900 dark:text-white truncate uppercase mb-1 leading-tight h-8 flex items-center justify-center">{card.name}</h4><div className="flex items-center justify-center gap-1 text-blue-600 dark:text-blue-400 font-black text-[9px] uppercase"><BarChart3 size={10} /> Análisis</div></div>
