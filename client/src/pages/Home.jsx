@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 // ✅ IMPORTACIÓN PARA GRÁFICOS PROFESIONALES
@@ -21,12 +21,15 @@ export default function HomePortal() {
     const [showPlayerModal, setShowPlayerModal] = useState(false);
     const [newPlayerData, setNewPlayerData] = useState({ name: "", instagram: "", logo: "" });
 
-    // ✅ DATOS PARA CARRUSEL DE BANEADAS (Actualizado a CDN JSDELIVR para mayor estabilidad)
+    // ✅ REFERENCIA PARA EL CONTENEDOR DEL CARRUSEL (NECESARIO PARA EL DRAG)
+    const carouselRef = useRef(null);
+
+    // ✅ DATOS PARA CARRUSEL DE BANEADAS (Actualizado con JSDelivr para que se vean)
     const bannedCards = [
         { name: "Sif", type: "Prohibida", img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/main/1.webp", color: "bg-red-500" },
         { name: "Lugh", type: "1 Copia", img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/main/2.webp", color: "bg-orange-500" },
         { name: "Dragón Dorado", type: "2 Copias", img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/main/3.webp", color: "bg-yellow-500" },
-        { name: "Fe sin Límite", type: "Prohibida", img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/main/4.webp", color: "bg-red-500" },
+        { name: "Fe sin Límite", type: "Prohibida", img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/es540.webp", color: "bg-red-500" },
         { name: "Ataque de Dragón", type: "1 Copia", img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/main/5.webp", color: "bg-orange-500" },
         { name: "Eolo", type: "2 Copias", img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/main/6.webp", color: "bg-yellow-500" },
     ];
@@ -145,38 +148,36 @@ export default function HomePortal() {
                 <FormatCard title="Imperio" desc="Metajuego actual y el pináculo del circuito competitivo." img="https://cdn.shopify.com/s/files/1/0103/3601/0303/files/bannerpreventakvm_177c3b4b-7d62-4fd8-8f0a-fa243f85e590.jpg?v=1761336400" icon={<Sword size={28} className="text-blue-600" />} onClick={() => navigate("/imperio")} delay="delay-300" />
             </motion.main>
 
-            {/* ✅ SECCIÓN REPARADA: CARRUSEL CARTAS BANEADAS */}
-            <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="w-full mb-24 relative overflow-hidden bg-slate-100/50 dark:bg-white/5 py-12">
+            {/* ✅ SECCIÓN REPARADA Y CON CONTROL DE ARRASTRE (DRAG) */}
+            <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="w-full mb-24 relative bg-slate-100/50 dark:bg-white/5 py-12">
                 <div className="max-w-7xl mx-auto px-6 mb-10 flex items-center gap-3">
                     <ShieldAlert className="text-red-500" />
                     <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Restricciones Primer Bloque</h3>
                 </div>
                 
-                <div className="relative flex overflow-hidden">
+                <div className="relative overflow-hidden cursor-grab active:cursor-grabbing" ref={carouselRef}>
                     <motion.div 
-                        className="flex gap-6 whitespace-nowrap"
+                        className="flex gap-6 w-max px-6"
+                        drag="x"
+                        dragConstraints={carouselRef}
                         animate={{ x: ["0%", "-50%"] }}
-                        transition={{ repeat: Infinity, duration: 25, ease: "linear" }}
+                        transition={{ repeat: Infinity, duration: 35, ease: "linear" }}
                     >
-                        {/* Se duplica el contenido para que el loop sea infinito sin cortes */}
-                        {[...bannedCards, ...bannedCards].map((card, i) => (
-                            <div key={i} className="inline-block w-40 md:w-56 shrink-0">
-                                <div className="relative group/card cursor-help bg-slate-200 dark:bg-slate-800 rounded-2xl overflow-hidden min-h-[220px] md:min-h-[310px]">
+                        {/* Triplicamos el contenido para un loop infinito más fluido mientras se permite el drag */}
+                        {[...bannedCards, ...bannedCards, ...bannedCards].map((card, i) => (
+                            <div key={i} className="w-40 md:w-56 shrink-0 select-none">
+                                <div className="relative group/card bg-slate-200 dark:bg-slate-800 rounded-2xl overflow-hidden shadow-xl border border-white/5 h-full">
                                     <img 
                                         src={card.img} 
-                                        className="w-full h-full object-cover transition-transform group-hover/card:scale-105" 
+                                        className="w-full h-full object-cover pointer-events-none" 
                                         alt={card.name} 
-                                        onError={(e) => { 
-                                            e.target.onerror = null; 
-                                            e.target.src = "https://placehold.co/250x350/1e293b/white?text=Error+al+Cargar"; 
-                                        }}
+                                        onError={(e) => { e.target.src = "https://placehold.co/250x350/1e293b/white?text=Cargando..."; }}
                                     />
                                     <div className={`absolute top-2 right-2 px-3 py-1 ${card.color} text-white text-[9px] font-black uppercase rounded-full shadow-lg z-10`}>
                                         {card.type}
                                     </div>
-                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/card:opacity-100 transition-opacity flex flex-col items-center justify-center p-4 text-center">
+                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/card:opacity-100 transition-opacity flex flex-col items-center justify-center p-4 text-center pointer-events-none">
                                         <p className="text-white text-xs font-bold whitespace-normal">{card.name}</p>
-                                        <div className="mt-2 text-white/50"><ImageOff size={20} /></div>
                                     </div>
                                 </div>
                             </div>
