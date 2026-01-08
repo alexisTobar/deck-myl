@@ -21,14 +21,14 @@ export default function HomePortal() {
     const [showPlayerModal, setShowPlayerModal] = useState(false);
     const [newPlayerData, setNewPlayerData] = useState({ name: "", instagram: "", logo: "" });
 
-    // ✅ DATOS PARA CARRUSEL DE BANEADAS (Placeholder corregido a placehold.co)
+    // ✅ DATOS PARA CARRUSEL DE BANEADAS (Actualizado a CDN JSDELIVR para mayor estabilidad)
     const bannedCards = [
-        { name: "Sif", type: "Prohibida", img: "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/1.webp", color: "bg-red-500" },
-        { name: "Lugh", type: "1 Copia", img: "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/2.webp", color: "bg-orange-500" },
-        { name: "Dragón Dorado", type: "2 Copias", img: "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/3.webp", color: "bg-yellow-500" },
-        { name: "Fe sin Límite", type: "Prohibida", img: "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/4.webp", color: "bg-red-500" },
-        { name: "Ataque de Dragón", type: "1 Copia", img: "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/5.webp", color: "bg-orange-500" },
-        { name: "Eolo", type: "2 Copias", img: "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/6.webp", color: "bg-yellow-500" },
+        { name: "Sif", type: "Prohibida", img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/main/1.webp", color: "bg-red-500" },
+        { name: "Lugh", type: "1 Copia", img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/main/2.webp", color: "bg-orange-500" },
+        { name: "Dragón Dorado", type: "2 Copias", img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/main/3.webp", color: "bg-yellow-500" },
+        { name: "Fe sin Límite", type: "Prohibida", img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/main/4.webp", color: "bg-red-500" },
+        { name: "Ataque de Dragón", type: "1 Copia", img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/main/5.webp", color: "bg-orange-500" },
+        { name: "Eolo", type: "2 Copias", img: "https://cdn.jsdelivr.net/gh/alexisTobar/cartas-pb-webp/main/6.webp", color: "bg-yellow-500" },
     ];
 
     const VIKINGO_LOGO = "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/vikingo.png";
@@ -166,7 +166,10 @@ export default function HomePortal() {
                                         src={card.img} 
                                         className="w-full h-full object-cover transition-transform group-hover/card:scale-105" 
                                         alt={card.name} 
-                                        onError={(e) => { e.target.src = "https://placehold.co/250x350/1e293b/white?text=Imagen+No+Encontrada"; }}
+                                        onError={(e) => { 
+                                            e.target.onerror = null; 
+                                            e.target.src = "https://placehold.co/250x350/1e293b/white?text=Error+al+Cargar"; 
+                                        }}
                                     />
                                     <div className={`absolute top-2 right-2 px-3 py-1 ${card.color} text-white text-[9px] font-black uppercase rounded-full shadow-lg z-10`}>
                                         {card.type}
