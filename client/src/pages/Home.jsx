@@ -21,7 +21,7 @@ export default function HomePortal() {
     const [showPlayerModal, setShowPlayerModal] = useState(false);
     const [newPlayerData, setNewPlayerData] = useState({ name: "", instagram: "", logo: "" });
 
-    // ✅ DATOS PARA CARRUSEL DE BANEADAS (Ejemplo con slots, puedes conectar a API luego)
+    // ✅ DATOS PARA CARRUSEL DE BANEADAS (URLs directas corregidas)
     const bannedCards = [
         { name: "Sif", type: "Prohibida", img: "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/1.webp", color: "bg-red-500" },
         { name: "Lugh", type: "1 Copia", img: "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/2.webp", color: "bg-orange-500" },
@@ -145,27 +145,33 @@ export default function HomePortal() {
                 <FormatCard title="Imperio" desc="Metajuego actual y el pináculo del circuito competitivo." img="https://cdn.shopify.com/s/files/1/0103/3601/0303/files/bannerpreventakvm_177c3b4b-7d62-4fd8-8f0a-fa243f85e590.jpg?v=1761336400" icon={<Sword size={28} className="text-blue-600" />} onClick={() => navigate("/imperio")} delay="delay-300" />
             </motion.main>
 
-            {/* ✅ SECCIÓN NUEVA: CARRUSEL CARTAS BANEADAS/RESTRINGIDAS */}
+            {/* ✅ SECCIÓN REPARADA: CARRUSEL CARTAS BANEADAS */}
             <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="w-full mb-24 relative overflow-hidden bg-slate-100/50 dark:bg-white/5 py-12">
                 <div className="max-w-7xl mx-auto px-6 mb-10 flex items-center gap-3">
                     <ShieldAlert className="text-red-500" />
                     <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Restricciones Primer Bloque</h3>
                 </div>
                 
-                <div className="flex overflow-hidden group">
+                <div className="relative flex overflow-hidden">
                     <motion.div 
                         className="flex gap-6 whitespace-nowrap"
-                        animate={{ x: [0, -1000] }}
-                        transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
+                        animate={{ x: ["0%", "-50%"] }}
+                        transition={{ repeat: Infinity, duration: 25, ease: "linear" }}
                     >
+                        {/* Se duplica el contenido para que el loop sea infinito sin cortes */}
                         {[...bannedCards, ...bannedCards].map((card, i) => (
                             <div key={i} className="inline-block w-40 md:w-56 shrink-0">
-                                <div className="relative group/card cursor-help">
-                                    <img src={card.img} className="w-full h-auto rounded-2xl shadow-xl transition-transform group-hover/card:scale-105" alt={card.name} />
-                                    <div className={`absolute top-2 right-2 px-3 py-1 ${card.color} text-white text-[9px] font-black uppercase rounded-full shadow-lg`}>
+                                <div className="relative group/card cursor-help bg-slate-200 dark:bg-slate-800 rounded-2xl overflow-hidden min-h-[220px] md:min-h-[310px]">
+                                    <img 
+                                        src={card.img} 
+                                        className="w-full h-full object-cover transition-transform group-hover/card:scale-105" 
+                                        alt={card.name} 
+                                        onError={(e) => { e.target.src = "https://via.placeholder.com/250x350?text=Cargando+Carta..."; }}
+                                    />
+                                    <div className={`absolute top-2 right-2 px-3 py-1 ${card.color} text-white text-[9px] font-black uppercase rounded-full shadow-lg z-10`}>
                                         {card.type}
                                     </div>
-                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/card:opacity-100 transition-opacity rounded-2xl flex items-center justify-center p-4 text-center">
+                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/card:opacity-100 transition-opacity flex items-center justify-center p-4 text-center">
                                         <p className="text-white text-xs font-bold whitespace-normal">{card.name}</p>
                                     </div>
                                 </div>
@@ -221,7 +227,7 @@ export default function HomePortal() {
                             </button>
                             
                             <div className="w-full md:w-2/5 p-6 md:p-8 bg-slate-50 dark:bg-black/20 flex items-center justify-center border-b md:border-b-0 md:border-r border-white/5 flex-shrink-0">
-                                <img src={selectedMetaCard.imgUrl || selectedMetaCard.img} className="w-full max-w-[140px] sm:max-w-[180px] md:max-w-[260px] rounded-xl md:rounded-2xl shadow-2xl border-2 md:border-4 border-white dark:border-white/5" alt="card" />
+                                <img src={selectedMetaCard.imgUrl || selectedMetaCard.img} className="w-full max-w-[140px] sm:max-w-[180px] md:max-w-[260px] rounded-xl md:rounded-2xl shadow-2xl border-2 md:border-4 border-white dark:border-white/5" alt="card" onError={(e) => { e.target.src = "https://via.placeholder.com/250x350?text=Imagen+No+Disponible"; }} />
                             </div>
 
                             <div className="w-full md:w-3/5 p-6 md:p-10 flex flex-col overflow-y-auto custom-scrollbar">
@@ -329,7 +335,7 @@ export default function HomePortal() {
                         <motion.a whileHover={{ scale: 1.1, rotate: 5 }} key={i} href={p.instagram} target="_blank" rel="noreferrer" className="flex flex-col items-center gap-3 min-w-[100px]">
                             <div className="w-20 h-20 md:w-24 md:h-24 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 shadow-xl">
                                 <div className="w-full h-full rounded-full border-[4px] border-white dark:border-[#0f172a] overflow-hidden">
-                                    <img src={p.logo || "https://via.placeholder.com/150"} className="w-full h-full object-cover" alt="player" />
+                                    <img src={p.logo || "https://via.placeholder.com/150"} className="w-full h-full object-cover" alt="player" onError={(e) => { e.target.src = "https://via.placeholder.com/150?text=Jugador"; }} />
                                 </div>
                             </div>
                             <span className="text-[9px] font-black uppercase text-slate-700 dark:text-slate-300 truncate w-full text-center">@{p.name}</span>
