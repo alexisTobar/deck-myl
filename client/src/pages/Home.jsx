@@ -52,13 +52,13 @@ export default function HomePortal() {
                     setImpTrending(dataImp.filter(c => c.format === 'imperio').slice(0, 10));
                 }
 
-                // ✅ 2. CARGAR CARTAS CON RESTRICCIÓN DESDE LA BASE DE DATOS
+                // ✅ 2. CARGAR CARTAS CON RESTRICCIÓN DESDE LA BASE DE DATOS (REPARADO)
                 const resCards = await fetch(`${BACKEND_URL}/api/cards/search?format=primer_bloque`);
                 if (resCards.ok) {
                     const allCards = await resCards.json();
-                    // Filtramos solo las que tienen el campo "restriction" (limited1, limited2, banned, etc)
-                    const restricted = (Array.isArray(allCards) ? allCards : (allCards.results || []))
-                        .filter(c => c.restriction && c.restriction !== "none");
+                    const dataArray = Array.isArray(allCards) ? allCards : (allCards.results || []);
+                    // Filtramos solo las que tienen el campo "restriction"
+                    const restricted = dataArray.filter(c => c.restriction && c.restriction !== "none");
                     setBannedCards(restricted);
                 }
 
@@ -129,7 +129,6 @@ export default function HomePortal() {
         }
     };
 
-    // Función auxiliar para etiquetas de restricción
     const getRestrictionLabel = (type) => {
         if (type === "banned" || type === "prohibited") return { text: "Prohibida", color: "bg-red-600" };
         if (type === "limited1") return { text: "1 Copia", color: "bg-orange-500" };
@@ -159,28 +158,24 @@ export default function HomePortal() {
                 <FormatCard title="Imperio" desc="Metajuego actual y el pináculo del circuito competitivo." img="https://cdn.shopify.com/s/files/1/0103/3601/0303/files/bannerpreventakvm_177c3b4b-7d62-4fd8-8f0a-fa243f85e590.jpg?v=1761336400" icon={<Sword size={28} className="text-blue-600" />} onClick={() => navigate("/imperio")} delay="delay-300" />
             </motion.main>
 
-            {/* ✅ SECCIÓN MEJORADA: CARRUSEL DE BANEADAS DESDE LA BASE DE DATOS */}
+            {/* ✅ SECCIÓN REPARADA: CARRUSEL BANEADAS CON DRAG Y DATOS REALES */}
             {bannedCards.length > 0 && (
-                <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="w-full mb-24 relative bg-slate-100/50 dark:bg-white/5 py-12">
-                    <div className="max-w-7xl mx-auto px-6 mb-10 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <ShieldAlert className="text-red-500" />
-                            <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Lista de Restricciones DAR</h3>
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-200 dark:bg-white/10 px-3 py-1 rounded-full">Desliza para ver más</span>
+                <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="w-full mb-24 relative overflow-hidden bg-slate-100/50 dark:bg-white/5 py-12">
+                    <div className="max-w-7xl mx-auto px-6 mb-10 flex items-center gap-3">
+                        <ShieldAlert className="text-red-500" />
+                        <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Restricciones Primer Bloque</h3>
                     </div>
                     
-                    <div className="relative overflow-hidden cursor-grab active:cursor-grabbing px-4" ref={carouselRef}>
+                    <div className="relative flex overflow-hidden cursor-grab active:cursor-grabbing px-4" ref={carouselRef}>
                         <motion.div 
                             className="flex gap-6 w-max"
                             drag="x"
                             dragConstraints={carouselRef}
-                            // Solo animamos automáticamente si hay suficientes cartas
-                            animate={bannedCards.length > 5 ? { x: ["0%", "-33.3%"] } : {}}
-                            transition={{ repeat: Infinity, duration: 40, ease: "linear" }}
+                            animate={{ x: ["0%", "-50%"] }}
+                            transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
                         >
-                            {/* Duplicamos los elementos para que el loop sea infinito visualmente */}
-                            {[...bannedCards, ...bannedCards, ...bannedCards].map((card, i) => {
+                            {/* Unimos los datos reales de la BD para mostrarlos en el carrusel */}
+                            {[...bannedCards, ...bannedCards].map((card, i) => {
                                 const label = getRestrictionLabel(card.restriction);
                                 return (
                                     <div key={`${card._id}-${i}`} className="w-40 md:w-52 shrink-0 select-none">
@@ -189,15 +184,14 @@ export default function HomePortal() {
                                                 src={card.imgUrl || card.img} 
                                                 className="w-full h-full object-cover pointer-events-none transition-transform group-hover/card:scale-105" 
                                                 alt={card.name} 
-                                                loading="lazy"
-                                                onError={(e) => { e.target.src = "https://placehold.co/250x350/1e293b/white?text=Cargando..."; }}
+                                                onError={(e) => { e.target.src = "https://placehold.co/250x350/1e293b/white?text=Cargando+Carta..."; }}
                                             />
-                                            <div className={`absolute top-2 right-2 px-3 py-1 ${label.color} text-white text-[8px] font-black uppercase rounded-lg shadow-lg z-10 border border-white/20`}>
+                                            <div className={`absolute top-2 right-2 px-3 py-1 ${label.color} text-white text-[8px] font-black uppercase rounded-lg shadow-lg z-10`}>
                                                 {label.text}
                                             </div>
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent opacity-0 group-hover/card:opacity-100 transition-opacity flex flex-col items-center justify-end p-4 text-center pointer-events-none">
-                                                <p className="text-white text-[10px] font-black uppercase italic tracking-tighter">{card.name}</p>
-                                                <p className="text-blue-400 text-[8px] font-bold uppercase">{card.edition?.replace('_', ' ')}</p>
+                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/card:opacity-100 transition-opacity flex flex-col items-center justify-center p-4 text-center pointer-events-none">
+                                                <p className="text-white text-xs font-bold whitespace-normal">{card.name}</p>
+                                                <div className="mt-2 text-white/50"><ImageOff size={20} /></div>
                                             </div>
                                         </div>
                                     </div>
