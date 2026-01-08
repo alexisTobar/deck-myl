@@ -6,7 +6,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, L
 import BACKEND_URL from "../config";
 import { 
     Sword, ScrollText, Zap, TrendingUp, ShieldCheck, Users, ArrowRight, Heart, Star, 
-    ShoppingBag, Instagram, ExternalLink, PlusCircle, X, Camera, Sparkles, UserPlus, BarChart3, LayoutList, Lock
+    ShoppingBag, Instagram, ExternalLink, PlusCircle, X, Camera, Sparkles, UserPlus, BarChart3, LayoutGrid, Lock, AlertTriangle, ShieldAlert
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,6 +20,16 @@ export default function HomePortal() {
     const [showMetaModal, setShowMetaModal] = useState(false);
     const [showPlayerModal, setShowPlayerModal] = useState(false);
     const [newPlayerData, setNewPlayerData] = useState({ name: "", instagram: "", logo: "" });
+
+    // ✅ DATOS PARA CARRUSEL DE BANEADAS (Ejemplo con slots, puedes conectar a API luego)
+    const bannedCards = [
+        { name: "Sif", type: "Prohibida", img: "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/1.webp", color: "bg-red-500" },
+        { name: "Lugh", type: "1 Copia", img: "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/2.webp", color: "bg-orange-500" },
+        { name: "Dragón Dorado", type: "2 Copias", img: "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/3.webp", color: "bg-yellow-500" },
+        { name: "Fe sin Límite", type: "Prohibida", img: "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/4.webp", color: "bg-red-500" },
+        { name: "Ataque de Dragón", type: "1 Copia", img: "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/5.webp", color: "bg-orange-500" },
+        { name: "Eolo", type: "2 Copias", img: "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/6.webp", color: "bg-yellow-500" },
+    ];
 
     const VIKINGO_LOGO = "https://raw.githubusercontent.com/alexisTobar/cartas-pb-webp/main/vikingo.png";
     const LOGO_NEGRO = "https://raw.githubusercontent.com/alexisTobar/deck-myl-assets/main/logoletrasnegas.png";
@@ -135,6 +145,36 @@ export default function HomePortal() {
                 <FormatCard title="Imperio" desc="Metajuego actual y el pináculo del circuito competitivo." img="https://cdn.shopify.com/s/files/1/0103/3601/0303/files/bannerpreventakvm_177c3b4b-7d62-4fd8-8f0a-fa243f85e590.jpg?v=1761336400" icon={<Sword size={28} className="text-blue-600" />} onClick={() => navigate("/imperio")} delay="delay-300" />
             </motion.main>
 
+            {/* ✅ SECCIÓN NUEVA: CARRUSEL CARTAS BANEADAS/RESTRINGIDAS */}
+            <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="w-full mb-24 relative overflow-hidden bg-slate-100/50 dark:bg-white/5 py-12">
+                <div className="max-w-7xl mx-auto px-6 mb-10 flex items-center gap-3">
+                    <ShieldAlert className="text-red-500" />
+                    <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Restricciones Primer Bloque</h3>
+                </div>
+                
+                <div className="flex overflow-hidden group">
+                    <motion.div 
+                        className="flex gap-6 whitespace-nowrap"
+                        animate={{ x: [0, -1000] }}
+                        transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
+                    >
+                        {[...bannedCards, ...bannedCards].map((card, i) => (
+                            <div key={i} className="inline-block w-40 md:w-56 shrink-0">
+                                <div className="relative group/card cursor-help">
+                                    <img src={card.img} className="w-full h-auto rounded-2xl shadow-xl transition-transform group-hover/card:scale-105" alt={card.name} />
+                                    <div className={`absolute top-2 right-2 px-3 py-1 ${card.color} text-white text-[9px] font-black uppercase rounded-full shadow-lg`}>
+                                        {card.type}
+                                    </div>
+                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/card:opacity-100 transition-opacity rounded-2xl flex items-center justify-center p-4 text-center">
+                                        <p className="text-white text-xs font-bold whitespace-normal">{card.name}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </motion.div>
+                </div>
+            </motion.section>
+
             {/* TOP 10 PB */}
             <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="w-full max-w-7xl px-6 mb-24 text-center md:text-left">
                 <div className="flex items-center gap-3 mb-10 border-b border-slate-200 dark:border-white/10 pb-6">
@@ -165,7 +205,7 @@ export default function HomePortal() {
                 </div>
             </motion.section>
 
-            {/* ✅ MODAL SOLUCIONADO: RESPONSIVE NOTEBOOK Y MÓVIL */}
+            {/* MODAL DETALLES */}
             <AnimatePresence>
                 {showMetaModal && selectedMetaCard && (
                     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 md:p-6">
@@ -180,12 +220,10 @@ export default function HomePortal() {
                                 <X size={20} />
                             </button>
                             
-                            {/* Lado Imagen de Carta: Centrado y adaptado */}
                             <div className="w-full md:w-2/5 p-6 md:p-8 bg-slate-50 dark:bg-black/20 flex items-center justify-center border-b md:border-b-0 md:border-r border-white/5 flex-shrink-0">
                                 <img src={selectedMetaCard.imgUrl || selectedMetaCard.img} className="w-full max-w-[140px] sm:max-w-[180px] md:max-w-[260px] rounded-xl md:rounded-2xl shadow-2xl border-2 md:border-4 border-white dark:border-white/5" alt="card" />
                             </div>
 
-                            {/* Lado Estadísticas: Scrollable para notebooks de baja resolución */}
                             <div className="w-full md:w-3/5 p-6 md:p-10 flex flex-col overflow-y-auto custom-scrollbar">
                                 <div className="mb-6">
                                     <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Racial Distribution Analysis</span>
@@ -198,7 +236,6 @@ export default function HomePortal() {
                                         <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Presencia Global</p>
                                         <p className="text-2xl font-black text-blue-500">{selectedMetaCard.usageCount} Mazos</p>
                                     </div>
-                                    {/* Gráfico circular con ResponsiveContainer */}
                                     <div className="h-48 md:h-56 w-full">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
