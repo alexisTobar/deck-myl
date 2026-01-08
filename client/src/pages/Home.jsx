@@ -163,8 +163,8 @@ export default function HomePortal() {
                         animate={{ x: ["0%", "-50%"] }}
                         transition={{ repeat: Infinity, duration: 35, ease: "linear" }}
                     >
-                        {/* Triplicamos el contenido para un loop infinito más fluido mientras se permite el drag */}
-                        {[...bannedCards, ...bannedCards, ...bannedCards].map((card, i) => (
+                        {/* Se duplica el contenido para que el loop sea infinito sin cortes */}
+                        {[...bannedCards, ...bannedCards].map((card, i) => (
                             <div key={i} className="w-40 md:w-56 shrink-0 select-none">
                                 <div className="relative group/card bg-slate-200 dark:bg-slate-800 rounded-2xl overflow-hidden shadow-xl border border-white/5 h-full">
                                     <img 
