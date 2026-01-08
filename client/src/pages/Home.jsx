@@ -21,7 +21,7 @@ export default function HomePortal() {
     const [showPlayerModal, setShowPlayerModal] = useState(false);
     const [newPlayerData, setNewPlayerData] = useState({ name: "", instagram: "", logo: "" });
 
-    // ✅ ESTADO PARA CARTAS BANEADAS DESDE LA API
+    // ✅ ESTADO PARA CARTAS CON RESTRICCIÓN (BANEADAS/LIMITADAS)
     const [bannedCards, setBannedCards] = useState([]);
     const carouselRef = useRef(null);
 
@@ -52,13 +52,12 @@ export default function HomePortal() {
                     setImpTrending(dataImp.filter(c => c.format === 'imperio').slice(0, 10));
                 }
 
-                // ✅ 2. CARGAR CARTAS CON RESTRICCIÓN DESDE LA BASE DE DATOS (DINÁMICO)
-                const resCards = await fetch(`${BACKEND_URL}/api/cards/search?format=primer_bloque`);
+                // ✅ 2. CARGAR TODAS LAS CARTAS Y FILTRAR LAS RESTRINGIDAS SEGÚN TU JSON
+                const resCards = await fetch(`${BACKEND_URL}/api/cards`); // Ajusta esta ruta si tu endpoint de todas las cartas es distinto
                 if (resCards.ok) {
                     const allCards = await resCards.json();
-                    const dataArray = Array.isArray(allCards) ? allCards : (allCards.results || []);
-                    // Buscamos cartas que tengan el campo "restriction" definido en tu DB
-                    const restricted = dataArray.filter(c => c.restriction && c.restriction !== "none");
+                    // Filtramos: que el campo restriction exista y no sea nulo ni vacío
+                    const restricted = allCards.filter(c => c.restriction && c.restriction !== "");
                     setBannedCards(restricted);
                 }
 
@@ -129,12 +128,12 @@ export default function HomePortal() {
         }
     };
 
-    // Función para definir colores de etiquetas basados en el valor de la DB
+    // Función para definir colores de etiquetas
     const getRestrictionLabel = (type) => {
         if (type === "banned" || type === "prohibited") return { text: "Prohibida", color: "bg-red-600" };
         if (type === "limited1") return { text: "1 Copia", color: "bg-orange-500" };
         if (type === "limited2") return { text: "2 Copias", color: "bg-yellow-500 text-black" };
-        return { text: "Restringida", color: "bg-slate-600" };
+        return { text: "Restringida", color: "bg-slate-700" };
     };
 
     return (
@@ -159,41 +158,35 @@ export default function HomePortal() {
                 <FormatCard title="Imperio" desc="Metajuego actual y el pináculo del circuito competitivo." img="https://cdn.shopify.com/s/files/1/0103/3601/0303/files/bannerpreventakvm_177c3b4b-7d62-4fd8-8f0a-fa243f85e590.jpg?v=1761336400" icon={<Sword size={28} className="text-blue-600" />} onClick={() => navigate("/imperio")} delay="delay-300" />
             </motion.main>
 
-            {/* ✅ SECCIÓN REPARADA: CARRUSEL BANEADAS MANIPULABLE (TOUCH/MOUSE) */}
+            {/* ✅ CARRUSEL DE BANEADAS (UBICADO ARRIBA DEL TOP 10) */}
             {bannedCards.length > 0 && (
                 <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="w-full mb-24 relative overflow-hidden bg-slate-100/50 dark:bg-white/5 py-12">
-                    <div className="max-w-7xl mx-auto px-6 mb-10 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <ShieldAlert className="text-red-500" size={32} />
-                            <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Restricciones DAR</h3>
-                        </div>
-                        <div className="hidden md:flex items-center gap-2 text-slate-400">
-                             <ArrowRight size={16} />
-                             <span className="text-[10px] font-black uppercase tracking-widest italic">Arrastra para explorar</span>
-                        </div>
+                    <div className="max-w-7xl mx-auto px-6 mb-10 flex items-center gap-3">
+                        <ShieldAlert className="text-red-500" size={32} />
+                        <h3 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">Restricciones DAR</h3>
                     </div>
                     
                     <div className="relative flex overflow-hidden cursor-grab active:cursor-grabbing px-4" ref={carouselRef}>
                         <motion.div 
-                            className="flex gap-6 w-max"
+                            className="flex gap-8 px-8"
                             drag="x"
                             dragConstraints={carouselRef}
                             animate={{ x: ["0%", "-50%"] }}
                             transition={{ repeat: Infinity, duration: 40, ease: "linear" }}
                         >
-                            {/* Mostramos las cartas de la base de datos una a una (Duplicadas para loop infinito) */}
+                            {/* Mostramos las cartas de la base de datos que cumplen con tener "restriction" */}
                             {[...bannedCards, ...bannedCards].map((card, i) => {
                                 const label = getRestrictionLabel(card.restriction);
                                 return (
-                                    <div key={`${card._id}-${i}`} className="w-40 md:w-56 shrink-0 select-none">
-                                        <div className="relative group/card bg-slate-200 dark:bg-slate-800 rounded-3xl overflow-hidden shadow-2xl border border-white/5 aspect-[3/4.2]">
+                                    <div key={`${card._id}-${i}`} className="w-44 md:w-60 shrink-0 select-none">
+                                        <div className="relative group/card bg-slate-200 dark:bg-slate-800 rounded-[2rem] overflow-hidden shadow-2xl border border-white/10 aspect-[3/4.2]">
                                             <img 
                                                 src={card.imgUrl || card.img} 
-                                                className="w-full h-full object-cover pointer-events-none transition-transform group-hover/card:scale-105 duration-700" 
+                                                className="w-full h-full object-cover pointer-events-none transition-transform group-hover/card:scale-110 duration-700" 
                                                 alt={card.name} 
                                                 onError={(e) => { e.target.src = "https://placehold.co/300x420/1e293b/white?text=Cargando+Carta..."; }}
                                             />
-                                            <div className={`absolute top-4 right-4 px-3 py-1 ${label.color} text-white text-[9px] font-black uppercase rounded-lg shadow-lg z-10 border border-white/20`}>
+                                            <div className={`absolute top-4 right-4 px-3 py-1.5 ${label.color} text-white text-[9px] font-black uppercase rounded-xl shadow-2xl z-10 border border-white/20`}>
                                                 {label.text}
                                             </div>
                                             <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent opacity-0 group-hover/card:opacity-100 transition-opacity flex flex-col items-center justify-end p-6 text-center pointer-events-none">
@@ -423,7 +416,7 @@ function MetaCard({ card, index, onClick }) {
                     src={card.imgUrl || card.img} 
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                     alt="card" 
-                    onError={(e) => { e.target.src = "https://placehold.co/300x420/1e293b/white?text=Cargando..."; }} 
+                    onError={(e) => { e.target.src = "https://placehold.co/200x280/1e293b/white?text=Cargando..."; }} 
                 />
                 <div className="absolute bottom-2 left-2 px-2 py-1 bg-blue-600 text-white rounded-lg text-[10px] font-black shadow-lg">#{index + 1}</div>
             </div>
