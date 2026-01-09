@@ -36,7 +36,7 @@ export default function HomePortal() {
         "Híbrido": "#64748b", "Otros": "#94a3b8"
     };
 
-    // ✅ LÓGICA VISUAL PARA RESTRICCIONES (BANDA CRUZADA MEJORADA)
+    // ✅ LÓGICA VISUAL PARA RESTRICCIONES (CON TEXTO SOLICITADO)
     const getCardRestrictionStyle = (card) => {
         if (card.restriction === "banned") return { filter: "grayscale(100%)", label: "PROHIBIDA", color: "bg-red-600" };
         if (card.restriction === "limited1") return { filter: "none", label: "RESTRINGIDA A 1 COPIA", color: "bg-orange-600" };
@@ -132,7 +132,7 @@ export default function HomePortal() {
         }
     };
 
-    // ✅ COMPONENTE PARA RENDERIZAR CARRUSELES POR EDICIÓN (CORREGIDO)
+    // ✅ COMPONENTE PARA RENDERIZAR CARRUSELES POR EDICIÓN
     const EditionCarousel = ({ title, cards }) => {
         if (cards.length === 0) return null;
         return (
@@ -160,9 +160,9 @@ export default function HomePortal() {
                                             alt={card.name} 
                                             onError={(e) => { e.target.src = "https://placehold.co/300x420/1e293b/white?text=MyL"; }}
                                         />
-                                        {/* Banda Cruzada Reparada: Sin puntas fuera */}
+                                        {/* Banda Cruzada Reparada: Sin puntas fuera con texto dinámico */}
                                         <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[2rem]">
-                                            <div className={`absolute top-6 -right-12 ${style.color} text-white px-12 py-1 text-[7px] font-black uppercase tracking-tighter shadow-lg z-10 rotate-45 border-y border-white/20 text-center w-[200px]`}>
+                                            <div className={`absolute top-7 -right-14 ${style.color} text-white px-14 py-1 text-[6.5px] font-black uppercase tracking-tighter shadow-lg z-10 rotate-45 border-y border-white/20 text-center w-[220px]`}>
                                                 {style.label}
                                             </div>
                                         </div>
@@ -304,7 +304,7 @@ export default function HomePortal() {
                             <h2 className="text-4xl md:text-7xl font-black uppercase italic tracking-tighter mb-4 leading-none">Juegos <span className="text-blue-600">Vikingos</span></h2>
                             <p className="text-slate-500 dark:text-slate-400 text-lg mb-8 font-medium italic mx-auto md:mx-0">Encuentra las cartas más codiciadas y los últimos lanzamientos de Mitos y Leyendas.</p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                                <a href="https://www.juegosvikingos.cl" target="_blank" rel="noreferrer" className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase italic text-xs flex gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/30 active:scale-95 text-center">Visitar Tienda <ExternalLink size={18} /></a>
+                                <a href="https://www.juegosvikingos.cl" target="_blank" rel="noreferrer" className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase italic text-xs flex gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/30 active:scale-95 text-center"><ExternalLink size={18} /> Visitar Tienda</a>
                                 <a href="https://www.instagram.com/juegosvikingos" target="_blank" rel="noreferrer" className="px-8 py-4 bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white rounded-2xl font-black uppercase italic text-xs flex gap-2 hover:bg-slate-200 dark:hover:bg-white/10 transition-all text-center"><Instagram size={18} /> Instagram</a>
                             </div>
                         </div>
