@@ -5,7 +5,7 @@ const Card = require('../models/Card');
 // Soporta: ?q=texto & edition=slug & type=Aliado & format=primer_bloque & race=Dragón
 router.get('/search', async (req, res) => {
     try {
-        const { q, edition, type, format, race } = req.query;
+        const { q, edition, type, format, race, showInHome } = req.query;
 
         let query = {};
 
@@ -48,8 +48,13 @@ router.get('/search', async (req, res) => {
             }
         }
 
+        // ✅ FILTRO PARA EL DASHBOARD ADMIN (Ver qué cartas están en Home)
+        if (showInHome !== undefined) {
+            query.showInHome = showInHome === 'true';
+        }
+
         // --- 5. VALIDACIÓN DE FILTROS ---
-        if (!q && !edition && !type && !race) {
+        if (!q && !edition && !type && !race && showInHome === undefined) {
             return res.json([]);
         }
 
@@ -64,6 +69,22 @@ router.get('/search', async (req, res) => {
     } catch (error) {
         console.error("Error en search cards:", error);
         res.status(500).json({ error: 'Error buscando cartas en la base de datos' });
+    }
+});
+
+// ✅ NUEVA RUTA: OBTENER ESPECÍFICAMENTE LAS CARTAS MARCADAS PARA EL CARRUSEL DEL HOME
+router.get('/home-carousel', async (req, res) => {
+    try {
+        // Buscamos solo las cartas que el Admin marcó con showInHome: true
+        // Las ordenamos por actualización para que las últimas marcadas salgan primero
+        const carouselCards = await Card.find({ showInHome: true })
+            .sort({ updatedAt: -1 })
+            .lean();
+            
+        res.json(carouselCards);
+    } catch (error) {
+        console.error("Error en home-carousel route:", error);
+        res.status(500).json({ error: "Error al obtener cartas del carrusel" });
     }
 });
 
@@ -99,6 +120,7 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
+        // req.body ahora incluirá automáticamente showInHome si viene del admin mejorado
         const updatedCard = await Card.findByIdAndUpdate(req.params.id, req.body, { new: true });
         res.json(updatedCard);
     } catch (err) {

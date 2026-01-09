@@ -12,6 +12,12 @@ const GlobalCardSchema = new mongoose.Schema({
         default: 'unrestricted',
         index: true 
     },
+    // ✅ CAMPO AÑADIDO PARA CONTROLAR EL CARRUSEL DEL HOME
+    showInHome: { 
+        type: Boolean, 
+        default: false,
+        index: true 
+    },
     main_edition: { type: String, default: "" }, 
     format: { 
         type: String, 

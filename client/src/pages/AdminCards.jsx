@@ -4,7 +4,7 @@ import Swal from "sweetalert2";
 import {
     Plus, Layout, Save, X, ChevronLeft, Star, ShieldAlert,
     Search, Layers, Users, BarChart3, MessageSquare, Trash2, ShieldCheck, 
-    Activity, ShoppingBag, Moon, Sun, ExternalLink, Phone, Instagram
+    Activity, ShoppingBag, Moon, Sun, ExternalLink, Phone, Instagram, CheckCircle2
 } from "lucide-react";
 
 // ✅ CONSTANTES MANTENIDAS
@@ -41,7 +41,6 @@ const TIPOS_IMPERIO = [
     { id: "5", label: "Oro" }
 ];
 
-// ✅ RAZAS DE IMPERIO ACTUALIZADAS
 const RAZAS_IMPERIO_LIST = [
     "Caballero", "Eterno", "Héroe", "Faerie", "Dragón", "Bestia", "Guerrero", "Sacerdote", "Sombra"
 ];
@@ -69,13 +68,13 @@ export default function AdminDashboard() {
         name: "", slug: "", edition: "", edition_slug: "",
         type: "", race: "", imgUrl: "", format: "",
         cost: 0, strength: 0, ability: "", rarity: "1",
-        restriction: "unrestricted"
+        restriction: "unrestricted",
+        showInHome: false // ✅ NUEVO CAMPO PARA EL CARRUSEL
     };
 
     const [formData, setFormData] = useState(initialFormState);
     const token = localStorage.getItem("token");
 
-    // Estilo para alertas adaptable (usa las clases del sistema)
     const swalStyle = {
         background: 'var(--tw-bg-opacity)',
         confirmButtonColor: '#2563eb',
@@ -336,6 +335,22 @@ export default function AdminDashboard() {
                                 {editingCard ? "Modificar" : "Nueva Carta"}
                             </h2>
                             <form onSubmit={handleSubmit} className="space-y-4">
+                                
+                                {/* ✅ NUEVO BOTÓN PARA MOSTRAR EN CARRUSEL HOME */}
+                                <div className="p-1 bg-slate-100 dark:bg-slate-950 rounded-2xl mb-4 border border-slate-200 dark:border-white/5">
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setFormData({...formData, showInHome: !formData.showInHome})}
+                                        className={`w-full flex items-center justify-between p-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest ${formData.showInHome ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400'}`}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            {formData.showInHome ? <CheckCircle2 size={14}/> : <X size={14}/>}
+                                            {formData.showInHome ? "Visible en Home" : "Oculta en Home"}
+                                        </div>
+                                        <span className="text-[8px] opacity-60">HOME CAROUSEL</span>
+                                    </button>
+                                </div>
+
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black text-slate-500 uppercase ml-2">Nombre</label>
                                     <input type="text" className="w-full p-3 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl outline-none border border-slate-200 dark:border-white/5 font-bold focus:border-orange-500" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
@@ -401,6 +416,14 @@ export default function AdminDashboard() {
                                     {cartasFiltradas.map(c => (
                                         <div key={c._id} className="bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-white/5 group relative overflow-hidden shadow-2xl hover:border-blue-500/50 transition-all">
                                             <img src={getImg(c)} className="w-full h-auto rounded-xl transition-transform group-hover:scale-105" alt={c.name} />
+                                            
+                                            {/* ✅ INDICADOR VISUAL SI ESTÁ EN EL HOME */}
+                                            {c.showInHome && (
+                                                <div className="absolute top-3 left-3 bg-blue-600 p-1.5 rounded-lg text-white shadow-xl z-10 border border-white/20">
+                                                    <Star size={10} fill="currentColor" />
+                                                </div>
+                                            )}
+
                                             <div className="mt-2 text-center pb-2 px-1">
                                                 <p className="text-[10px] font-black truncate uppercase text-slate-900 dark:text-white tracking-tighter">{c.name}</p>
                                                 <p className="text-[8px] text-slate-500 font-bold uppercase">{c.edition_slug || c.edition}</p>
@@ -409,7 +432,7 @@ export default function AdminDashboard() {
                                             <div className="absolute inset-0 bg-slate-950/90 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-all duration-300 backdrop-blur-sm">
                                                 <button onClick={() => {
                                                     setEditingCard(c);
-                                                    setFormData({ ...c, imgUrl: getImg(c), restriction: c.restriction || "unrestricted", edition: c.edition || c.edition_slug, race: c.race || "" });
+                                                    setFormData({ ...c, imgUrl: getImg(c), restriction: c.restriction || "unrestricted", edition: c.edition || c.edition_slug, race: c.race || "", showInHome: c.showInHome || false });
                                                     window.scrollTo({ top: 0, behavior: 'smooth' });
                                                 }} className="bg-blue-600 p-3 rounded-full text-white shadow-xl hover:scale-110 transition-transform">
                                                     <Layout size={18} />
@@ -423,6 +446,7 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
+                {/* RESTO DE TABS SE MANTIENEN IGUAL... */}
                 {activeTab === "users" && (
                     <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/5 p-8 shadow-2xl">
                         <h2 className="text-2xl font-black uppercase italic mb-8 text-purple-500 flex items-center gap-3">
