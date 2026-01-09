@@ -36,7 +36,7 @@ export default function HomePortal() {
         "Híbrido": "#64748b", "Otros": "#94a3b8"
     };
 
-    // ✅ LÓGICA VISUAL PARA RESTRICCIONES (REPARADA CON TEXTOS LARGOS Y BANDA RECORTADA)
+    // ✅ LÓGICA VISUAL PARA RESTRICCIONES REPARADA
     const getCardRestrictionStyle = (card) => {
         if (card.restriction === "banned") return { filter: "grayscale(100%)", label: "PROHIBIDA", color: "bg-red-600" };
         if (card.restriction === "limited1") return { filter: "none", label: "RESTRINGIDA A 1 COPIA", color: "bg-orange-600" };
@@ -132,42 +132,39 @@ export default function HomePortal() {
         }
     };
 
-    // ✅ COMPONENTE PARA RENDERIZAR CARRUSELES POR EDICIÓN
+    // ✅ COMPONENTE PARA RENDERIZAR CARRUSELES POR EDICIÓN REPARADO
     const EditionCarousel = ({ title, cards }) => {
         if (cards.length === 0) return null;
         return (
-            <div className="w-full mb-16 overflow-hidden">
+            <div className="w-full mb-12">
                 <div className="max-w-7xl mx-auto px-6 mb-6">
-                    <h4 className="text-xl font-black text-blue-600 dark:text-blue-400 uppercase italic tracking-tighter border-l-4 border-blue-600 pl-3">{title}</h4>
+                    <h4 className="text-lg font-black text-blue-600 dark:text-blue-400 uppercase italic tracking-tighter border-l-4 border-blue-600 pl-3">{title}</h4>
                 </div>
                 <div className="relative flex overflow-hidden cursor-grab active:cursor-grabbing px-4">
                     <motion.div 
-                        className="flex gap-8"
+                        className="flex gap-10 px-10 py-4"
                         drag="x"
-                        dragConstraints={{ right: 0, left: -3000 }}
-                        animate={{ x: ["0%", "-20%"] }}
-                        transition={{ repeat: Infinity, duration: 50, ease: "linear" }}
+                        dragConstraints={{ right: 0, left: -2000 }}
+                        animate={{ x: ["0%", "-15%"] }}
+                        transition={{ repeat: Infinity, duration: 60, ease: "linear" }}
                     >
-                        {[...cards, ...cards, ...cards].map((card, i) => {
+                        {[...cards, ...cards].map((card, i) => {
                             const style = getCardRestrictionStyle(card);
                             return (
-                                <div key={`${card._id}-${i}`} className="w-40 md:w-56 shrink-0 select-none">
+                                <div key={`${card._id}-${i}`} className="w-36 md:w-52 shrink-0 select-none">
                                     <div className="relative group bg-slate-200 dark:bg-slate-800 rounded-[2rem] overflow-hidden shadow-2xl border border-white/10 aspect-[3/4.2]">
                                         <img 
                                             src={card.imgUrl || card.img} 
                                             style={{ filter: style.filter }}
                                             className="w-full h-full object-cover pointer-events-none transition-transform group-hover:scale-105 duration-700" 
                                             alt={card.name} 
-                                            onError={(e) => { e.target.src = "https://placehold.co/300x420/1e293b/white?text=Imagen+No+Disponible"; }}
+                                            onError={(e) => { e.target.src = "https://placehold.co/300x420/1e293b/white?text=Cargando..."; }}
                                         />
-                                        {/* Banda Cruzada Recortada con Texto de 1 o 2 copias */}
-                                        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[2rem]">
-                                            <div className={`absolute top-7 -right-14 ${style.color} text-white px-14 py-1 text-[6.5px] font-black uppercase tracking-tighter shadow-lg z-10 rotate-45 border-y border-white/20 text-center w-[220px]`}>
+                                        {/* Banda Cruzada Recortada (Sin puntas afuera) */}
+                                        <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-[2rem]">
+                                            <div className={`absolute top-7 -right-16 ${style.color} text-white px-10 py-1 text-[7px] font-black uppercase tracking-tighter shadow-lg z-10 rotate-45 border-y border-white/20 text-center w-[240px]`}>
                                                 {style.label}
                                             </div>
-                                        </div>
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-end p-6 text-center pointer-events-none">
-                                            <p className="text-white text-xs font-black uppercase italic tracking-tighter leading-none">{card.name}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -206,7 +203,7 @@ export default function HomePortal() {
                 <section className="w-full mb-24 py-12 bg-slate-100/50 dark:bg-white/5 border-y border-slate-200 dark:border-white/5 relative">
                     <div className="max-w-7xl mx-auto px-6 mb-12 flex items-center gap-3">
                         <ShieldAlert className="text-red-500" size={32} />
-                        <h3 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic text-center md:text-left">Lista de Restricciones DAR</h3>
+                        <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Restricciones DAR</h3>
                     </div>
                     
                     <EditionCarousel title="Espada Sagrada" cards={bannedCards.filter(c => c.edition_slug === "espada_sagrada" || c.edition === "espada_sagrada")} />
@@ -238,7 +235,7 @@ export default function HomePortal() {
                     <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Top 10 Imperio</h3>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6">
-                    {loading ? [...Array(10)].map((_, n) => <div key={`imp-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />) : 
+                    {loading ? [...Array(10)].map((_, n) => <div key={`iml-${n}`} className="h-48 md:h-64 bg-slate-800/20 rounded-3xl animate-pulse" />) : 
                         impTrending.map((card, idx) => (
                             <MetaCard key={`imp-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
                         ))
@@ -284,6 +281,18 @@ export default function HomePortal() {
                                                 <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', paddingTop: '10px' }} />
                                             </PieChart>
                                         </ResponsiveContainer>
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2 text-slate-400 border-t border-white/5 pt-6">
+                                        <LayoutList size={14} /> <span className="text-[10px] font-black uppercase tracking-widest">Fuentes Estratégicas:</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 pb-6">
+                                        {selectedMetaCard.featuredDecks?.map((deck, i) => (
+                                            <button key={i} onClick={() => goToCommunityDeck(deck)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase italic transition-all border flex items-center gap-2 ${deck.isPublic ? 'bg-green-500/10 border-green-500/30 text-green-500 hover:bg-green-500 hover:text-white cursor-pointer active:scale-95' : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 cursor-not-allowed opacity-60'}`}>
+                                                {deck.name} {deck.isPublic && <ArrowRight size={10} />} {!deck.isPublic && <Lock size={10} />}
+                                            </button>
+                                        )) || <p className="text-[9px] text-slate-600 italic">No hay mazos vinculados</p>}
                                     </div>
                                 </div>
                             </div>
