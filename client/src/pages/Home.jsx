@@ -36,7 +36,7 @@ export default function HomePortal() {
         "Híbrido": "#64748b", "Otros": "#94a3b8"
     };
 
-    // ✅ LÓGICA VISUAL PARA RESTRICCIONES
+    // ✅ LÓGICA VISUAL PARA RESTRICCIONES (PARA EL CARRUSEL)
     const getCardRestrictionStyle = (card) => {
         if (card.restriction === "banned") return { filter: "grayscale(100%)", label: "BAN", color: "bg-red-600" };
         if (card.restriction === "limited1") return { filter: "none", label: "1", color: "bg-orange-600" };
@@ -59,7 +59,7 @@ export default function HomePortal() {
                     setImpTrending(dataImp.filter(c => c.format === 'imperio').slice(0, 10));
                 }
 
-                // ✅ NUEVA CARGA: CARTAS MARCADAS POR ADMIN (CARRUSEL)
+                // ✅ CARGA DE CARTAS MARCADAS DESDE ADMIN PARA EL CARRUSEL
                 const resCarousel = await fetch(`${BACKEND_URL}/api/cards/home-carousel`);
                 if (resCarousel.ok) {
                     setBannedCards(await resCarousel.json());
@@ -154,7 +154,7 @@ export default function HomePortal() {
                 <FormatCard title="Imperio" desc="Metajuego actual y el pináculo del circuito competitivo." img="https://cdn.shopify.com/s/files/1/0103/3601/0303/files/bannerpreventakvm_177c3b4b-7d62-4fd8-8f0a-fa243f85e590.jpg?v=1761336400" icon={<Sword size={28} className="text-blue-600" />} onClick={() => navigate("/imperio")} delay="delay-300" />
             </motion.main>
 
-            {/* ✅ SECCIÓN MEJORADA: CARRUSEL DE RESTRICCIONES (CON DRAG Y DATOS DE ADMIN) */}
+            {/* ✅ SECCIÓN DINÁMICA: CARRUSEL DE RESTRICCIONES (ADMIN CONTROLLED) */}
             {bannedCards.length > 0 && (
                 <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="w-full mb-24 relative overflow-hidden bg-slate-100/50 dark:bg-white/5 py-12 border-y border-slate-200 dark:border-white/5">
                     <div className="max-w-7xl mx-auto px-6 mb-10 flex items-center gap-3">
@@ -180,7 +180,7 @@ export default function HomePortal() {
                                                 style={{ filter: style.filter }}
                                                 className="w-full h-full object-cover pointer-events-none transition-transform group-hover/card:scale-110 duration-700" 
                                                 alt={card.name} 
-                                                onError={(e) => { e.target.src = "https://placehold.co/300x420/1e293b/white?text=Imagen+No+Cargada"; }}
+                                                onError={(e) => { e.target.src = "https://placehold.co/300x420/1e293b/white?text=Cargando..."; }}
                                             />
                                             <div className={`absolute top-4 right-4 px-3 py-1.5 ${style.color} text-white text-[9px] font-black uppercase rounded-xl shadow-2xl z-10 border border-white/20`}>
                                                 {style.label}
@@ -228,7 +228,7 @@ export default function HomePortal() {
                 </div>
             </motion.section>
 
-            {/* MODAL DETALLES */}
+            {/* ✅ MODAL SOLUCIONADO: RESPONSIVE NOTEBOOK Y MÓVIL */}
             <AnimatePresence>
                 {showMetaModal && selectedMetaCard && (
                     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 md:p-6">
@@ -243,10 +243,12 @@ export default function HomePortal() {
                                 <X size={20} />
                             </button>
                             
+                            {/* Lado Imagen de Carta: Centrado y adaptado */}
                             <div className="w-full md:w-2/5 p-6 md:p-8 bg-slate-50 dark:bg-black/20 flex items-center justify-center border-b md:border-b-0 md:border-r border-white/5 flex-shrink-0">
                                 <img src={selectedMetaCard.imgUrl || selectedMetaCard.img} className="w-full max-w-[140px] sm:max-w-[180px] md:max-w-[260px] rounded-xl md:rounded-2xl shadow-2xl border-2 md:border-4 border-white dark:border-white/5" alt="card" />
                             </div>
 
+                            {/* Lado Estadísticas: Scrollable para notebooks de baja resolución */}
                             <div className="w-full md:w-3/5 p-6 md:p-10 flex flex-col overflow-y-auto custom-scrollbar">
                                 <div className="mb-6">
                                     <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Racial Distribution Analysis</span>
@@ -259,25 +261,46 @@ export default function HomePortal() {
                                         <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Presencia Global</p>
                                         <p className="text-2xl font-black text-blue-500">{selectedMetaCard.usageCount} Mazos</p>
                                     </div>
+                                    {/* Gráfico circular con ResponsiveContainer */}
                                     <div className="h-48 md:h-56 w-full">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
-                                                <Pie data={getChartData(selectedMetaCard)} innerRadius={35} outerRadius={55} paddingAngle={5} dataKey="value" stroke="none" label={renderCustomizedLabel} labelLine={false}>
+                                                <Pie 
+                                                    data={getChartData(selectedMetaCard)} 
+                                                    innerRadius={35} 
+                                                    outerRadius={55} 
+                                                    paddingAngle={5} 
+                                                    dataKey="value" 
+                                                    stroke="none"
+                                                    label={renderCustomizedLabel}
+                                                    labelLine={false}
+                                                >
                                                     {getChartData(selectedMetaCard).map((e, i) => <Cell key={i} fill={e.color} />)}
                                                 </Pie>
-                                                <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '11px', color: '#fff', fontWeight: 'bold' }} itemStyle={{ color: '#fff' }} />
+                                                <RechartsTooltip 
+                                                    contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '11px', color: '#fff', fontWeight: 'bold' }} 
+                                                    itemStyle={{ color: '#fff' }}
+                                                />
                                                 <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', paddingTop: '10px' }} />
                                             </PieChart>
                                         </ResponsiveContainer>
                                     </div>
                                 </div>
+
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-2 text-slate-400 border-t border-white/5 pt-6">
                                         <LayoutList size={14} /> <span className="text-[10px] font-black uppercase tracking-widest">Fuentes Estratégicas:</span>
                                     </div>
                                     <div className="flex flex-wrap gap-2 pb-6">
                                         {selectedMetaCard.featuredDecks?.map((deck, i) => (
-                                            <button key={i} onClick={() => goToCommunityDeck(deck)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase italic transition-all border flex items-center gap-2 ${deck.isPublic ? 'bg-green-500/10 border-green-500/30 text-green-500 hover:bg-green-500 hover:text-white cursor-pointer active:scale-95' : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 cursor-not-allowed opacity-60'}`}>
+                                            <button 
+                                                key={i} 
+                                                onClick={() => goToCommunityDeck(deck)}
+                                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase italic transition-all border flex items-center gap-2
+                                                    ${deck.isPublic 
+                                                        ? 'bg-green-500/10 border-green-500/30 text-green-500 hover:bg-green-500 hover:text-white cursor-pointer active:scale-95' 
+                                                        : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 cursor-not-allowed opacity-60'}`}
+                                            >
                                                 {deck.name} {deck.isPublic && <ArrowRight size={10} />} {!deck.isPublic && <Lock size={10} />}
                                             </button>
                                         )) || <p className="text-[9px] text-slate-600 italic">No hay mazos vinculados</p>}
