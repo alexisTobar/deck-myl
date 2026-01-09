@@ -36,12 +36,12 @@ export default function HomePortal() {
         "Híbrido": "#64748b", "Otros": "#94a3b8"
     };
 
-    // ✅ LÓGICA VISUAL PARA RESTRICCIONES (CON NÚMEROS Y BANDA CRUZADA)
+    // ✅ LÓGICA VISUAL PARA RESTRICCIONES (BANDA CRUZADA MEJORADA)
     const getCardRestrictionStyle = (card) => {
-        if (card.restriction === "banned") return { filter: "grayscale(100%)", label: "BAN", color: "bg-red-600" };
-        if (card.restriction === "limited1") return { filter: "none", label: "1", color: "bg-orange-600" };
-        if (card.restriction === "limited2") return { filter: "none", label: "2", color: "bg-yellow-500 text-black" };
-        return { filter: "none", label: "!", color: "bg-blue-600" };
+        if (card.restriction === "banned") return { filter: "grayscale(100%)", label: "PROHIBIDA", color: "bg-red-600" };
+        if (card.restriction === "limited1") return { filter: "none", label: "RESTRINGIDA A 1 COPIA", color: "bg-orange-600" };
+        if (card.restriction === "limited2") return { filter: "none", label: "RESTRINGIDA A 2 COPIAS", color: "bg-yellow-500 text-black" };
+        return { filter: "none", label: "RESTRINGIDA", color: "bg-blue-600" };
     };
 
     useEffect(() => {
@@ -132,37 +132,42 @@ export default function HomePortal() {
         }
     };
 
-    // ✅ COMPONENTE PARA RENDERIZAR CARRUSELES POR EDICIÓN
+    // ✅ COMPONENTE PARA RENDERIZAR CARRUSELES POR EDICIÓN (CORREGIDO)
     const EditionCarousel = ({ title, cards }) => {
         if (cards.length === 0) return null;
         return (
-            <div className="w-full mb-12">
+            <div className="w-full mb-16 overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6 mb-6">
-                    <h4 className="text-lg font-black text-blue-600 dark:text-blue-400 uppercase italic tracking-tighter border-l-4 border-blue-600 pl-3">{title}</h4>
+                    <h4 className="text-xl font-black text-blue-600 dark:text-blue-400 uppercase italic tracking-tighter border-l-4 border-blue-600 pl-3">{title}</h4>
                 </div>
                 <div className="relative flex overflow-hidden cursor-grab active:cursor-grabbing px-4">
                     <motion.div 
-                        className="flex gap-6"
+                        className="flex gap-8"
                         drag="x"
-                        dragConstraints={{ right: 0, left: -2000 }}
-                        animate={{ x: ["0%", "-15%"] }}
-                        transition={{ repeat: Infinity, duration: 60, ease: "linear" }}
+                        dragConstraints={{ right: 0, left: -3000 }}
+                        animate={{ x: ["0%", "-20%"] }}
+                        transition={{ repeat: Infinity, duration: 50, ease: "linear" }}
                     >
-                        {[...cards, ...cards].map((card, i) => {
+                        {[...cards, ...cards, ...cards].map((card, i) => {
                             const style = getCardRestrictionStyle(card);
                             return (
-                                <div key={`${card._id}-${i}`} className="w-32 md:w-44 shrink-0 select-none">
-                                    <div className="relative group bg-slate-200 dark:bg-slate-800 rounded-2xl overflow-hidden shadow-xl border border-white/10 aspect-[3/4.2]">
+                                <div key={`${card._id}-${i}`} className="w-40 md:w-56 shrink-0 select-none">
+                                    <div className="relative group bg-slate-200 dark:bg-slate-800 rounded-[2rem] overflow-hidden shadow-2xl border border-white/10 aspect-[3/4.2]">
                                         <img 
                                             src={card.imgUrl || card.img} 
                                             style={{ filter: style.filter }}
                                             className="w-full h-full object-cover pointer-events-none transition-transform group-hover:scale-105 duration-700" 
                                             alt={card.name} 
-                                            onError={(e) => { e.target.src = "https://placehold.co/300x420/1e293b/white?text=Cargando..."; }}
+                                            onError={(e) => { e.target.src = "https://placehold.co/300x420/1e293b/white?text=MyL"; }}
                                         />
-                                        {/* Banda Cruzada Elegante */}
-                                        <div className={`absolute top-0 right-0 ${style.color} text-white px-7 py-1 text-[9px] font-black uppercase tracking-tighter shadow-lg z-10 rotate-45 translate-x-5 translate-y-2 border-b border-white/30`}>
-                                            {style.label}
+                                        {/* Banda Cruzada Reparada: Sin puntas fuera */}
+                                        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[2rem]">
+                                            <div className={`absolute top-6 -right-12 ${style.color} text-white px-12 py-1 text-[7px] font-black uppercase tracking-tighter shadow-lg z-10 rotate-45 border-y border-white/20 text-center w-[200px]`}>
+                                                {style.label}
+                                            </div>
+                                        </div>
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-end p-6 text-center pointer-events-none">
+                                            <p className="text-white text-xs font-black uppercase italic tracking-tighter leading-none">{card.name}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -201,7 +206,7 @@ export default function HomePortal() {
                 <section className="w-full mb-24 py-12 bg-slate-100/50 dark:bg-white/5 border-y border-slate-200 dark:border-white/5 relative">
                     <div className="max-w-7xl mx-auto px-6 mb-12 flex items-center gap-3">
                         <ShieldAlert className="text-red-500" size={32} />
-                        <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Restricciones DAR</h3>
+                        <h3 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic text-center md:text-left">Lista de Restricciones DAR</h3>
                     </div>
                     
                     <EditionCarousel title="Espada Sagrada" cards={bannedCards.filter(c => c.edition_slug === "espada_sagrada" || c.edition === "espada_sagrada")} />
@@ -233,7 +238,7 @@ export default function HomePortal() {
                     <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Top 10 Imperio</h3>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6">
-                    {loading ? [...Array(10)].map((_, n) => <div key={`iml-${n}`} className="h-48 md:h-64 bg-slate-800/20 rounded-3xl animate-pulse" />) : 
+                    {loading ? [...Array(10)].map((_, n) => <div key={`imp-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />) : 
                         impTrending.map((card, idx) => (
                             <MetaCard key={`imp-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
                         ))
