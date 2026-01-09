@@ -36,11 +36,11 @@ export default function HomePortal() {
         "Híbrido": "#64748b", "Otros": "#94a3b8"
     };
 
-    // ✅ LÓGICA VISUAL PARA RESTRICCIONES (REPARADA SEGÚN SOLICITUD)
+    // ✅ LÓGICA VISUAL PARA RESTRICCIONES (CON NÚMEROS Y BANDA CRUZADA)
     const getCardRestrictionStyle = (card) => {
-        if (card.restriction === "banned") return { filter: "grayscale(100%)", label: "PROHIBIDA", color: "bg-red-600" };
-        if (card.restriction === "limited1") return { filter: "none", label: "1 COPIA", color: "bg-orange-600" };
-        if (card.restriction === "limited2") return { filter: "none", label: "2 COPIAS", color: "bg-yellow-500 text-black" };
+        if (card.restriction === "banned") return { filter: "grayscale(100%)", label: "BAN", color: "bg-red-600" };
+        if (card.restriction === "limited1") return { filter: "none", label: "1", color: "bg-orange-600" };
+        if (card.restriction === "limited2") return { filter: "none", label: "2", color: "bg-yellow-500 text-black" };
         return { filter: "none", label: "!", color: "bg-blue-600" };
     };
 
@@ -132,7 +132,7 @@ export default function HomePortal() {
         }
     };
 
-    // ✅ COMPONENTE INTERNO PARA EL CARRUSEL POR EDICIÓN
+    // ✅ COMPONENTE PARA RENDERIZAR CARRUSELES POR EDICIÓN
     const EditionCarousel = ({ title, cards }) => {
         if (cards.length === 0) return null;
         return (
@@ -145,13 +145,13 @@ export default function HomePortal() {
                         className="flex gap-6"
                         drag="x"
                         dragConstraints={{ right: 0, left: -2000 }}
-                        animate={{ x: ["0%", "-30%"] }}
-                        transition={{ repeat: Infinity, duration: 50, ease: "linear" }}
+                        animate={{ x: ["0%", "-15%"] }}
+                        transition={{ repeat: Infinity, duration: 60, ease: "linear" }}
                     >
                         {[...cards, ...cards].map((card, i) => {
                             const style = getCardRestrictionStyle(card);
                             return (
-                                <div key={`${card._id}-${i}`} className="w-36 md:w-48 shrink-0 select-none">
+                                <div key={`${card._id}-${i}`} className="w-32 md:w-44 shrink-0 select-none">
                                     <div className="relative group bg-slate-200 dark:bg-slate-800 rounded-2xl overflow-hidden shadow-xl border border-white/10 aspect-[3/4.2]">
                                         <img 
                                             src={card.imgUrl || card.img} 
@@ -160,12 +160,9 @@ export default function HomePortal() {
                                             alt={card.name} 
                                             onError={(e) => { e.target.src = "https://placehold.co/300x420/1e293b/white?text=Cargando..."; }}
                                         />
-                                        {/* Badge Cruzado NO INVASIVO */}
-                                        <div className={`absolute top-0 right-0 ${style.color} text-white px-8 py-1 text-[8px] font-black uppercase tracking-widest shadow-lg z-10 rotate-45 translate-x-6 translate-y-3 border-b border-white/20`}>
+                                        {/* Banda Cruzada Elegante */}
+                                        <div className={`absolute top-0 right-0 ${style.color} text-white px-7 py-1 text-[9px] font-black uppercase tracking-tighter shadow-lg z-10 rotate-45 translate-x-5 translate-y-2 border-b border-white/30`}>
                                             {style.label}
-                                        </div>
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center pointer-events-none">
-                                            <p className="text-white text-[10px] font-black uppercase leading-tight">{card.name}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -204,32 +201,13 @@ export default function HomePortal() {
                 <section className="w-full mb-24 py-12 bg-slate-100/50 dark:bg-white/5 border-y border-slate-200 dark:border-white/5 relative">
                     <div className="max-w-7xl mx-auto px-6 mb-12 flex items-center gap-3">
                         <ShieldAlert className="text-red-500" size={32} />
-                        <h3 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Restricciones DAR por Edición</h3>
+                        <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Restricciones DAR</h3>
                     </div>
                     
-                    {/* Carrusel 1: Espada Sagrada */}
-                    <EditionCarousel 
-                        title="Espada Sagrada" 
-                        cards={bannedCards.filter(c => c.edition_slug === "espada_sagrada" || c.edition === "espada_sagrada")} 
-                    />
-                    
-                    {/* Carrusel 2: Helénica */}
-                    <EditionCarousel 
-                        title="Helénica" 
-                        cards={bannedCards.filter(c => c.edition_slug === "helenica" || c.edition === "helenica")} 
-                    />
-                    
-                    {/* Carrusel 3: Hijos de Daana */}
-                    <EditionCarousel 
-                        title="Hijos de Daana" 
-                        cards={bannedCards.filter(c => c.edition_slug === "hijos_de_daana" || c.edition === "hijos_de_daana")} 
-                    />
-                    
-                    {/* Carrusel 4: Dominios de Ra */}
-                    <EditionCarousel 
-                        title="Dominios de Ra" 
-                        cards={bannedCards.filter(c => c.edition_slug === "dominios_de_ra" || c.edition === "dominios_de_ra")} 
-                    />
+                    <EditionCarousel title="Espada Sagrada" cards={bannedCards.filter(c => c.edition_slug === "espada_sagrada" || c.edition === "espada_sagrada")} />
+                    <EditionCarousel title="Helénica" cards={bannedCards.filter(c => c.edition_slug === "helenica" || c.edition === "helenica")} />
+                    <EditionCarousel title="Hijos de Daana" cards={bannedCards.filter(c => c.edition_slug === "hijos_de_daana" || c.edition === "hijos_de_daana")} />
+                    <EditionCarousel title="Dominios de Ra" cards={bannedCards.filter(c => c.edition_slug === "dominios_de_ra" || c.edition === "dominios_de_ra")} />
                 </section>
             )}
 
@@ -255,7 +233,7 @@ export default function HomePortal() {
                     <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Top 10 Imperio</h3>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6">
-                    {loading ? [...Array(10)].map((_, n) => <div key={`imp-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />) : 
+                    {loading ? [...Array(10)].map((_, n) => <div key={`iml-${n}`} className="h-48 md:h-64 bg-slate-800/20 rounded-3xl animate-pulse" />) : 
                         impTrending.map((card, idx) => (
                             <MetaCard key={`imp-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
                         ))
@@ -263,7 +241,7 @@ export default function HomePortal() {
                 </div>
             </motion.section>
 
-            {/* ✅ MODAL SOLUCIONADO: RESPONSIVE NOTEBOOK Y MÓVIL */}
+            {/* MODAL DETALLES */}
             <AnimatePresence>
                 {showMetaModal && selectedMetaCard && (
                     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 md:p-6">
@@ -301,18 +279,6 @@ export default function HomePortal() {
                                                 <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', paddingTop: '10px' }} />
                                             </PieChart>
                                         </ResponsiveContainer>
-                                    </div>
-                                </div>
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-2 text-slate-400 border-t border-white/5 pt-6">
-                                        <LayoutList size={14} /> <span className="text-[10px] font-black uppercase tracking-widest">Fuentes Estratégicas:</span>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2 pb-6">
-                                        {selectedMetaCard.featuredDecks?.map((deck, i) => (
-                                            <button key={i} onClick={() => goToCommunityDeck(deck)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase italic transition-all border flex items-center gap-2 ${deck.isPublic ? 'bg-green-500/10 border-green-500/30 text-green-500 hover:bg-green-500 hover:text-white cursor-pointer active:scale-95' : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 cursor-not-allowed opacity-60'}`}>
-                                                {deck.name} {deck.isPublic && <ArrowRight size={10} />} {!deck.isPublic && <Lock size={10} />}
-                                            </button>
-                                        )) || <p className="text-[9px] text-slate-600 italic">No hay mazos vinculados</p>}
                                     </div>
                                 </div>
                             </div>
