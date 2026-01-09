@@ -36,11 +36,11 @@ export default function HomePortal() {
         "Híbrido": "#64748b", "Otros": "#94a3b8"
     };
 
-    // ✅ LÓGICA VISUAL PARA RESTRICCIONES (PARA EL CARRUSEL)
+    // ✅ LÓGICA VISUAL PARA RESTRICCIONES (REPARADA SEGÚN SOLICITUD)
     const getCardRestrictionStyle = (card) => {
-        if (card.restriction === "banned") return { filter: "grayscale(100%)", label: "BAN", color: "bg-red-600" };
-        if (card.restriction === "limited1") return { filter: "none", label: "1", color: "bg-orange-600" };
-        if (card.restriction === "limited2") return { filter: "none", label: "2", color: "bg-yellow-500 text-black" };
+        if (card.restriction === "banned") return { filter: "grayscale(100%)", label: "PROHIBIDA", color: "bg-red-600" };
+        if (card.restriction === "limited1") return { filter: "none", label: "1 COPIA", color: "bg-orange-600" };
+        if (card.restriction === "limited2") return { filter: "none", label: "2 COPIAS", color: "bg-yellow-500 text-black" };
         return { filter: "none", label: "!", color: "bg-blue-600" };
     };
 
@@ -132,6 +132,51 @@ export default function HomePortal() {
         }
     };
 
+    // ✅ COMPONENTE INTERNO PARA EL CARRUSEL POR EDICIÓN
+    const EditionCarousel = ({ title, cards }) => {
+        if (cards.length === 0) return null;
+        return (
+            <div className="w-full mb-12">
+                <div className="max-w-7xl mx-auto px-6 mb-6">
+                    <h4 className="text-lg font-black text-blue-600 dark:text-blue-400 uppercase italic tracking-tighter border-l-4 border-blue-600 pl-3">{title}</h4>
+                </div>
+                <div className="relative flex overflow-hidden cursor-grab active:cursor-grabbing px-4">
+                    <motion.div 
+                        className="flex gap-6"
+                        drag="x"
+                        dragConstraints={{ right: 0, left: -2000 }}
+                        animate={{ x: ["0%", "-30%"] }}
+                        transition={{ repeat: Infinity, duration: 50, ease: "linear" }}
+                    >
+                        {[...cards, ...cards].map((card, i) => {
+                            const style = getCardRestrictionStyle(card);
+                            return (
+                                <div key={`${card._id}-${i}`} className="w-36 md:w-48 shrink-0 select-none">
+                                    <div className="relative group bg-slate-200 dark:bg-slate-800 rounded-2xl overflow-hidden shadow-xl border border-white/10 aspect-[3/4.2]">
+                                        <img 
+                                            src={card.imgUrl || card.img} 
+                                            style={{ filter: style.filter }}
+                                            className="w-full h-full object-cover pointer-events-none transition-transform group-hover:scale-105 duration-700" 
+                                            alt={card.name} 
+                                            onError={(e) => { e.target.src = "https://placehold.co/300x420/1e293b/white?text=Cargando..."; }}
+                                        />
+                                        {/* Badge Cruzado NO INVASIVO */}
+                                        <div className={`absolute top-0 right-0 ${style.color} text-white px-8 py-1 text-[8px] font-black uppercase tracking-widest shadow-lg z-10 rotate-45 translate-x-6 translate-y-3 border-b border-white/20`}>
+                                            {style.label}
+                                        </div>
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center pointer-events-none">
+                                            <p className="text-white text-[10px] font-black uppercase leading-tight">{card.name}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </motion.div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-[#0A0C10] dark:via-[#0f172a] dark:to-[#0A0C10] flex flex-col items-center font-sans text-slate-900 dark:text-white selection:bg-blue-100 dark:selection:bg-blue-900/30 overflow-x-hidden transition-colors duration-500">
             
@@ -154,48 +199,38 @@ export default function HomePortal() {
                 <FormatCard title="Imperio" desc="Metajuego actual y el pináculo del circuito competitivo." img="https://cdn.shopify.com/s/files/1/0103/3601/0303/files/bannerpreventakvm_177c3b4b-7d62-4fd8-8f0a-fa243f85e590.jpg?v=1761336400" icon={<Sword size={28} className="text-blue-600" />} onClick={() => navigate("/imperio")} delay="delay-300" />
             </motion.main>
 
-            {/* ✅ SECCIÓN DINÁMICA: CARRUSEL DE RESTRICCIONES (ADMIN CONTROLLED) */}
+            {/* ✅ SECCIÓN MEJORADA: 4 CARRUSELES POR EDICIÓN */}
             {bannedCards.length > 0 && (
-                <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="w-full mb-24 relative overflow-hidden bg-slate-100/50 dark:bg-white/5 py-12 border-y border-slate-200 dark:border-white/5">
-                    <div className="max-w-7xl mx-auto px-6 mb-10 flex items-center gap-3">
+                <section className="w-full mb-24 py-12 bg-slate-100/50 dark:bg-white/5 border-y border-slate-200 dark:border-white/5 relative">
+                    <div className="max-w-7xl mx-auto px-6 mb-12 flex items-center gap-3">
                         <ShieldAlert className="text-red-500" size={32} />
-                        <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Restricciones DAR</h3>
+                        <h3 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Restricciones DAR por Edición</h3>
                     </div>
                     
-                    <div className="relative flex overflow-hidden cursor-grab active:cursor-grabbing px-4" ref={carouselRef}>
-                        <motion.div 
-                            className="flex gap-8"
-                            drag="x"
-                            dragConstraints={carouselRef}
-                            animate={{ x: ["0%", "-50%"] }}
-                            transition={{ repeat: Infinity, duration: 40, ease: "linear" }}
-                        >
-                            {[...bannedCards, ...bannedCards].map((card, i) => {
-                                const style = getCardRestrictionStyle(card);
-                                return (
-                                    <div key={`${card._id}-${i}`} className="w-44 md:w-60 shrink-0 select-none">
-                                        <div className="relative group/card bg-slate-200 dark:bg-slate-800 rounded-[2rem] overflow-hidden shadow-2xl border border-white/10 aspect-[3/4.2]">
-                                            <img 
-                                                src={card.imgUrl || card.img} 
-                                                style={{ filter: style.filter }}
-                                                className="w-full h-full object-cover pointer-events-none transition-transform group-hover/card:scale-110 duration-700" 
-                                                alt={card.name} 
-                                                onError={(e) => { e.target.src = "https://placehold.co/300x420/1e293b/white?text=Cargando..."; }}
-                                            />
-                                            <div className={`absolute top-4 right-4 px-3 py-1.5 ${style.color} text-white text-[9px] font-black uppercase rounded-xl shadow-2xl z-10 border border-white/20`}>
-                                                {style.label}
-                                            </div>
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent opacity-0 group-hover/card:opacity-100 transition-opacity flex flex-col items-center justify-end p-6 text-center pointer-events-none">
-                                                <p className="text-white text-xs font-black uppercase italic tracking-tighter leading-none">{card.name}</p>
-                                                <p className="text-blue-400 text-[8px] font-bold uppercase mt-2 tracking-widest">{card.edition?.replace('_', ' ')}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </motion.div>
-                    </div>
-                </motion.section>
+                    {/* Carrusel 1: Espada Sagrada */}
+                    <EditionCarousel 
+                        title="Espada Sagrada" 
+                        cards={bannedCards.filter(c => c.edition_slug === "espada_sagrada" || c.edition === "espada_sagrada")} 
+                    />
+                    
+                    {/* Carrusel 2: Helénica */}
+                    <EditionCarousel 
+                        title="Helénica" 
+                        cards={bannedCards.filter(c => c.edition_slug === "helenica" || c.edition === "helenica")} 
+                    />
+                    
+                    {/* Carrusel 3: Hijos de Daana */}
+                    <EditionCarousel 
+                        title="Hijos de Daana" 
+                        cards={bannedCards.filter(c => c.edition_slug === "hijos_de_daana" || c.edition === "hijos_de_daana")} 
+                    />
+                    
+                    {/* Carrusel 4: Dominios de Ra */}
+                    <EditionCarousel 
+                        title="Dominios de Ra" 
+                        cards={bannedCards.filter(c => c.edition_slug === "dominios_de_ra" || c.edition === "dominios_de_ra")} 
+                    />
+                </section>
             )}
 
             {/* TOP 10 PB */}
@@ -220,7 +255,7 @@ export default function HomePortal() {
                     <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Top 10 Imperio</h3>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6">
-                    {loading ? [...Array(10)].map((_, n) => <div key={`iml-${n}`} className="h-48 md:h-64 bg-slate-800/20 rounded-3xl animate-pulse" />) : 
+                    {loading ? [...Array(10)].map((_, n) => <div key={`imp-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />) : 
                         impTrending.map((card, idx) => (
                             <MetaCard key={`imp-${idx}`} card={card} index={idx} onClick={() => { setSelectedMetaCard(card); setShowMetaModal(true); }} />
                         ))
@@ -242,65 +277,39 @@ export default function HomePortal() {
                             <button onClick={() => setShowMetaModal(false)} className="absolute top-4 right-4 z-[2010] p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-blue-500 transition-all shadow-lg">
                                 <X size={20} />
                             </button>
-                            
-                            {/* Lado Imagen de Carta: Centrado y adaptado */}
                             <div className="w-full md:w-2/5 p-6 md:p-8 bg-slate-50 dark:bg-black/20 flex items-center justify-center border-b md:border-b-0 md:border-r border-white/5 flex-shrink-0">
                                 <img src={selectedMetaCard.imgUrl || selectedMetaCard.img} className="w-full max-w-[140px] sm:max-w-[180px] md:max-w-[260px] rounded-xl md:rounded-2xl shadow-2xl border-2 md:border-4 border-white dark:border-white/5" alt="card" />
                             </div>
-
-                            {/* Lado Estadísticas: Scrollable para notebooks de baja resolución */}
                             <div className="w-full md:w-3/5 p-6 md:p-10 flex flex-col overflow-y-auto custom-scrollbar">
                                 <div className="mb-6">
                                     <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Racial Distribution Analysis</span>
                                     <h3 className="text-2xl md:text-4xl font-black uppercase italic text-slate-900 dark:text-white leading-tight mb-1">{selectedMetaCard.name}</h3>
                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{selectedMetaCard.format?.replace('_',' ')}</p>
                                 </div>
-
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                                     <div className="p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10 text-center">
                                         <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Presencia Global</p>
                                         <p className="text-2xl font-black text-blue-500">{selectedMetaCard.usageCount} Mazos</p>
                                     </div>
-                                    {/* Gráfico circular con ResponsiveContainer */}
                                     <div className="h-48 md:h-56 w-full">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
-                                                <Pie 
-                                                    data={getChartData(selectedMetaCard)} 
-                                                    innerRadius={35} 
-                                                    outerRadius={55} 
-                                                    paddingAngle={5} 
-                                                    dataKey="value" 
-                                                    stroke="none"
-                                                    label={renderCustomizedLabel}
-                                                    labelLine={false}
-                                                >
+                                                <Pie data={getChartData(selectedMetaCard)} innerRadius={35} outerRadius={55} paddingAngle={5} dataKey="value" stroke="none" label={renderCustomizedLabel} labelLine={false}>
                                                     {getChartData(selectedMetaCard).map((e, i) => <Cell key={i} fill={e.color} />)}
                                                 </Pie>
-                                                <RechartsTooltip 
-                                                    contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '11px', color: '#fff', fontWeight: 'bold' }} 
-                                                    itemStyle={{ color: '#fff' }}
-                                                />
+                                                <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '11px', color: '#fff', fontWeight: 'bold' }} itemStyle={{ color: '#fff' }} />
                                                 <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', paddingTop: '10px' }} />
                                             </PieChart>
                                         </ResponsiveContainer>
                                     </div>
                                 </div>
-
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-2 text-slate-400 border-t border-white/5 pt-6">
                                         <LayoutList size={14} /> <span className="text-[10px] font-black uppercase tracking-widest">Fuentes Estratégicas:</span>
                                     </div>
                                     <div className="flex flex-wrap gap-2 pb-6">
                                         {selectedMetaCard.featuredDecks?.map((deck, i) => (
-                                            <button 
-                                                key={i} 
-                                                onClick={() => goToCommunityDeck(deck)}
-                                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase italic transition-all border flex items-center gap-2
-                                                    ${deck.isPublic 
-                                                        ? 'bg-green-500/10 border-green-500/30 text-green-500 hover:bg-green-500 hover:text-white cursor-pointer active:scale-95' 
-                                                        : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 cursor-not-allowed opacity-60'}`}
-                                            >
+                                            <button key={i} onClick={() => goToCommunityDeck(deck)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase italic transition-all border flex items-center gap-2 ${deck.isPublic ? 'bg-green-500/10 border-green-500/30 text-green-500 hover:bg-green-500 hover:text-white cursor-pointer active:scale-95' : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 cursor-not-allowed opacity-60'}`}>
                                                 {deck.name} {deck.isPublic && <ArrowRight size={10} />} {!deck.isPublic && <Lock size={10} />}
                                             </button>
                                         )) || <p className="text-[9px] text-slate-600 italic">No hay mazos vinculados</p>}
