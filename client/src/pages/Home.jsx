@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+// ✅ IMPORTACIÓN PARA GRÁFICOS PROFESIONALES
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from "recharts";
 import BACKEND_URL from "../config";
 import { 
     Sword, ScrollText, Zap, TrendingUp, ShieldCheck, Users, ArrowRight, Heart, Star, 
-    ShoppingBag, Instagram, ExternalLink, PlusCircle, X, Camera, Sparkles, UserPlus, BarChart3, LayoutGrid, Lock, ShieldAlert, ImageOff
+    ShoppingBag, Instagram, ExternalLink, PlusCircle, X, Camera, Sparkles, UserPlus, BarChart3, LayoutGrid, Lock, AlertTriangle, ShieldAlert, ImageOff
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -41,29 +42,22 @@ export default function HomePortal() {
                 if (resPb.ok) setPbTrending((await resPb.json()).slice(0, 10));
                 if (resImp.ok) setImpTrending((await resImp.json()).slice(0, 10));
 
-                // ✅ 2. CARGAR CARTAS RESTRINGIDAS (INTENTO DOBLE)
-                // Intentamos primero con el buscador que usas en el constructor
-                let resCards = await fetch(`${BACKEND_URL}/api/cards/search?format=primer_bloque&limit=1000`);
+                // ✅ 2. CARGAR CARTAS RESTRINGIDAS (REPARADO USANDO EDICIÓN COMO EL CONSTRUCTOR)
+                // Tu backend no devuelve nada si el query está vacío, así que forzamos una edición inicial
+                const resCards = await fetch(`${BACKEND_URL}/api/cards/search?format=primer_bloque&edition=espada_sagrada`);
                 
-                if (!resCards.ok) {
-                    // Si falla, intentamos el endpoint general
-                    resCards = await fetch(`${BACKEND_URL}/api/cards?format=primer_bloque`);
-                }
-
                 if (resCards.ok) {
                     const data = await resCards.json();
                     const rawCards = Array.isArray(data) ? data : (data.results || data.cards || []);
                     
-                    // Filtramos exactamente como en tu constructor
+                    // Filtramos por el campo "restriction"
                     const filtered = rawCards.filter(c => 
                         c.restriction && 
                         c.restriction !== "none" && 
                         c.restriction !== ""
                     );
                     
-                    console.log("DEBUG: Cartas encontradas en total:", rawCards.length);
-                    console.log("DEBUG: Cartas con restricción:", filtered.length);
-                    
+                    console.log("DEBUG HOME: Cartas restringidas encontradas:", filtered.length);
                     setBannedCards(filtered);
                 }
             } catch (error) {
@@ -77,10 +71,10 @@ export default function HomePortal() {
     }, []);
 
     const getCardRestrictionStyle = (card) => {
-        if (card.restriction === "banned") return { filter: "grayscale(100%)", label: "PROHIBIDA", color: "bg-red-600" };
-        if (card.restriction === "limited1") return { filter: "none", label: "1 COPIA", color: "bg-orange-600" };
-        if (card.restriction === "limited2") return { filter: "none", label: "2 COPIAS", color: "bg-yellow-500 text-black" };
-        return { filter: "none", label: "RESTRINGIDA", color: "bg-slate-700" };
+        if (card.restriction === "banned") return { filter: "grayscale(100%)", label: "BAN", color: "bg-red-600" };
+        if (card.restriction === "limited1") return { filter: "none", label: "1", color: "bg-orange-600" };
+        if (card.restriction === "limited2") return { filter: "none", label: "2", color: "bg-yellow-500 text-black" };
+        return { filter: "none", label: "!", color: "bg-slate-700" };
     };
 
     return (
@@ -101,22 +95,22 @@ export default function HomePortal() {
             </div>
 
             {/* ✅ CARRUSEL DE BANEADAS (OBLIGATORIO ARRIBA DEL TOP 10) */}
-            <section className="w-full mb-24 py-12 bg-slate-100/50 dark:bg-white/5 border-y border-slate-200 dark:border-white/5 relative overflow-hidden">
-                <div className="max-w-7xl mx-auto px-6 mb-10 flex items-center gap-3">
-                    <ShieldAlert className="text-red-500" size={32} />
-                    <h3 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter">Lista de <span className="text-red-600">Restricciones DAR</span></h3>
-                </div>
-                
-                <div className="relative overflow-hidden cursor-grab active:cursor-grabbing px-4" ref={carouselRef}>
-                    <motion.div 
-                        className="flex gap-8 w-max"
-                        drag="x"
-                        dragConstraints={carouselRef}
-                        animate={bannedCards.length > 0 ? { x: ["0%", "-50%"] } : {}}
-                        transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
-                    >
-                        {bannedCards.length > 0 ? (
-                            [...bannedCards, ...bannedCards].map((card, i) => {
+            {bannedCards.length > 0 && (
+                <section className="w-full mb-24 py-12 bg-slate-100/50 dark:bg-white/5 border-y border-slate-200 dark:border-white/5 relative overflow-hidden">
+                    <div className="max-w-7xl mx-auto px-6 mb-10 flex items-center gap-3">
+                        <ShieldAlert className="text-red-500" size={32} />
+                        <h3 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter">Lista de <span className="text-red-600">Restricciones DAR</span></h3>
+                    </div>
+                    
+                    <div className="relative overflow-hidden cursor-grab active:cursor-grabbing px-4" ref={carouselRef}>
+                        <motion.div 
+                            className="flex gap-8 w-max"
+                            drag="x"
+                            dragConstraints={carouselRef}
+                            animate={{ x: ["0%", "-50%"] }}
+                            transition={{ repeat: Infinity, duration: 45, ease: "linear" }}
+                        >
+                            {[...bannedCards, ...bannedCards].map((card, i) => {
                                 const style = getCardRestrictionStyle(card);
                                 return (
                                     <div key={`${card._id}-${i}`} className="w-44 md:w-60 shrink-0 select-none">
@@ -133,21 +127,16 @@ export default function HomePortal() {
                                             </div>
                                             <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-end p-6 text-center pointer-events-none">
                                                 <p className="text-white text-xs font-black uppercase italic tracking-tighter leading-none">{card.name}</p>
+                                                <p className="text-blue-400 text-[8px] font-bold uppercase mt-1 opacity-80">{card.edition?.replace('_', ' ')}</p>
                                             </div>
                                         </div>
                                     </div>
-                                )
-                            })
-                        ) : (
-                            /* Loader mientras Mongo responde */
-                            <div className="w-full flex justify-center items-center py-20 gap-4 text-slate-400">
-                                <Sparkles className="animate-spin" />
-                                <p className="font-black uppercase text-xs tracking-widest">Buscando cartas en la base de datos...</p>
-                            </div>
-                        )}
-                    </motion.div>
-                </div>
-            </section>
+                                );
+                            })}
+                        </motion.div>
+                    </div>
+                </section>
+            )}
 
             {/* TOP 10 PB */}
             <section className="max-w-7xl mx-auto px-6 mb-24">
@@ -165,7 +154,6 @@ export default function HomePortal() {
     );
 }
 
-// ... (MetaCard y FormatCard iguales abajo)
 function MetaCard({ card, index, onClick }) {
     return (
         <motion.div whileHover={{ y: -8, scale: 1.02 }} onClick={onClick} className="cursor-pointer group bg-white dark:bg-slate-900 p-4 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-xl transition-all duration-500 text-center">
