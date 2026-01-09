@@ -1,14 +1,30 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-// ✅ IMPORTACIÓN PARA GRÁFICOS PROFESIONALES
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from "recharts";
 import BACKEND_URL from "../config";
 import { 
     Sword, ScrollText, Zap, TrendingUp, ShieldCheck, Users, ArrowRight, Heart, Star, 
-    ShoppingBag, Instagram, ExternalLink, PlusCircle, X, Camera, Sparkles, UserPlus, BarChart3, LayoutGrid, Lock, AlertTriangle, ShieldAlert, ImageOff
+    ShoppingBag, Instagram, ExternalLink, PlusCircle, X, Camera, Sparkles, UserPlus, BarChart3, LayoutGrid, Lock, ShieldAlert, ImageOff
 } from "lucide-react";
 import { toast } from "sonner";
+
+// 🔥 AQUÍ GESTIONAS TUS CARTAS DEL CARRUSEL
+// Puedes borrar cualquier objeto de esta lista o añadir nuevos usando su "slug"
+const MIS_CARTAS_BANEADAS = [
+    // ESPADA SAGRADA
+    { name: "Fe Sin Limite", slug: "es540", restriction: "limited2" },
+    { name: "Sif", slug: "es1", restriction: "banned" },
+    // HELÉNICA
+    { name: "Lugh", slug: "he140", restriction: "limited1" },
+    { name: "Aquiles", slug: "he2", restriction: "limited2" },
+    // HIJOS DE DAANA
+    { name: "Dragón Dorado", slug: "hd200", restriction: "limited1" },
+    { name: "Dagda", slug: "hd10", restriction: "limited2" },
+    // DOMINIOS DE RA
+    { name: "Eolo", slug: "dr50", restriction: "limited2" },
+    { name: "Anubis", slug: "dr5", restriction: "banned" }
+];
 
 export default function HomePortal() {
     const navigate = useNavigate();
@@ -21,7 +37,7 @@ export default function HomePortal() {
     const [showPlayerModal, setShowPlayerModal] = useState(false);
     const [newPlayerData, setNewPlayerData] = useState({ name: "", instagram: "", logo: "" });
 
-    // ✅ ESTADO PARA LAS CARTAS BANEADAS
+    // ✅ ESTADO PARA LAS CARTAS DEL CARRUSEL
     const [bannedCards, setBannedCards] = useState([]);
     const carouselRef = useRef(null);
 
@@ -42,24 +58,22 @@ export default function HomePortal() {
                 if (resPb.ok) setPbTrending((await resPb.json()).slice(0, 10));
                 if (resImp.ok) setImpTrending((await resImp.json()).slice(0, 10));
 
-                // ✅ 2. CARGAR CARTAS RESTRINGIDAS (REPARADO USANDO EDICIÓN COMO EL CONSTRUCTOR)
-                // Tu backend no devuelve nada si el query está vacío, así que forzamos una edición inicial
-                const resCards = await fetch(`${BACKEND_URL}/api/cards/search?format=primer_bloque&edition=espada_sagrada`);
-                
-                if (resCards.ok) {
-                    const data = await resCards.json();
-                    const rawCards = Array.isArray(data) ? data : (data.results || data.cards || []);
-                    
-                    // Filtramos por el campo "restriction"
-                    const filtered = rawCards.filter(c => 
-                        c.restriction && 
-                        c.restriction !== "none" && 
-                        c.restriction !== ""
-                    );
-                    
-                    console.log("DEBUG HOME: Cartas restringidas encontradas:", filtered.length);
-                    setBannedCards(filtered);
-                }
+                // ✅ 2. CARGAR LAS CARTAS ESPECÍFICAS QUE PUSIMOS EN LA LISTA DE ARRIBA
+                // Buscamos en la base de datos solo los slugs que definiste manualmente
+                const promesas = MIS_CARTAS_BANEADAS.map(async (item) => {
+                    const r = await fetch(`${BACKEND_URL}/api/cards/search?q=${item.slug}`);
+                    if (r.ok) {
+                        const d = await r.json();
+                        const cardData = Array.isArray(d) ? d[0] : (d.results ? d.results[0] : null);
+                        // Combinamos la data de la DB con la restricción manual
+                        return cardData ? { ...cardData, restriction: item.restriction } : null;
+                    }
+                    return null;
+                });
+
+                const resultados = await Promise.all(promesas);
+                setBannedCards(resultados.filter(c => c !== null));
+
             } catch (error) {
                 console.error("Error cargando datos:", error);
             } finally {
@@ -80,7 +94,6 @@ export default function HomePortal() {
     return (
         <div className="min-h-screen bg-[#FDFDFD] dark:bg-[#06080F] text-slate-900 dark:text-white pb-20 transition-colors duration-500 overflow-x-hidden">
             
-            {/* HERO SECTION */}
             <header className="w-full max-w-7xl mx-auto px-6 pt-20 pb-12 text-center animate-in fade-in duration-1000">
                 <div className="flex justify-center mb-8 px-4">
                     <img src={LOGO_NEGRO} alt="Logo" className="w-[85vw] max-w-[500px] h-auto dark:hidden" />
@@ -88,13 +101,12 @@ export default function HomePortal() {
                 </div>
             </header>
 
-            {/* BOTONES FORMATO */}
             <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8 mb-24">
                 <FormatCard title="Primer Bloque" onClick={() => navigate("/primer-bloque")} img="https://los40.cl/resizer/v2/RGW3O7B6EBMJTOG3663Q63HYUM.jpg?quality=70&width=1200" icon={<ScrollText />} />
                 <FormatCard title="Imperio" onClick={() => navigate("/imperio")} img="https://cdn.shopify.com/s/files/1/0103/3601/0303/files/bannerpreventakvm_177c3b4b-7d62-4fd8-8f0a-fa243f85e590.jpg" icon={<Sword />} />
             </div>
 
-            {/* ✅ CARRUSEL DE BANEADAS (OBLIGATORIO ARRIBA DEL TOP 10) */}
+            {/* ✅ CARRUSEL MANUAL: Aquí verás las cartas de todas las ediciones que pusiste arriba */}
             {bannedCards.length > 0 && (
                 <section className="w-full mb-24 py-12 bg-slate-100/50 dark:bg-white/5 border-y border-slate-200 dark:border-white/5 relative overflow-hidden">
                     <div className="max-w-7xl mx-auto px-6 mb-10 flex items-center gap-3">
@@ -108,7 +120,7 @@ export default function HomePortal() {
                             drag="x"
                             dragConstraints={carouselRef}
                             animate={{ x: ["0%", "-50%"] }}
-                            transition={{ repeat: Infinity, duration: 45, ease: "linear" }}
+                            transition={{ repeat: Infinity, duration: 40, ease: "linear" }}
                         >
                             {[...bannedCards, ...bannedCards].map((card, i) => {
                                 const style = getCardRestrictionStyle(card);
@@ -138,7 +150,6 @@ export default function HomePortal() {
                 </section>
             )}
 
-            {/* TOP 10 PB */}
             <section className="max-w-7xl mx-auto px-6 mb-24">
                 <div className="flex items-center gap-3 mb-10 border-b border-slate-200 dark:border-white/10 pb-6">
                     <TrendingUp className="text-blue-600" />
@@ -154,6 +165,7 @@ export default function HomePortal() {
     );
 }
 
+// ... (MetaCard y FormatCard iguales)
 function MetaCard({ card, index, onClick }) {
     return (
         <motion.div whileHover={{ y: -8, scale: 1.02 }} onClick={onClick} className="cursor-pointer group bg-white dark:bg-slate-900 p-4 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-xl transition-all duration-500 text-center">
